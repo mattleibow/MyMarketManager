@@ -1,6 +1,5 @@
 # Data Model
 
----
 
 ## Supplier
 Description: Represents a vendor or store from which goods are purchased.  
@@ -11,7 +10,6 @@ Description: Represents a vendor or store from which goods are purchased.
 | WebsiteUrl | Text (nullable) | Supplier website | — |
 | ContactInfo | Text (nullable) | Contact details | — |
 
----
 
 ## PurchaseOrder
 Description: A record of an order placed with a supplier, including costs and overhead allocations.  
@@ -27,7 +25,6 @@ Description: A record of an order placed with a supplier, including costs and ov
 | AdditionalFees | Currency | Miscellaneous overhead | — |
 | Notes | Text (nullable) | Free‑form notes | — |
 
----
 
 ## PurchaseOrderItem
 Description: Line items within a purchase order, representing specific products or SKUs ordered.  
@@ -46,7 +43,6 @@ Description: Line items within a purchase order, representing specific products 
 | AllocatedUnitOverhead | Currency | Overhead share of the total order overhead | — |
 | TotalUnitCost | Currency | Total cost of a unit factoring in discounts, overhead and any fees | — |
 
----
 
 ## Delivery
 Description: Represents a shipment or receipt of goods, which may be linked to a purchase order or stand alone.  
@@ -59,7 +55,6 @@ Description: Represents a shipment or receipt of goods, which may be linked to a
 | TrackingNumber | Text (nullable) | Tracking reference | — |
 | Status | Enum (Pending, Partial, Complete) | Delivery state | — |
 
----
 
 ## DeliveryItem
 Description: Individual items received in a delivery, with quality and inspection details.  
@@ -68,11 +63,10 @@ Description: Individual items received in a delivery, with quality and inspectio
 | Id | Integer (PK) | Unique identifier | — |
 | DeliveryId | Integer (FK) | Parent delivery | → Delivery |
 | ProductId | Integer (FK) | Linked product | → Product |
-| ReceivedQuantity | Integer | Quantity received | — |
+| Quantity | Integer | Quantity received | — |
 | Quality | Enum (Excellent, Good, Fair, Poor, Terrible) | Quality rating | — |
 | Notes | Text (nullable) | Inspection notes | — |
 
----
 
 ## Product
 Description: Represents a catalog item that can be purchased, delivered, and sold. Central to linking orders, deliveries, and sales.  
@@ -86,7 +80,6 @@ Description: Represents a catalog item that can be purchased, delivered, and sol
 | Notes | Text (nullable) | Additional notes | — |
 | StockOnHand | Integer | Current stock | Derived from deliveries & sales |
 
----
 
 ## ProductPhoto
 Description: Stores one or more images associated with a product.  
@@ -97,7 +90,6 @@ Description: Stores one or more images associated with a product.
 | Url | Text | Photo URL or path | — |
 | Caption | Text (nullable) | Description of photo | — |
 
----
 
 ## MarketEvent
 Description: Represents a market day or event where sales occur. Used to group reconciled sales.  
@@ -107,22 +99,8 @@ Description: Represents a market day or event where sales occur. Used to group r
 | Name | Text | Event name | — |
 | Date | DateTime | Event date | — |
 | Location | Text (nullable) | Event location | — |
+| Notes | Text (nullable) | Additional notes | — |
 
----
-
-## ImportedSaleRecord
-Description: Raw sales data imported from third‑party reports before reconciliation.  
-| Field | Type | Description | Relationships |
-|-------|------|-------------|----------------|
-| Id | Integer (PK) | Unique identifier | — |
-| ProductDescription | Text | Description from report | — |
-| ReportedPrice | Currency | Price from report | — |
-| ReportedQuantity | Integer | Quantity sold (if available) | — |
-| MarketEventName | Text (nullable) | Event name from report | — |
-| Status | Enum (Pending, Linked, Ignored) | Processing state | — |
-| RawData | Text | Raw data that represents the sale from report | — |
-
----
 
 ## ReconciledSale
 Description: A confirmed sale linked to a product and market event, derived from imported records and stocktake.  
@@ -135,10 +113,9 @@ Description: A confirmed sale linked to a product and market event, derived from
 | SalePrice | Currency | Price per unit | — |
 
 
----
 
 ## StagingBatch
-Description: Represents a single supplier data upload (e.g. Shein ZIP), grouping all parsed orders and items.  
+Description: Represents a single supplier data upload (e.g. Shein ZIP) or sales data upload (e.g. Yoco API load, grouping all parsed orders, sales and items.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
 | Id | Integer (PK) | Unique identifier | Parent of StagingPurchaseOrder |
@@ -148,7 +125,33 @@ Description: Represents a single supplier data upload (e.g. Shein ZIP), grouping
 | Status | Enum (Pending, Processed) | Batch state | — |
 | Notes | Text (nullable) | Free‑form notes | — |
 
----
+
+## StagingSale
+Description: A parsed sale stored in staging before validation and promotion.  
+| Field | Type | Description | Relationships |
+|-------|------|-------------|----------------|
+| Id | Integer (PK) | Unique identifier | Parent of StagingSaleItem |
+| StagingBatchId | Integer (FK) | Parent batch | → StagingBatch |
+| SaleDate | DateTime | Sale date | — |
+| RawData | JSON/Text | Original row data from sales endpoint | — |
+| IsImported | Boolean | Whether promoted into production | — |
+
+## StagingSaleItem
+Description: Raw sales data imported from third‑party reports before reconciliation.  
+| Field | Type | Description | Relationships |
+|-------|------|-------------|----------------|
+| Id | Integer (PK) | Unique identifier | — |
+| StagingSaleId | Integer (FK) | Parent sale | → StagingSale |
+| ProductDescription | Text | Description from report | — |
+| ProductId | Integer (FK, nullable) | Linked product if matched | → Product |
+| SaleDate | DateTime | Sale date | — |
+| Price | Currency | Price from report | — |
+| Quantity | Integer | Quantity sold (if available) | — |
+| MarketEventName | Text (nullable) | Event name from report | — |
+| RawData | JSON/Text | Raw data that represents the sale from report | — |
+| IsImported | Boolean | Whether promoted into production | — |
+| Status | Enum (PendingReview, Linked, Ignored) | Candidate state | — |
+
 
 ## StagingPurchaseOrder
 Description: A parsed supplier order stored in staging before validation and promotion.  
@@ -156,12 +159,12 @@ Description: A parsed supplier order stored in staging before validation and pro
 |-------|------|-------------|----------------|
 | Id | Integer (PK) | Unique identifier | Parent of StagingPurchaseOrderItem |
 | StagingBatchId | Integer (FK) | Parent batch | → StagingBatch |
-| SupplierOrderId | Text | Supplier order reference | — |
+| PurchaseOrderId | Integer (FK, nullable) | Linked purchase order if matched | → PurchaseOrder |
+| SupplierReferenceNumber | Text | Supplier order reference number | — |
 | OrderDate | DateTime | Order date | — |
 | RawData | JSON/Text | Original row data from supplier | — |
 | IsImported | Boolean | Whether promoted into production | — |
 
----
 
 ## StagingPurchaseOrderItem
 Description: Line items from a supplier order in staging, awaiting linking or confirmation.  
@@ -169,8 +172,9 @@ Description: Line items from a supplier order in staging, awaiting linking or co
 |-------|------|-------------|----------------|
 | Id | Integer (PK) | Unique identifier | — |
 | StagingPurchaseOrderId | Integer (FK) | Parent order | → StagingPurchaseOrder |
-| LinkedProductId | Integer (FK, nullable) | Linked product if matched | → Product |
-| LinkedSupplierId | Integer (FK, nullable) | Linked  supplier if matched | → Supplier |
+| ProductId | Integer (FK, nullable) | Linked product if matched | → Product |
+| SupplierId | Integer (FK, nullable) | Linked  supplier if matched | → Supplier |
+| PurchaseOrderItemId | Integer (FK, nullable) | Linked purchase order item if matched | → PurchaseOrderItem |
 | SupplierReferenceNumber | Text | Supplier SKU | — |
 | SupplierProductUrl | Text (nullable) | Product URL | — |
 | Name | Text | Item name | — |
@@ -182,5 +186,4 @@ Description: Line items from a supplier order in staging, awaiting linking or co
 | IsImported | Boolean | Whether promoted into production | — |
 | Status | Enum (PendingReview, Linked, Ignored) | Candidate state | — |
 
----
 
