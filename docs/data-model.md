@@ -2,7 +2,7 @@
 
 ## Enums
 
-### Status
+### ProcessingStatus
 Used to track the state of purchase orders, deliveries, and staging batches.
 
 | Value | Description |
@@ -20,7 +20,7 @@ Used to track the state of staging items during the validation and linking proce
 | Linked | Successfully matched to an existing entity |
 | Ignored | Marked to be skipped during import |
 
-### Quality
+### ProductQuality
 Used to rate the quality of products and delivered items.
 
 | Value | Description |
@@ -50,7 +50,7 @@ Description: A record of an order placed with a supplier, including costs and ov
 | Id | Integer (PK) | Unique identifier | Parent of PurchaseOrderItem, Delivery |
 | SupplierId | Integer (FK) | Supplier reference | → Supplier |
 | OrderDate | DateTime | Date order was placed | — |
-| Status | Status | Current state | — |
+| Status | ProcessingStatus | Current state | — |
 | ShippingFees | Currency | Shipping cost | — |
 | ImportFees | Currency | Import duties | — |
 | InsuranceFees | Currency | Insurance fees | — |
@@ -85,7 +85,7 @@ Description: Represents a shipment or receipt of goods, which may be linked to a
 | DeliveryDate | DateTime | Date received | — |
 | Courier | Text (nullable) | Courier name | — |
 | TrackingNumber | Text (nullable) | Tracking reference | — |
-| Status | Status | Delivery state | — |
+| Status | ProcessingStatus | Delivery state | — |
 
 
 ## DeliveryItem
@@ -96,7 +96,7 @@ Description: Individual items received in a delivery, with quality and inspectio
 | DeliveryId | Integer (FK) | Parent delivery | → Delivery |
 | ProductId | Integer (FK) | Linked product | → Product |
 | Quantity | Integer | Quantity received | — |
-| Quality | Quality | Quality rating | — |
+| Quality | ProductQuality | Quality rating | — |
 | Notes | Text (nullable) | Inspection notes | — |
 
 
@@ -108,7 +108,7 @@ Description: Represents a catalog item that can be purchased, delivered, and sol
 | SKU | Text (nullable) | Internal SKU | — |
 | Name | Text | Product name | — |
 | Description | Text (nullable) | Product description | — |
-| Quality | Quality | Default quality rating | — |
+| Quality | ProductQuality | Default quality rating | — |
 | Notes | Text (nullable) | Additional notes | — |
 | StockOnHand | Integer | Current stock (denormalized from deliveries & sales) | Derived from deliveries & sales |
 
@@ -154,7 +154,7 @@ Description: Represents a single supplier data upload (e.g. Shein ZIP) or sales 
 | SupplierId | Integer (FK) | Supplier reference | → Supplier |
 | UploadDate | DateTime | When file was uploaded | — |
 | FileHash | Text | Hash for deduplication | — |
-| Status | Status | Batch state | — |
+| Status | ProcessingStatus | Batch state | — |
 | Notes | Text (nullable) | Free‑form notes | — |
 
 
