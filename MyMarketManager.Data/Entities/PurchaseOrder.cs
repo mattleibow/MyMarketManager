@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using MyMarketManager.Data.Enums;
 
 namespace MyMarketManager.Data.Entities;
@@ -7,18 +8,29 @@ namespace MyMarketManager.Data.Entities;
 /// </summary>
 public class PurchaseOrder
 {
-    public int Id { get; set; }
-    public int SupplierId { get; set; }
-    public DateTime OrderDate { get; set; }
+    public Guid Id { get; set; }
+    
+    public Guid SupplierId { get; set; }
+    public Supplier Supplier { get; set; } = null!;
+    
+    public DateTimeOffset OrderDate { get; set; }
     public ProcessingStatus Status { get; set; }
+    
+    [Column(TypeName = "decimal(18,2)")]
     public decimal ShippingFees { get; set; }
+    
+    [Column(TypeName = "decimal(18,2)")]
     public decimal ImportFees { get; set; }
+    
+    [Column(TypeName = "decimal(18,2)")]
     public decimal InsuranceFees { get; set; }
+    
+    [Column(TypeName = "decimal(18,2)")]
     public decimal AdditionalFees { get; set; }
+    
     public string? Notes { get; set; }
 
     // Navigation properties
-    public Supplier Supplier { get; set; } = null!;
     public ICollection<PurchaseOrderItem> Items { get; set; } = new List<PurchaseOrderItem>();
     public ICollection<Delivery> Deliveries { get; set; } = new List<Delivery>();
     public ICollection<StagingPurchaseOrder> StagingPurchaseOrders { get; set; } = new List<StagingPurchaseOrder>();

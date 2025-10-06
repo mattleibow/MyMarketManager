@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace MyMarketManager.Data.Entities;
 
 /// <summary>
@@ -5,21 +8,35 @@ namespace MyMarketManager.Data.Entities;
 /// </summary>
 public class PurchaseOrderItem
 {
-    public int Id { get; set; }
-    public int PurchaseOrderId { get; set; }
-    public int? ProductId { get; set; }
+    public Guid Id { get; set; }
+    
+    public Guid PurchaseOrderId { get; set; }
+    public PurchaseOrder PurchaseOrder { get; set; } = null!;
+    
+    public Guid? ProductId { get; set; }
+    public Product? Product { get; set; }
+    
+    [Required]
     public string SupplierReference { get; set; } = string.Empty;
     public string? SupplierProductUrl { get; set; }
+    
+    [Required]
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int Quantity { get; set; }
+    
+    [Column(TypeName = "decimal(18,2)")]
     public decimal ListedUnitPrice { get; set; }
+    
+    [Column(TypeName = "decimal(18,2)")]
     public decimal ActualUnitPrice { get; set; }
+    
+    [Column(TypeName = "decimal(18,2)")]
     public decimal AllocatedUnitOverhead { get; set; }
+    
+    [Column(TypeName = "decimal(18,2)")]
     public decimal TotalUnitCost { get; set; }
 
     // Navigation properties
-    public PurchaseOrder PurchaseOrder { get; set; } = null!;
-    public Product? Product { get; set; }
     public ICollection<StagingPurchaseOrderItem> StagingPurchaseOrderItems { get; set; } = new List<StagingPurchaseOrderItem>();
 }

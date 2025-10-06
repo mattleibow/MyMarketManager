@@ -7,14 +7,16 @@ namespace MyMarketManager.Data.Entities;
 /// </summary>
 public class Delivery
 {
-    public int Id { get; set; }
-    public int? PurchaseOrderId { get; set; }
-    public DateTime DeliveryDate { get; set; }
+    public Guid Id { get; set; }
+    
+    public Guid? PurchaseOrderId { get; set; }
+    public PurchaseOrder? PurchaseOrder { get; set; }
+    
+    public DateTimeOffset DeliveryDate { get; set; }
     public string? Courier { get; set; }
     public string? TrackingNumber { get; set; }
     public ProcessingStatus Status { get; set; }
 
     // Navigation properties
-    public PurchaseOrder? PurchaseOrder { get; set; }
     public ICollection<DeliveryItem> Items { get; set; } = new List<DeliveryItem>();
 }

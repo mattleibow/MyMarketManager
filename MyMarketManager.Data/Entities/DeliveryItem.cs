@@ -7,14 +7,15 @@ namespace MyMarketManager.Data.Entities;
 /// </summary>
 public class DeliveryItem
 {
-    public int Id { get; set; }
-    public int DeliveryId { get; set; }
-    public int ProductId { get; set; }
+    public Guid Id { get; set; }
+    
+    public Guid DeliveryId { get; set; }
+    public Delivery Delivery { get; set; } = null!;
+    
+    public Guid ProductId { get; set; }
+    public Product Product { get; set; } = null!;
+    
     public int Quantity { get; set; }
     public ProductQuality Quality { get; set; }
     public string? Notes { get; set; }
-
-    // Navigation properties
-    public Delivery Delivery { get; set; } = null!;
-    public Product Product { get; set; } = null!;
 }

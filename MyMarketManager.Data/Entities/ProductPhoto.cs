@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace MyMarketManager.Data.Entities;
 
 /// <summary>
@@ -5,11 +7,12 @@ namespace MyMarketManager.Data.Entities;
 /// </summary>
 public class ProductPhoto
 {
-    public int Id { get; set; }
-    public int ProductId { get; set; }
+    public Guid Id { get; set; }
+    
+    public Guid ProductId { get; set; }
+    public Product Product { get; set; } = null!;
+    
+    [Required]
     public string Url { get; set; } = string.Empty;
     public string? Caption { get; set; }
-
-    // Navigation properties
-    public Product Product { get; set; } = null!;
 }

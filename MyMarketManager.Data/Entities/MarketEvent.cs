@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace MyMarketManager.Data.Entities;
 
 /// <summary>
@@ -5,9 +7,11 @@ namespace MyMarketManager.Data.Entities;
 /// </summary>
 public class MarketEvent
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
+    
+    [Required]
     public string Name { get; set; } = string.Empty;
-    public DateTime Date { get; set; }
+    public DateTimeOffset Date { get; set; }
     public string? Location { get; set; }
     public string? Notes { get; set; }
 

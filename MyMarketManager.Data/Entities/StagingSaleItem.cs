@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using MyMarketManager.Data.Enums;
 
 namespace MyMarketManager.Data.Entities;
@@ -7,19 +9,26 @@ namespace MyMarketManager.Data.Entities;
 /// </summary>
 public class StagingSaleItem
 {
-    public int Id { get; set; }
-    public int StagingSaleId { get; set; }
+    public Guid Id { get; set; }
+    
+    public Guid StagingSaleId { get; set; }
+    public StagingSale StagingSale { get; set; } = null!;
+    
+    public Guid? ProductId { get; set; }
+    public Product? Product { get; set; }
+    
+    [Required]
     public string ProductDescription { get; set; } = string.Empty;
-    public int? ProductId { get; set; }
-    public DateTime SaleDate { get; set; }
+    public DateTimeOffset SaleDate { get; set; }
+    
+    [Column(TypeName = "decimal(18,2)")]
     public decimal Price { get; set; }
+    
     public int Quantity { get; set; }
     public string? MarketEventName { get; set; }
+    
+    [Required]
     public string RawData { get; set; } = string.Empty;
     public bool IsImported { get; set; }
     public CandidateStatus Status { get; set; }
-
-    // Navigation properties
-    public StagingSale StagingSale { get; set; } = null!;
-    public Product? Product { get; set; }
 }

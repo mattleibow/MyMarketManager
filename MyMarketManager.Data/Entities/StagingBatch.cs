@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using MyMarketManager.Data.Enums;
 
 namespace MyMarketManager.Data.Entities;
@@ -7,15 +8,19 @@ namespace MyMarketManager.Data.Entities;
 /// </summary>
 public class StagingBatch
 {
-    public int Id { get; set; }
-    public int SupplierId { get; set; }
-    public DateTime UploadDate { get; set; }
+    public Guid Id { get; set; }
+    
+    public Guid SupplierId { get; set; }
+    public Supplier Supplier { get; set; } = null!;
+    
+    public DateTimeOffset UploadDate { get; set; }
+    
+    [Required]
     public string FileHash { get; set; } = string.Empty;
     public ProcessingStatus Status { get; set; }
     public string? Notes { get; set; }
 
     // Navigation properties
-    public Supplier Supplier { get; set; } = null!;
     public ICollection<StagingPurchaseOrder> StagingPurchaseOrders { get; set; } = new List<StagingPurchaseOrder>();
     public ICollection<StagingSale> StagingSales { get; set; } = new List<StagingSale>();
 }

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data.Enums;
 
 namespace MyMarketManager.Data.Entities;
@@ -5,10 +7,14 @@ namespace MyMarketManager.Data.Entities;
 /// <summary>
 /// Represents a catalog item that can be purchased, delivered, and sold. Central to linking orders, deliveries, and sales.
 /// </summary>
+[Index(nameof(SKU), IsUnique = true)]
 public class Product
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
+    
     public string? SKU { get; set; }
+    
+    [Required]
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public ProductQuality Quality { get; set; }

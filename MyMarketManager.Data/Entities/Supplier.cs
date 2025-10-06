@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace MyMarketManager.Data.Entities;
 
 /// <summary>
@@ -5,7 +7,9 @@ namespace MyMarketManager.Data.Entities;
 /// </summary>
 public class Supplier
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
+    
+    [Required]
     public string Name { get; set; } = string.Empty;
     public string? WebsiteUrl { get; set; }
     public string? ContactInfo { get; set; }
