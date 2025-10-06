@@ -40,8 +40,7 @@ MyMarketManager.Data/
 │   └── ProductQuality.cs
 ├── Migrations/            # EF Core migrations
 │   └── 20251006142907_InitialCreate.cs
-├── MyMarketManagerDbContext.cs        # Main DbContext
-└── MyMarketManagerDbContextFactory.cs # Design-time factory
+└── MyMarketManagerDbContext.cs        # Main DbContext
 ```
 
 ## Entity Overview
@@ -70,36 +69,7 @@ MyMarketManager.Data/
 - **CandidateStatus**: Pending, Linked, Ignored
 - **ProductQuality**: Excellent, Good, Fair, Poor, Terrible
 
-## Database Configuration
-
-The DbContext includes configurations for:
-- Entity relationships with appropriate delete behaviors
-- String length constraints
-- Decimal precision for currency fields
-- Unique indexes where needed
-
 ## Using the Project
-
-### Connection String Configuration
-
-In your application's configuration (e.g., `appsettings.json`):
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=tcp:your-server.database.windows.net,1433;Initial Catalog=MyMarketManager;Persist Security Info=False;User ID=your-username;Password=your-password;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
-  }
-}
-```
-
-### Registering the DbContext
-
-In your startup/program configuration:
-
-```csharp
-services.AddDbContext<MyMarketManagerDbContext>(options =>
-    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
-```
 
 ### Running Migrations
 
@@ -124,17 +94,3 @@ When you make changes to entities:
 cd MyMarketManager.Data
 dotnet ef migrations add YourMigrationName
 ```
-
-## NuGet Packages
-
-The project includes:
-- `Microsoft.EntityFrameworkCore.SqlServer` (9.0.9)
-- `Microsoft.EntityFrameworkCore.Design` (9.0.9)
-
-## Notes
-
-- The `MyMarketManagerDbContextFactory` provides design-time support for EF Core tools
-- All decimal properties use `decimal(18,2)` precision
-- Foreign key relationships use appropriate delete behaviors (Cascade or Restrict)
-- The Product.SKU field has a unique index
-- All navigation properties are initialized to prevent null reference warnings
