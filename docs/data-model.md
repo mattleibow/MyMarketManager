@@ -1,4 +1,4 @@
-# Data Model — My Market Manager
+# Data Model
 
 ---
 
@@ -36,7 +36,7 @@ Description: Line items within a purchase order, representing specific products 
 | Id | Integer (PK) | Unique identifier | — |
 | PurchaseOrderId | Integer (FK) | Parent order | → PurchaseOrder |
 | ProductId | Integer (FK, nullable) | Linked product | → Product |
-| SupplierReferenceNumber | Text | Supplier SKU or reference | — |
+| SupplierReference | Text | Supplier SKU or reference | — |
 | SupplierProductUrl | Text (nullable) | Link to supplier product page | — |
 | Name | Text | Item name (from supplier) | — |
 | Description | Text (nullable) | Item description | — |
@@ -107,7 +107,6 @@ Description: Represents a market day or event where sales occur. Used to group r
 | Name | Text | Event name | — |
 | Date | DateTime | Event date | — |
 | Location | Text (nullable) | Event location | — |
-| IsRecurring | Boolean | Recurring flag | — |
 
 ---
 
@@ -116,11 +115,12 @@ Description: Raw sales data imported from third‑party reports before reconcili
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
 | Id | Integer (PK) | Unique identifier | — |
-| RawDescription | Text | Description from report | — |
-| ReportPrice | Currency | Price from report | — |
-| QuantityReported | Integer | Quantity sold (if available) | — |
+| ProductDescription | Text | Description from report | — |
+| ReportedPrice | Currency | Price from report | — |
+| ReportedQuantity | Integer | Quantity sold (if available) | — |
 | MarketEventName | Text (nullable) | Event name from report | — |
 | Status | Enum (Pending, Linked, Ignored) | Processing state | — |
+| RawData | Text | Raw data that represents the sale from report | — |
 
 ---
 
@@ -133,7 +133,6 @@ Description: A confirmed sale linked to a product and market event, derived from
 | MarketEventId | Integer (FK) | Linked event | → MarketEvent |
 | Quantity | Integer | Units sold | — |
 | SalePrice | Currency | Price per unit | — |
-| Confirmed | Boolean | Whether reconciled | — |
 
 
 ---
