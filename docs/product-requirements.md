@@ -1,18 +1,12 @@
 
 
 # Product Requirements Document (PRD)
-Project: My Market Manager  
-Owner: Matthew  
-Date: October 2025  
-
----
 
 ## 1. Introduction
 My Market Manager is a mobile and web application to manage weekend market purchasing, deliveries, inventory reconciliation, and profitability analysis. Purchases may be recorded before delivery or at delivery time. Deliveries can arrive in full or in multiple partial shipments. Sales are tracked offline and reconciled via stocktakes against imported reports.  
 
 The system also supports ingestion of supplier data files (e.g. Shein “Request My Data” ZIPs) into a staging layer, with a two‑phase process: automated ingestion overnight, followed by validation and confirmation by a user.
 
----
 
 ## 2. Objectives
 - Separate recording of purchase orders and delivery events.  
@@ -24,7 +18,6 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 - Automate ingestion of supplier data into staging, with deduplication and smart linking.  
 - Provide a validation workflow for unresolved supplier items before promotion into production data.  
 
----
 
 ## 3. User Roles and Personas
 - Buyer  
@@ -34,7 +27,6 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 - Admin/Manager  
   - Configures catalog, delivery and purchase workflows, reviews performance reports, and validates supplier ingestion candidates.  
 
----
 
 ## 4. User Stories
 1. As a Buyer, I want to create a purchase order before delivery so I can plan costs in advance.  
@@ -47,7 +39,6 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 8. As a Manager, I want the system to auto‑link staged items to existing products by supplier reference number so I don’t have to re‑enter data.  
 9. As a Manager, I want to review unresolved product candidates and confirm or link them so that staging data can be promoted into production.  
 
----
 
 ## 5. Functional Requirements
 
@@ -113,7 +104,6 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
   - Once resolved, staging orders/items are promoted into production entities.  
   - Mark staging rows as imported.  
 
----
 
 ## 6. Integration Requirements
 - Purchases & Deliveries: manual entry and file import.  
@@ -122,7 +112,6 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 - Configurable parsers per supplier.  
 - Manual overrides for ambiguous or unmatched records.  
 
----
 
 ## 7. Reporting Requirements
 - Ingestion Summary (per batch): orders parsed, items parsed, imported, pending candidates.  
@@ -131,7 +120,6 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 - Time & Event Analysis: aggregate reconciled sales and profits by month and by Market Event.  
 - Reorder Recommendations: identify top‑performing SKUs for restock; flag slow‑moving or low‑margin items.  
 
----
 
 ## 8. Non‑Functional Requirements
 - Performance: sub‑500 ms for search, fuzzy‑match, and sale capture.  
