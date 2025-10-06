@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MyMarketManager.Data\MyMarketManager.Data.csproj" />
+    <ProjectReference Include="..\..\src\MyMarketManager.Data\MyMarketManager.Data.csproj" />
   </ItemGroup>
 
 </Project>
