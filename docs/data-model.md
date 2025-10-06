@@ -1,12 +1,8 @@
-Perfect — here’s the full data model for My Market Manager, including both the core production entities and the staging entities used for supplier ingestion and validation. Each entity has a description, fields, types, and relationships. This is comprehensive enough for documentation and as a foundation for EF Core entity design.
+# Data Model — My Market Manager
 
 ---
 
-📊 Data Model — My Market Manager (Full Set)
-
----
-
-Supplier
+## Supplier
 Description: Represents a vendor or store from which goods are purchased.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -17,7 +13,7 @@ Description: Represents a vendor or store from which goods are purchased.
 
 ---
 
-PurchaseOrder
+## PurchaseOrder
 Description: A record of an order placed with a supplier, including costs and overhead allocations.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -33,7 +29,7 @@ Description: A record of an order placed with a supplier, including costs and ov
 
 ---
 
-PurchaseOrderItem
+## PurchaseOrderItem
 Description: Line items within a purchase order, representing specific products or SKUs ordered.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -51,7 +47,7 @@ Description: Line items within a purchase order, representing specific products 
 
 ---
 
-Delivery
+## Delivery
 Description: Represents a shipment or receipt of goods, which may be linked to a purchase order or stand alone.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -64,7 +60,7 @@ Description: Represents a shipment or receipt of goods, which may be linked to a
 
 ---
 
-DeliveryItem
+## DeliveryItem
 Description: Individual items received in a delivery, with quality and inspection details.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -78,7 +74,7 @@ Description: Individual items received in a delivery, with quality and inspectio
 
 ---
 
-Product
+## Product
 Description: Represents a catalog item that can be purchased, delivered, and sold. Central to linking orders, deliveries, and sales.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -92,7 +88,7 @@ Description: Represents a catalog item that can be purchased, delivered, and sol
 
 ---
 
-ProductPhoto
+## ProductPhoto
 Description: Stores one or more images associated with a product.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -103,7 +99,7 @@ Description: Stores one or more images associated with a product.
 
 ---
 
-MarketEvent
+## MarketEvent
 Description: Represents a market day or event where sales occur. Used to group reconciled sales.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -115,7 +111,7 @@ Description: Represents a market day or event where sales occur. Used to group r
 
 ---
 
-ImportedSaleRecord
+## ImportedSaleRecord
 Description: Raw sales data imported from third‑party reports before reconciliation.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -128,7 +124,7 @@ Description: Raw sales data imported from third‑party reports before reconcili
 
 ---
 
-ReconciledSale
+## ReconciledSale
 Description: A confirmed sale linked to a product and market event, derived from imported records and stocktake.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -139,36 +135,10 @@ Description: A confirmed sale linked to a product and market event, derived from
 | SalePrice | Currency | Price per unit | — |
 | Confirmed | Boolean | Whether reconciled | — |
 
----
-
-StocktakeSession
-Description: Represents a stocktake process tied to a market event, used to reconcile sales and inventory.  
-| Field | Type | Description | Relationships |
-|-------|------|-------------|----------------|
-| Id | Integer (PK) | Unique identifier | — |
-| MarketEventId | Integer (FK) | Linked event | → MarketEvent |
-| StartTime | DateTime | Session start | — |
-| Status | Enum (Active, Paused, Completed) | Session state | — |
-| UserId | Text | User performing stocktake | — |
 
 ---
 
-PricingRule
-Description: Defines rules for calculating sale prices from costs and quality.  
-| Field | Type | Description | Relationships |
-|-------|------|-------------|----------------|
-| Id | Integer (PK) | Unique identifier | — |
-| RuleType | Enum (MarginPercent, FixedMarkup) | Rule type | — |
-| MarginPercent | Decimal | % margin (if applicable) | — |
-| QualityThresholds | JSON/Text | Rules per quality tier | — |
-
----
-
-🗂️ Staging Entities (Supplier Ingestion)
-
----
-
-StagingBatch
+## StagingBatch
 Description: Represents a single supplier data upload (e.g. Shein ZIP), grouping all parsed orders and items.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -181,7 +151,7 @@ Description: Represents a single supplier data upload (e.g. Shein ZIP), grouping
 
 ---
 
-StagingPurchaseOrder
+## StagingPurchaseOrder
 Description: A parsed supplier order stored in staging before validation and promotion.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
@@ -189,14 +159,41 @@ Description: A parsed supplier order stored in staging before validation and pro
 | StagingBatchId | Integer (FK) | Parent batch | → StagingBatch |
 | SupplierOrderId | Text | Supplier order reference | — |
 | OrderDate | DateTime | Order date | — |
-| RawData | JSON/Text | Original row data | — |
-| IsImported | Boolean | Whether promoted | — |
+| RawData | JSON/Text | Original row data from supplier | — |
+| IsImported | Boolean | Whether promoted into production | — |
 
 ---
 
-StagingPurchaseOrderItem
+## StagingPurchaseOrderItem
 Description: Line items from a supplier order in staging, awaiting linking or confirmation.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
 | Id | Integer (PK) | Unique identifier | — |
-|
+| StagingPurchaseOrderId | Integer (FK) | Parent order | → StagingPurchaseOrder |
+| LinkedProductId | Integer (FK, nullable) | Linked product if matched | → Product |
+| SupplierReferenceNumber | Text | Supplier SKU | — |
+| SupplierProductUrl | Text (nullable) | Product URL | — |
+| Name | Text | Item name | — |
+| Description | Text (nullable) | Item description | — |
+| Quantity | Integer | Ordered quantity | — |
+| ListedPrice | Currency | Listed price | — |
+| ActualPrice | Currency | Paid price | — |
+| RawData | JSON/Text | Original row data | — |
+| IsImported | Boolean | Whether promoted into production | — |
+
+---
+
+## StagingProductCandidate
+Description: Represents a potential new product discovered during ingestion that could not be auto‑linked. Requires manual validation.  
+| Field | Type | Description | Relationships |
+|-------|------|-------------|----------------|
+| Id | Integer (PK) | Unique identifier | — |
+| SupplierId | Integer (FK) | Supplier reference | → Supplier |
+| SupplierReferenceNumber | Text | Supplier SKU | — |
+| Name | Text | Candidate product name | — |
+| Description | Text (nullable) | Candidate description | — |
+| Url | Text (nullable) | Supplier product URL | — |
+| Status | Enum (PendingReview, Linked, Ignored) | Candidate state | — |
+
+---
+
