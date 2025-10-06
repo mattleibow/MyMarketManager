@@ -5,10 +5,8 @@ namespace MyMarketManager.Data.Entities;
 /// <summary>
 /// Individual items received in a delivery, with quality and inspection details.
 /// </summary>
-public class DeliveryItem
+public class DeliveryItem : EntityBase
 {
-    public Guid Id { get; set; }
-    
     public Guid DeliveryId { get; set; }
     public Delivery Delivery { get; set; } = null!;
     

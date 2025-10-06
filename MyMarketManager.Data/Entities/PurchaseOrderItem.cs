@@ -5,10 +5,8 @@ namespace MyMarketManager.Data.Entities;
 /// <summary>
 /// Line items within a purchase order, representing specific products or SKUs ordered.
 /// </summary>
-public class PurchaseOrderItem
+public class PurchaseOrderItem : EntityBase
 {
-    public Guid Id { get; set; }
-    
     public Guid PurchaseOrderId { get; set; }
     public PurchaseOrder PurchaseOrder { get; set; } = null!;
     

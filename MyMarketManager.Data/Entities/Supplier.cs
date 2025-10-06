@@ -5,10 +5,8 @@ namespace MyMarketManager.Data.Entities;
 /// <summary>
 /// Represents a vendor or store from which goods are purchased.
 /// </summary>
-public class Supplier
+public class Supplier : EntityBase
 {
-    public Guid Id { get; set; }
-    
     [Required]
     public string Name { get; set; } = string.Empty;
     public string? WebsiteUrl { get; set; }

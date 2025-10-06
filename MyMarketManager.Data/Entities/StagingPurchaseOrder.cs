@@ -5,10 +5,8 @@ namespace MyMarketManager.Data.Entities;
 /// <summary>
 /// A parsed supplier order stored in staging before validation and promotion.
 /// </summary>
-public class StagingPurchaseOrder
+public class StagingPurchaseOrder : EntityBase
 {
-    public Guid Id { get; set; }
-    
     public Guid StagingBatchId { get; set; }
     public StagingBatch StagingBatch { get; set; } = null!;
     

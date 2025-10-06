@@ -5,10 +5,8 @@ namespace MyMarketManager.Data.Entities;
 /// <summary>
 /// Stores one or more images associated with a product.
 /// </summary>
-public class ProductPhoto
+public class ProductPhoto : EntityBase
 {
-    public Guid Id { get; set; }
-    
     public Guid ProductId { get; set; }
     public Product Product { get; set; } = null!;
     

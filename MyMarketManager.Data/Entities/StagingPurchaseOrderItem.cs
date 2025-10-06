@@ -6,10 +6,8 @@ namespace MyMarketManager.Data.Entities;
 /// <summary>
 /// Line items from a supplier order in staging, awaiting linking or confirmation.
 /// </summary>
-public class StagingPurchaseOrderItem
+public class StagingPurchaseOrderItem : EntityBase
 {
-    public Guid Id { get; set; }
-    
     public Guid StagingPurchaseOrderId { get; set; }
     public StagingPurchaseOrder StagingPurchaseOrder { get; set; } = null!;
     

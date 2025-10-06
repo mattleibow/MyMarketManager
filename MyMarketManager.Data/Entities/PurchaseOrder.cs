@@ -5,10 +5,8 @@ namespace MyMarketManager.Data.Entities;
 /// <summary>
 /// A record of an order placed with a supplier, including costs and overhead allocations.
 /// </summary>
-public class PurchaseOrder
+public class PurchaseOrder : EntityBase
 {
-    public Guid Id { get; set; }
-    
     public Guid SupplierId { get; set; }
     public Supplier Supplier { get; set; } = null!;
     

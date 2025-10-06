@@ -6,10 +6,8 @@ namespace MyMarketManager.Data.Entities;
 /// <summary>
 /// Raw sales data imported from third‑party reports before reconciliation.
 /// </summary>
-public class StagingSaleItem
+public class StagingSaleItem : EntityBase
 {
-    public Guid Id { get; set; }
-    
     public Guid StagingSaleId { get; set; }
     public StagingSale StagingSale { get; set; } = null!;
     

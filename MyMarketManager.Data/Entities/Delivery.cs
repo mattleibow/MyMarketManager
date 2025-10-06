@@ -5,10 +5,8 @@ namespace MyMarketManager.Data.Entities;
 /// <summary>
 /// Represents a shipment or receipt of goods, which may be linked to a purchase order or stand alone.
 /// </summary>
-public class Delivery
+public class Delivery : EntityBase
 {
-    public Guid Id { get; set; }
-    
     public Guid? PurchaseOrderId { get; set; }
     public PurchaseOrder? PurchaseOrder { get; set; }
     

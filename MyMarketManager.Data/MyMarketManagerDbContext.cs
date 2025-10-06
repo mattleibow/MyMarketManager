@@ -48,60 +48,59 @@ public class MyMarketManagerDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure delete behaviors for relationships where needed
-        modelBuilder.Entity<PurchaseOrder>()
-            .HasOne(e => e.Supplier)
-            .WithMany(s => s.PurchaseOrders)
-            .OnDelete(DeleteBehavior.Restrict);
+        // Configure soft delete query filters for all entities
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(IAuditable).IsAssignableFrom(entityType.ClrType))
+            {
+                // Add query filter to exclude soft-deleted entities
+                var parameter = System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e");
+                var property = System.Linq.Expressions.Expression.Property(parameter, nameof(IAuditable.DeletedAt));
+                var nullCheck = System.Linq.Expressions.Expression.Equal(property, System.Linq.Expressions.Expression.Constant(null, typeof(DateTimeOffset?)));
+                var lambda = System.Linq.Expressions.Expression.Lambda(nullCheck, parameter);
+                
+                modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+            }
+        }
+    }
 
-        modelBuilder.Entity<PurchaseOrderItem>()
-            .HasOne(e => e.Product)
-            .WithMany(p => p.PurchaseOrderItems)
-            .OnDelete(DeleteBehavior.Restrict);
+    public override int SaveChanges()
+    {
+        UpdateAuditFields();
+        return base.SaveChanges();
+    }
 
-        modelBuilder.Entity<Delivery>()
-            .HasOne(e => e.PurchaseOrder)
-            .WithMany(p => p.Deliveries)
-            .OnDelete(DeleteBehavior.Restrict);
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        UpdateAuditFields();
+        return base.SaveChangesAsync(cancellationToken);
+    }
 
-        modelBuilder.Entity<DeliveryItem>()
-            .HasOne(e => e.Product)
-            .WithMany(p => p.DeliveryItems)
-            .OnDelete(DeleteBehavior.Restrict);
+    private void UpdateAuditFields()
+    {
+        var entries = ChangeTracker.Entries<IAuditable>();
+        var now = DateTimeOffset.UtcNow;
 
-        modelBuilder.Entity<ReconciledSale>()
-            .HasOne(e => e.Product)
-            .WithMany(p => p.ReconciledSales)
-            .OnDelete(DeleteBehavior.Restrict);
+        foreach (var entry in entries)
+        {
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Entity.CreatedAt = now;
+                    entry.Entity.UpdatedAt = now;
+                    break;
 
-        modelBuilder.Entity<StagingBatch>()
-            .HasOne(e => e.Supplier)
-            .WithMany(s => s.StagingBatches)
-            .OnDelete(DeleteBehavior.Restrict);
+                case EntityState.Modified:
+                    entry.Entity.UpdatedAt = now;
+                    break;
 
-        modelBuilder.Entity<StagingPurchaseOrder>()
-            .HasOne(e => e.PurchaseOrder)
-            .WithMany(p => p.StagingPurchaseOrders)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<StagingPurchaseOrderItem>()
-            .HasOne(e => e.Product)
-            .WithMany(p => p.StagingPurchaseOrderItems)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<StagingPurchaseOrderItem>()
-            .HasOne(e => e.Supplier)
-            .WithMany()
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<StagingPurchaseOrderItem>()
-            .HasOne(e => e.PurchaseOrderItem)
-            .WithMany(p => p.StagingPurchaseOrderItems)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<StagingSaleItem>()
-            .HasOne(e => e.Product)
-            .WithMany(p => p.StagingSaleItems)
-            .OnDelete(DeleteBehavior.Restrict);
+                case EntityState.Deleted:
+                    // Soft delete: mark as deleted instead of actually deleting
+                    entry.State = EntityState.Modified;
+                    entry.Entity.DeletedAt = now;
+                    entry.Entity.UpdatedAt = now;
+                    break;
+            }
+        }
     }
 }

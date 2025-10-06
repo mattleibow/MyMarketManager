@@ -5,10 +5,8 @@ namespace MyMarketManager.Data.Entities;
 /// <summary>
 /// Represents a market day or event where sales occur. Used to group reconciled sales.
 /// </summary>
-public class MarketEvent
+public class MarketEvent : EntityBase
 {
-    public Guid Id { get; set; }
-    
     [Required]
     public string Name { get; set; } = string.Empty;
     public DateTimeOffset Date { get; set; }

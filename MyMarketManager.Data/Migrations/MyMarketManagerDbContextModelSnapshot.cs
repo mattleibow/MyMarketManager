@@ -31,6 +31,12 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<string>("Courier")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<DateTimeOffset>("DeliveryDate")
                         .HasColumnType("datetimeoffset");
 
@@ -42,6 +48,9 @@ namespace MyMarketManager.Data.Migrations
 
                     b.Property<string>("TrackingNumber")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
@@ -55,6 +64,12 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<Guid>("DeliveryId")
                         .HasColumnType("uniqueidentifier");
@@ -71,6 +86,9 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DeliveryId");
@@ -86,7 +104,13 @@ namespace MyMarketManager.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<DateTimeOffset>("Date")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Location")
@@ -99,6 +123,9 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("Id");
 
                     b.ToTable("MarketEvents");
@@ -109,6 +136,12 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
@@ -129,6 +162,9 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<int>("StockOnHand")
                         .HasColumnType("int");
 
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("Id");
 
                     b.HasIndex("SKU")
@@ -147,8 +183,17 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<string>("Caption")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Url")
                         .IsRequired()
@@ -169,6 +214,12 @@ namespace MyMarketManager.Data.Migrations
 
                     b.Property<decimal>("AdditionalFees")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<decimal>("ImportFees")
                         .HasColumnType("decimal(18,2)");
@@ -191,6 +242,9 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<Guid>("SupplierId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("Id");
 
                     b.HasIndex("SupplierId");
@@ -209,6 +263,12 @@ namespace MyMarketManager.Data.Migrations
 
                     b.Property<decimal>("AllocatedUnitOverhead")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
@@ -233,11 +293,13 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SupplierReference")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("TotalUnitCost")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
@@ -254,6 +316,12 @@ namespace MyMarketManager.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<Guid>("MarketEventId")
                         .HasColumnType("uniqueidentifier");
 
@@ -265,6 +333,9 @@ namespace MyMarketManager.Data.Migrations
 
                     b.Property<decimal>("SalePrice")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
@@ -281,6 +352,12 @@ namespace MyMarketManager.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("FileHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -293,6 +370,9 @@ namespace MyMarketManager.Data.Migrations
 
                     b.Property<Guid>("SupplierId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset>("UploadDate")
                         .HasColumnType("datetimeoffset");
@@ -309,6 +389,12 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<bool>("IsImported")
                         .HasColumnType("bit");
@@ -327,8 +413,10 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("SupplierReference")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
@@ -347,6 +435,12 @@ namespace MyMarketManager.Data.Migrations
 
                     b.Property<decimal>("ActualUnitPrice")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
@@ -387,8 +481,10 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SupplierReference")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
@@ -409,6 +505,12 @@ namespace MyMarketManager.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<bool>("IsImported")
                         .HasColumnType("bit");
 
@@ -422,6 +524,9 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<Guid>("StagingBatchId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("Id");
 
                     b.HasIndex("StagingBatchId");
@@ -434,6 +539,12 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<bool>("IsImported")
                         .HasColumnType("bit");
@@ -467,6 +578,9 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
@@ -485,9 +599,18 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<string>("ContactInfo")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("WebsiteUrl")
                         .HasColumnType("nvarchar(max)");
@@ -501,8 +624,7 @@ namespace MyMarketManager.Data.Migrations
                 {
                     b.HasOne("MyMarketManager.Data.Entities.PurchaseOrder", "PurchaseOrder")
                         .WithMany("Deliveries")
-                        .HasForeignKey("PurchaseOrderId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("PurchaseOrderId");
 
                     b.Navigation("PurchaseOrder");
                 });
@@ -518,7 +640,7 @@ namespace MyMarketManager.Data.Migrations
                     b.HasOne("MyMarketManager.Data.Entities.Product", "Product")
                         .WithMany("DeliveryItems")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Delivery");
@@ -542,7 +664,7 @@ namespace MyMarketManager.Data.Migrations
                     b.HasOne("MyMarketManager.Data.Entities.Supplier", "Supplier")
                         .WithMany("PurchaseOrders")
                         .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Supplier");
@@ -552,8 +674,7 @@ namespace MyMarketManager.Data.Migrations
                 {
                     b.HasOne("MyMarketManager.Data.Entities.Product", "Product")
                         .WithMany("PurchaseOrderItems")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("ProductId");
 
                     b.HasOne("MyMarketManager.Data.Entities.PurchaseOrder", "PurchaseOrder")
                         .WithMany("Items")
@@ -577,7 +698,7 @@ namespace MyMarketManager.Data.Migrations
                     b.HasOne("MyMarketManager.Data.Entities.Product", "Product")
                         .WithMany("ReconciledSales")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("MarketEvent");
@@ -590,7 +711,7 @@ namespace MyMarketManager.Data.Migrations
                     b.HasOne("MyMarketManager.Data.Entities.Supplier", "Supplier")
                         .WithMany("StagingBatches")
                         .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Supplier");
@@ -600,8 +721,7 @@ namespace MyMarketManager.Data.Migrations
                 {
                     b.HasOne("MyMarketManager.Data.Entities.PurchaseOrder", "PurchaseOrder")
                         .WithMany("StagingPurchaseOrders")
-                        .HasForeignKey("PurchaseOrderId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("PurchaseOrderId");
 
                     b.HasOne("MyMarketManager.Data.Entities.StagingBatch", "StagingBatch")
                         .WithMany("StagingPurchaseOrders")
@@ -618,13 +738,11 @@ namespace MyMarketManager.Data.Migrations
                 {
                     b.HasOne("MyMarketManager.Data.Entities.Product", "Product")
                         .WithMany("StagingPurchaseOrderItems")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("ProductId");
 
                     b.HasOne("MyMarketManager.Data.Entities.PurchaseOrderItem", "PurchaseOrderItem")
                         .WithMany("StagingPurchaseOrderItems")
-                        .HasForeignKey("PurchaseOrderItemId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("PurchaseOrderItemId");
 
                     b.HasOne("MyMarketManager.Data.Entities.StagingPurchaseOrder", "StagingPurchaseOrder")
                         .WithMany("Items")
@@ -634,8 +752,7 @@ namespace MyMarketManager.Data.Migrations
 
                     b.HasOne("MyMarketManager.Data.Entities.Supplier", "Supplier")
                         .WithMany()
-                        .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("SupplierId");
 
                     b.Navigation("Product");
 
@@ -661,8 +778,7 @@ namespace MyMarketManager.Data.Migrations
                 {
                     b.HasOne("MyMarketManager.Data.Entities.Product", "Product")
                         .WithMany("StagingSaleItems")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("ProductId");
 
                     b.HasOne("MyMarketManager.Data.Entities.StagingSale", "StagingSale")
                         .WithMany("Items")

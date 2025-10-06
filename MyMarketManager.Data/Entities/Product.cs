@@ -8,10 +8,8 @@ namespace MyMarketManager.Data.Entities;
 /// Represents a catalog item that can be purchased, delivered, and sold. Central to linking orders, deliveries, and sales.
 /// </summary>
 [Index(nameof(SKU), IsUnique = true)]
-public class Product
+public class Product : EntityBase
 {
-    public Guid Id { get; set; }
-    
     public string? SKU { get; set; }
     
     [Required]
