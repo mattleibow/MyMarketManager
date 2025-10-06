@@ -20,20 +20,20 @@ public class SoftDeleteTests : SqliteTestBase
             Name = "Test Supplier"
         };
         Context.Suppliers.Add(supplier);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         Context.Suppliers.Remove(supplier);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert - entity should not be returned by default queries
-        var foundSupplier = await Context.Suppliers.FirstOrDefaultAsync(s => s.Id == supplier.Id);
+        var foundSupplier = await Context.Suppliers.FirstOrDefaultAsync(s => s.Id == supplier.Id, TestContext.Current.CancellationToken);
         Assert.Null(foundSupplier);
 
         // But should be found when ignoring query filters
         var deletedSupplier = await Context.Suppliers
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(s => s.Id == supplier.Id);
+            .FirstOrDefaultAsync(s => s.Id == supplier.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deletedSupplier);
         Assert.NotNull(deletedSupplier.DeletedAt);
         Assert.True(deletedSupplier.IsDeleted);
@@ -54,7 +54,7 @@ public class SoftDeleteTests : SqliteTestBase
 
         // Act
         Context.Products.Add(product);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var afterCreate = DateTimeOffset.UtcNow.AddSeconds(1);
 
@@ -76,17 +76,17 @@ public class SoftDeleteTests : SqliteTestBase
             Quality = ProductQuality.Good
         };
         Context.Products.Add(product);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var originalCreatedAt = product.CreatedAt;
         var originalUpdatedAt = product.UpdatedAt;
 
         // Wait a bit to ensure timestamp difference
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         // Act
         product.Name = "Updated Name";
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(originalCreatedAt, product.CreatedAt); // CreatedAt should not change
@@ -102,15 +102,15 @@ public class SoftDeleteTests : SqliteTestBase
         var supplier2 = new Supplier { Id = Guid.NewGuid(), Name = "Deleted Supplier" };
         
         Context.Suppliers.AddRange(supplier1, supplier2);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Delete one supplier
         Context.Suppliers.Remove(supplier2);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
-        var activeSuppliers = await Context.Suppliers.ToListAsync();
-        var allSuppliers = await Context.Suppliers.IgnoreQueryFilters().ToListAsync();
+        var activeSuppliers = await Context.Suppliers.ToListAsync(TestContext.Current.CancellationToken);
+        var allSuppliers = await Context.Suppliers.IgnoreQueryFilters().ToListAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(activeSuppliers);

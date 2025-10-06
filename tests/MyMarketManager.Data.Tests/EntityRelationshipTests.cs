@@ -20,7 +20,7 @@ public class EntityRelationshipTests : SqliteTestBase
             Name = "Test Supplier"
         };
         Context.Suppliers.Add(supplier);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var order1 = new PurchaseOrder
         {
@@ -38,12 +38,12 @@ public class EntityRelationshipTests : SqliteTestBase
         };
 
         Context.PurchaseOrders.AddRange(order1, order2);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var supplierWithOrders = await Context.Suppliers
             .Include(s => s.PurchaseOrders)
-            .FirstAsync(s => s.Id == supplier.Id);
+            .FirstAsync(s => s.Id == supplier.Id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, supplierWithOrders.PurchaseOrders.Count);
@@ -66,7 +66,7 @@ public class EntityRelationshipTests : SqliteTestBase
         };
         Context.Suppliers.Add(supplier);
         Context.Products.Add(product);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var order = new PurchaseOrder
         {
@@ -76,7 +76,7 @@ public class EntityRelationshipTests : SqliteTestBase
             Status = ProcessingStatus.Pending
         };
         Context.PurchaseOrders.Add(order);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var item1 = new PurchaseOrderItem
         {
@@ -104,12 +104,12 @@ public class EntityRelationshipTests : SqliteTestBase
         };
 
         Context.PurchaseOrderItems.AddRange(item1, item2);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var orderWithItems = await Context.PurchaseOrders
             .Include(o => o.Items)
-            .FirstAsync(o => o.Id == order.Id);
+            .FirstAsync(o => o.Id == order.Id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, orderWithItems.Items.Count);
@@ -127,7 +127,7 @@ public class EntityRelationshipTests : SqliteTestBase
             Quality = ProductQuality.Excellent
         };
         Context.Products.Add(product);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var photo1 = new ProductPhoto
         {
@@ -145,12 +145,12 @@ public class EntityRelationshipTests : SqliteTestBase
         };
 
         Context.ProductPhotos.AddRange(photo1, photo2);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var productWithPhotos = await Context.Products
             .Include(p => p.Photos)
-            .FirstAsync(p => p.Id == product.Id);
+            .FirstAsync(p => p.Id == product.Id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, productWithPhotos.Photos.Count);
@@ -181,7 +181,7 @@ public class EntityRelationshipTests : SqliteTestBase
 
         Context.MarketEvents.Add(marketEvent);
         Context.Products.AddRange(product1, product2);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var sale1 = new ReconciledSale
         {
@@ -201,12 +201,12 @@ public class EntityRelationshipTests : SqliteTestBase
         };
 
         Context.ReconciledSales.AddRange(sale1, sale2);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var eventWithSales = await Context.MarketEvents
             .Include(e => e.ReconciledSales)
-            .FirstAsync(e => e.Id == marketEvent.Id);
+            .FirstAsync(e => e.Id == marketEvent.Id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, eventWithSales.ReconciledSales.Count);

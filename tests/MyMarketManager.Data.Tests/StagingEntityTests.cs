@@ -20,7 +20,7 @@ public class StagingEntityTests : SqliteTestBase
             Name = "Test Supplier"
         };
         Context.Suppliers.Add(supplier);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var batch = new StagingBatch
         {
@@ -31,7 +31,7 @@ public class StagingEntityTests : SqliteTestBase
             Status = ProcessingStatus.Pending
         };
         Context.StagingBatches.Add(batch);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var order1 = new StagingPurchaseOrder
         {
@@ -53,12 +53,12 @@ public class StagingEntityTests : SqliteTestBase
         };
 
         Context.StagingPurchaseOrders.AddRange(order1, order2);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var batchWithOrders = await Context.StagingBatches
             .Include(b => b.StagingPurchaseOrders)
-            .FirstAsync(b => b.Id == batch.Id);
+            .FirstAsync(b => b.Id == batch.Id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, batchWithOrders.StagingPurchaseOrders.Count);
@@ -74,7 +74,7 @@ public class StagingEntityTests : SqliteTestBase
             Name = "Test Supplier"
         };
         Context.Suppliers.Add(supplier);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var batch = new StagingBatch
         {
@@ -85,7 +85,7 @@ public class StagingEntityTests : SqliteTestBase
             Status = ProcessingStatus.Pending
         };
         Context.StagingBatches.Add(batch);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var order = new StagingPurchaseOrder
         {
@@ -97,7 +97,7 @@ public class StagingEntityTests : SqliteTestBase
             IsImported = false
         };
         Context.StagingPurchaseOrders.Add(order);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var item1 = new StagingPurchaseOrderItem
         {
@@ -125,12 +125,12 @@ public class StagingEntityTests : SqliteTestBase
         };
 
         Context.StagingPurchaseOrderItems.AddRange(item1, item2);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var orderWithItems = await Context.StagingPurchaseOrders
             .Include(o => o.Items)
-            .FirstAsync(o => o.Id == order.Id);
+            .FirstAsync(o => o.Id == order.Id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, orderWithItems.Items.Count);
@@ -155,7 +155,7 @@ public class StagingEntityTests : SqliteTestBase
             Name = "Test Supplier"
         };
         Context.Suppliers.Add(supplier);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var batch = new StagingBatch
         {
@@ -166,7 +166,7 @@ public class StagingEntityTests : SqliteTestBase
             Status = ProcessingStatus.Pending
         };
         Context.StagingBatches.Add(batch);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var sale = new StagingSale
         {
@@ -177,7 +177,7 @@ public class StagingEntityTests : SqliteTestBase
             IsImported = false
         };
         Context.StagingSales.Add(sale);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var saleItem = new StagingSaleItem
         {
@@ -193,12 +193,12 @@ public class StagingEntityTests : SqliteTestBase
             Status = CandidateStatus.Linked
         };
         Context.StagingSaleItems.Add(saleItem);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var linkedItem = await Context.StagingSaleItems
             .Include(i => i.Product)
-            .FirstAsync(i => i.Id == saleItem.Id);
+            .FirstAsync(i => i.Id == saleItem.Id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(linkedItem.Product);
