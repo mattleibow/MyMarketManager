@@ -47,6 +47,12 @@ This repository uses .NET 10. The setup is automated in `.github/workflows/copil
 - Mock external dependencies appropriately
 - Aim for meaningful test coverage, not just high percentages
 
+## .NET Tools
+
+- Always use local .NET tools over globally installed tools
+- If a new tool is needed, install locally unless specifically requested.
+- If a tool is requested to not install locally, edit the `.github/workflows/copilot-setup-steps.yml` file to install it globally.
+
 ## Documentation
 
 - Update README.md when adding major features
