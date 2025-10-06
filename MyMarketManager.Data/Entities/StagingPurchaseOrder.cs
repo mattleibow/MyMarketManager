@@ -15,8 +15,7 @@ public class StagingPurchaseOrder
     public Guid? PurchaseOrderId { get; set; }
     public PurchaseOrder? PurchaseOrder { get; set; }
     
-    [Required]
-    public string SupplierReference { get; set; } = string.Empty;
+    public string? SupplierReference { get; set; }
     public DateTimeOffset OrderDate { get; set; }
     
     [Required]
