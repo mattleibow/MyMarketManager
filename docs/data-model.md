@@ -170,6 +170,7 @@ Description: Line items from a supplier order in staging, awaiting linking or co
 | Id | Integer (PK) | Unique identifier | — |
 | StagingPurchaseOrderId | Integer (FK) | Parent order | → StagingPurchaseOrder |
 | LinkedProductId | Integer (FK, nullable) | Linked product if matched | → Product |
+| LinkedSupplierId | Integer (FK, nullable) | Linked  supplier if matched | → Supplier |
 | SupplierReferenceNumber | Text | Supplier SKU | — |
 | SupplierProductUrl | Text (nullable) | Product URL | — |
 | Name | Text | Item name | — |
@@ -179,19 +180,6 @@ Description: Line items from a supplier order in staging, awaiting linking or co
 | ActualPrice | Currency | Paid price | — |
 | RawData | JSON/Text | Original row data | — |
 | IsImported | Boolean | Whether promoted into production | — |
-
----
-
-## StagingProductCandidate
-Description: Represents a potential new product discovered during ingestion that could not be auto‑linked. Requires manual validation.  
-| Field | Type | Description | Relationships |
-|-------|------|-------------|----------------|
-| Id | Integer (PK) | Unique identifier | — |
-| SupplierId | Integer (FK) | Supplier reference | → Supplier |
-| SupplierReferenceNumber | Text | Supplier SKU | — |
-| Name | Text | Candidate product name | — |
-| Description | Text (nullable) | Candidate description | — |
-| Url | Text (nullable) | Supplier product URL | — |
 | Status | Enum (PendingReview, Linked, Ignored) | Candidate state | — |
 
 ---
