@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using MyMarketManager.Data.Enums;
 
 namespace MyMarketManager.Data.Entities;
@@ -16,16 +15,9 @@ public class PurchaseOrder
     public DateTimeOffset OrderDate { get; set; }
     public ProcessingStatus Status { get; set; }
     
-    [Column(TypeName = "decimal(18,2)")]
     public decimal ShippingFees { get; set; }
-    
-    [Column(TypeName = "decimal(18,2)")]
     public decimal ImportFees { get; set; }
-    
-    [Column(TypeName = "decimal(18,2)")]
     public decimal InsuranceFees { get; set; }
-    
-    [Column(TypeName = "decimal(18,2)")]
     public decimal AdditionalFees { get; set; }
     
     public string? Notes { get; set; }

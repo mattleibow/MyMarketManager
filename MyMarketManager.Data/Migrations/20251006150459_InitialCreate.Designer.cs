@@ -12,7 +12,7 @@ using MyMarketManager.Data;
 namespace MyMarketManager.Data.Migrations
 {
     [DbContext(typeof(MyMarketManagerDbContext))]
-    [Migration("20251006145758_InitialCreate")]
+    [Migration("20251006150459_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

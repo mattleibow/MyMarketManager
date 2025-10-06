@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using MyMarketManager.Data.Enums;
 
 namespace MyMarketManager.Data.Entities;
@@ -21,7 +20,6 @@ public class StagingSaleItem
     public string ProductDescription { get; set; } = string.Empty;
     public DateTimeOffset SaleDate { get; set; }
     
-    [Column(TypeName = "decimal(18,2)")]
     public decimal Price { get; set; }
     
     public int Quantity { get; set; }

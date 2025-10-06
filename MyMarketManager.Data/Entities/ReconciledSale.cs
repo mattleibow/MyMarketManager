@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace MyMarketManager.Data.Entities;
 
 /// <summary>
@@ -16,7 +14,5 @@ public class ReconciledSale
     public MarketEvent MarketEvent { get; set; } = null!;
     
     public int Quantity { get; set; }
-    
-    [Column(TypeName = "decimal(18,2)")]
     public decimal SalePrice { get; set; }
 }

@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MyMarketManager.Data.Entities;
 
@@ -25,16 +24,9 @@ public class PurchaseOrderItem
     public string? Description { get; set; }
     public int Quantity { get; set; }
     
-    [Column(TypeName = "decimal(18,2)")]
     public decimal ListedUnitPrice { get; set; }
-    
-    [Column(TypeName = "decimal(18,2)")]
     public decimal ActualUnitPrice { get; set; }
-    
-    [Column(TypeName = "decimal(18,2)")]
     public decimal AllocatedUnitOverhead { get; set; }
-    
-    [Column(TypeName = "decimal(18,2)")]
     public decimal TotalUnitCost { get; set; }
 
     // Navigation properties
