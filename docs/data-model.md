@@ -23,7 +23,7 @@ Description: A record of an order placed with a supplier, including costs and ov
 | Status | Enum (Pending, PartiallyDelivered, Delivered) | Current state | — |
 | ShippingFees | Currency | Shipping cost | — |
 | ImportFees | Currency | Import duties | — |
-| Insurance | Currency | Insurance fees | — |
+| InsuranceFees | Currency | Insurance fees | — |
 | AdditionalFees | Currency | Miscellaneous overhead | — |
 | Notes | Text (nullable) | Free‑form notes | — |
 
@@ -40,10 +40,11 @@ Description: Line items within a purchase order, representing specific products 
 | SupplierProductUrl | Text (nullable) | Link to supplier product page | — |
 | Name | Text | Item name (from supplier) | — |
 | Description | Text (nullable) | Item description | — |
-| OrderedQuantity | Integer | Quantity ordered | — |
-| ListedPrice | Currency | Supplier listed price | — |
-| ActualPrice | Currency | Actual paid price | — |
-| AllocatedOverhead | Currency | Overhead share | — |
+| Quantity | Integer | Quantity ordered | — |
+| ListedUnitPrice | Currency | Supplier listed price | — |
+| ActualUnitPrice | Currency | Actual paid price | — |
+| AllocatedUnitOverhead | Currency | Overhead share of the total order overhead | — |
+| TotalUnitCost | Currency | Total cost of a unit factoring in discounts, overhead and any fees | — |
 
 ---
 
@@ -68,8 +69,7 @@ Description: Individual items received in a delivery, with quality and inspectio
 | DeliveryId | Integer (FK) | Parent delivery | → Delivery |
 | ProductId | Integer (FK) | Linked product | → Product |
 | ReceivedQuantity | Integer | Quantity received | — |
-| UnitCost | Currency | Cost per unit | — |
-| Quality | Enum (Excellent, Good, Fair, Poor) | Quality rating | — |
+| Quality | Enum (Excellent, Good, Fair, Poor, Terrible) | Quality rating | — |
 | Notes | Text (nullable) | Inspection notes | — |
 
 ---
@@ -82,7 +82,7 @@ Description: Represents a catalog item that can be purchased, delivered, and sol
 | SKU | Text (nullable) | Internal SKU | — |
 | Name | Text | Product name | — |
 | Description | Text (nullable) | Product description | — |
-| Quality | Enum | Default quality rating | — |
+| Quality | Enum (Excellent, Good, Fair, Poor, Terrible) | Default quality rating | — |
 | Notes | Text (nullable) | Additional notes | — |
 | StockOnHand | Integer | Current stock | Derived from deliveries & sales |
 
