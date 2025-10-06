@@ -1,3 +1,8 @@
 <Solution>
-  <Project Path="src/MyMarketManager.Core/MyMarketManager.Core.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/MyMarketManager.Data/MyMarketManager.Data.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MyMarketManager.Data.Tests/MyMarketManager.Data.Tests.csproj" />
+  </Folder>
 </Solution>
