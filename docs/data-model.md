@@ -1,11 +1,43 @@
 # Data Model
 
+## Enums
+
+### ProcessingStatus
+Used to track the state of purchase orders, deliveries, and staging batches.
+
+| Value | Description |
+|-------|-------------|
+| Pending | Not yet started or awaiting action |
+| Partial | Partially completed or in progress |
+| Complete | Fully completed |
+
+### CandidateStatus
+Used to track the state of staging items during the validation and linking process.
+
+| Value | Description |
+|-------|-------------|
+| Pending | Awaiting review and linking |
+| Linked | Successfully matched to an existing entity |
+| Ignored | Marked to be skipped during import |
+
+### ProductQuality
+Used to rate the quality of products and delivered items.
+
+| Value | Description |
+|-------|-------------|
+| Excellent | Superior condition, no defects |
+| Good | Minor imperfections, fully functional |
+| Fair | Noticeable flaws but acceptable |
+| Poor | Significant defects, limited usability |
+| Terrible | Severe damage, may not be sellable |
+
+## Entities
 
 ## Supplier
 Description: Represents a vendor or store from which goods are purchased.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
-| Id | Integer (PK) | Unique identifier | Referenced by PurchaseOrder, StagingBatch, StagingProductCandidate |
+| Id | Integer (PK) | Unique identifier | Referenced by PurchaseOrder, StagingBatch |
 | Name | Text | Supplier name | — |
 | WebsiteUrl | Text (nullable) | Supplier website | — |
 | ContactInfo | Text (nullable) | Contact details | — |
@@ -18,7 +50,7 @@ Description: A record of an order placed with a supplier, including costs and ov
 | Id | Integer (PK) | Unique identifier | Parent of PurchaseOrderItem, Delivery |
 | SupplierId | Integer (FK) | Supplier reference | → Supplier |
 | OrderDate | DateTime | Date order was placed | — |
-| Status | Enum (Pending, PartiallyDelivered, Delivered) | Current state | — |
+| Status | ProcessingStatus | Current state | — |
 | ShippingFees | Currency | Shipping cost | — |
 | ImportFees | Currency | Import duties | — |
 | InsuranceFees | Currency | Insurance fees | — |
@@ -53,7 +85,7 @@ Description: Represents a shipment or receipt of goods, which may be linked to a
 | DeliveryDate | DateTime | Date received | — |
 | Courier | Text (nullable) | Courier name | — |
 | TrackingNumber | Text (nullable) | Tracking reference | — |
-| Status | Enum (Pending, Partial, Complete) | Delivery state | — |
+| Status | ProcessingStatus | Delivery state | — |
 
 
 ## DeliveryItem
@@ -64,7 +96,7 @@ Description: Individual items received in a delivery, with quality and inspectio
 | DeliveryId | Integer (FK) | Parent delivery | → Delivery |
 | ProductId | Integer (FK) | Linked product | → Product |
 | Quantity | Integer | Quantity received | — |
-| Quality | Enum (Excellent, Good, Fair, Poor, Terrible) | Quality rating | — |
+| Quality | ProductQuality | Quality rating | — |
 | Notes | Text (nullable) | Inspection notes | — |
 
 
@@ -76,9 +108,9 @@ Description: Represents a catalog item that can be purchased, delivered, and sol
 | SKU | Text (nullable) | Internal SKU | — |
 | Name | Text | Product name | — |
 | Description | Text (nullable) | Product description | — |
-| Quality | Enum (Excellent, Good, Fair, Poor, Terrible) | Default quality rating | — |
+| Quality | ProductQuality | Default quality rating | — |
 | Notes | Text (nullable) | Additional notes | — |
-| StockOnHand | Integer | Current stock | Derived from deliveries & sales |
+| StockOnHand | Integer | Current stock (denormalized from deliveries & sales) | Derived from deliveries & sales |
 
 
 ## ProductPhoto
@@ -95,7 +127,7 @@ Description: Stores one or more images associated with a product.
 Description: Represents a market day or event where sales occur. Used to group reconciled sales.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
-| Id | Integer (PK) | Unique identifier | Parent of ReconciledSale, StocktakeSession |
+| Id | Integer (PK) | Unique identifier | Parent of ReconciledSale |
 | Name | Text | Event name | — |
 | Date | DateTime | Event date | — |
 | Location | Text (nullable) | Event location | — |
@@ -122,7 +154,7 @@ Description: Represents a single supplier data upload (e.g. Shein ZIP) or sales 
 | SupplierId | Integer (FK) | Supplier reference | → Supplier |
 | UploadDate | DateTime | When file was uploaded | — |
 | FileHash | Text | Hash for deduplication | — |
-| Status | Enum (Pending, Processed) | Batch state | — |
+| Status | ProcessingStatus | Batch state | — |
 | Notes | Text (nullable) | Free‑form notes | — |
 
 
@@ -150,7 +182,7 @@ Description: Raw sales data imported from third‑party reports before reconcili
 | MarketEventName | Text (nullable) | Event name from report | — |
 | RawData | JSON/Text | Raw data that represents the sale from report | — |
 | IsImported | Boolean | Whether promoted into production | — |
-| Status | Enum (PendingReview, Linked, Ignored) | Candidate state | — |
+| Status | CandidateStatus | Candidate state | — |
 
 
 ## StagingPurchaseOrder
@@ -160,7 +192,7 @@ Description: A parsed supplier order stored in staging before validation and pro
 | Id | Integer (PK) | Unique identifier | Parent of StagingPurchaseOrderItem |
 | StagingBatchId | Integer (FK) | Parent batch | → StagingBatch |
 | PurchaseOrderId | Integer (FK, nullable) | Linked purchase order if matched | → PurchaseOrder |
-| SupplierReferenceNumber | Text | Supplier order reference number | — |
+| SupplierReference | Text | Supplier order reference number | — |
 | OrderDate | DateTime | Order date | — |
 | RawData | JSON/Text | Original row data from supplier | — |
 | IsImported | Boolean | Whether promoted into production | — |
@@ -175,15 +207,15 @@ Description: Line items from a supplier order in staging, awaiting linking or co
 | ProductId | Integer (FK, nullable) | Linked product if matched | → Product |
 | SupplierId | Integer (FK, nullable) | Linked  supplier if matched | → Supplier |
 | PurchaseOrderItemId | Integer (FK, nullable) | Linked purchase order item if matched | → PurchaseOrderItem |
-| SupplierReferenceNumber | Text | Supplier SKU | — |
+| SupplierReference | Text | Supplier SKU | — |
 | SupplierProductUrl | Text (nullable) | Product URL | — |
 | Name | Text | Item name | — |
 | Description | Text (nullable) | Item description | — |
 | Quantity | Integer | Ordered quantity | — |
-| ListedPrice | Currency | Listed price | — |
-| ActualPrice | Currency | Paid price | — |
+| ListedUnitPrice | Currency | Listed price | — |
+| ActualUnitPrice | Currency | Paid price | — |
 | RawData | JSON/Text | Original row data | — |
 | IsImported | Boolean | Whether promoted into production | — |
-| Status | Enum (PendingReview, Linked, Ignored) | Candidate state | — |
+| Status | CandidateStatus | Candidate state | — |
 
 
