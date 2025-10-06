@@ -15,8 +15,7 @@ public class PurchaseOrderItem
     public Guid? ProductId { get; set; }
     public Product? Product { get; set; }
     
-    [Required]
-    public string SupplierReference { get; set; } = string.Empty;
+    public string? SupplierReference { get; set; }
     public string? SupplierProductUrl { get; set; }
     
     [Required]
