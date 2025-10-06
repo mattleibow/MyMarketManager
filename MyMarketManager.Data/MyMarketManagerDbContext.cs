@@ -8,10 +8,6 @@ namespace MyMarketManager.Data;
 /// </summary>
 public class MyMarketManagerDbContext : DbContext
 {
-    public MyMarketManagerDbContext()
-    {
-    }
-
     public MyMarketManagerDbContext(DbContextOptions<MyMarketManagerDbContext> options)
         : base(options)
     {
@@ -34,15 +30,6 @@ public class MyMarketManagerDbContext : DbContext
     public DbSet<StagingPurchaseOrderItem> StagingPurchaseOrderItems => Set<StagingPurchaseOrderItem>();
     public DbSet<StagingSale> StagingSales => Set<StagingSale>();
     public DbSet<StagingSaleItem> StagingSaleItems => Set<StagingSaleItem>();
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        // For design-time only (migrations). Override with actual connection in startup.
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=MyMarketManager;Trusted_Connection=True;MultipleActiveResultSets=true");
-        }
-    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
