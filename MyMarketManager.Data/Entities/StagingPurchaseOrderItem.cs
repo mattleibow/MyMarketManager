@@ -22,8 +22,7 @@ public class StagingPurchaseOrderItem
     public Guid? PurchaseOrderItemId { get; set; }
     public PurchaseOrderItem? PurchaseOrderItem { get; set; }
     
-    [Required]
-    public string SupplierReference { get; set; } = string.Empty;
+    public string? SupplierReference { get; set; }
     public string? SupplierProductUrl { get; set; }
     
     [Required]
