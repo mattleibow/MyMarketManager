@@ -65,7 +65,7 @@ Description: Line items within a purchase order, representing specific products 
 | Id | Integer (PK) | Unique identifier | — |
 | PurchaseOrderId | Integer (FK) | Parent order | → PurchaseOrder |
 | ProductId | Integer (FK, nullable) | Linked product | → Product |
-| Reference | Text | Supplier SKU or reference | — |
+| SupplierReference | Text | Supplier SKU or reference | — |
 | SupplierProductUrl | Text (nullable) | Link to supplier product page | — |
 | Name | Text | Item name (from supplier) | — |
 | Description | Text (nullable) | Item description | — |
@@ -192,7 +192,7 @@ Description: A parsed supplier order stored in staging before validation and pro
 | Id | Integer (PK) | Unique identifier | Parent of StagingPurchaseOrderItem |
 | StagingBatchId | Integer (FK) | Parent batch | → StagingBatch |
 | PurchaseOrderId | Integer (FK, nullable) | Linked purchase order if matched | → PurchaseOrder |
-| Reference | Text | Supplier order reference number | — |
+| SupplierReference | Text | Supplier order reference number | — |
 | OrderDate | DateTime | Order date | — |
 | RawData | JSON/Text | Original row data from supplier | — |
 | IsImported | Boolean | Whether promoted into production | — |
@@ -207,7 +207,7 @@ Description: Line items from a supplier order in staging, awaiting linking or co
 | ProductId | Integer (FK, nullable) | Linked product if matched | → Product |
 | SupplierId | Integer (FK, nullable) | Linked  supplier if matched | → Supplier |
 | PurchaseOrderItemId | Integer (FK, nullable) | Linked purchase order item if matched | → PurchaseOrderItem |
-| Reference | Text | Supplier SKU | — |
+| SupplierReference | Text | Supplier SKU | — |
 | SupplierProductUrl | Text (nullable) | Product URL | — |
 | Name | Text | Item name | — |
 | Description | Text (nullable) | Item description | — |
