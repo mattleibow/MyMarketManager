@@ -1,6 +1,7 @@
 using MyMarketManager.Data;
 using MyMarketManager.WebApp.Components;
 using MyMarketManager.WebApp.Services;
+using MyMarketManager.WebApp.GraphQL;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,10 +21,19 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// Add GraphQL server with HotChocolate
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<ProductQueries>()
+    .AddMutationType<ProductMutations>();
+
 var app = builder.Build();
 
 // Map Aspire default endpoints (health checks)
 app.MapDefaultEndpoints();
+
+// Map GraphQL endpoint
+app.MapGraphQL();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
