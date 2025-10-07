@@ -1,11 +1,10 @@
 {
   "schema": "schema.graphql",
-  "documents": "GraphQL/Schemas/**/*.graphql",
+  "documents": "GraphQL/**/*.graphql",
   "extensions": {
     "strawberryShake": {
       "name": "MyMarketManagerClient",
-      "namespace": "MyMarketManager.WebApp.GraphQL.Generated",
-      "url": "http://localhost:5000/graphql",
+      "namespace": "MyMarketManager.GraphQL.Client.Generated",
       "records": {
         "inputs": false,
         "entities": false

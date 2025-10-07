@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/MyMarketManager.AppHost/MyMarketManager.AppHost.csproj" />
+    <Project Path="src/MyMarketManager.GraphQL.Client/MyMarketManager.GraphQL.Client.csproj" />
     <Project Path="src/MyMarketManager.ServiceDefaults/MyMarketManager.ServiceDefaults.csproj" />
     <Project Path="src/MyMarketManager.Data/MyMarketManager.Data.csproj" />
     <Project Path="src/MyMarketManager.WebApp/MyMarketManager.WebApp.csproj" />
