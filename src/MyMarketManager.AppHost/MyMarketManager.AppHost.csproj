@@ -15,4 +15,8 @@
     <PackageReference Include="Aspire.Hosting.Azure.Sql" Version="9.5.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MyMarketManager.WebApp\MyMarketManager.WebApp.csproj" />
+  </ItemGroup>
+
 </Project>

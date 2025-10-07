@@ -7,4 +7,14 @@
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="9.5.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyMarketManager.ServiceDefaults\MyMarketManager.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\MyMarketManager.Data\MyMarketManager.Data.csproj" />
+  </ItemGroup>
+
 </Project>
