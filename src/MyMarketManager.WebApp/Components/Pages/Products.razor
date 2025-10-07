@@ -1,10 +1,9 @@
 @page "/products"
 @rendermode InteractiveServer
-@using MyMarketManager.Data
-@using MyMarketManager.Data.Entities
+@using MyMarketManager.Api.Models
 @using MyMarketManager.Data.Enums
-@using Microsoft.EntityFrameworkCore
-@inject MyMarketManagerDbContext DbContext
+@using MyMarketManager.ApiClient
+@inject ProductsClient ProductsClient
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -132,10 +131,10 @@ else
 }
 
 @code {
-    private List<Product> products = new();
+    private List<ProductDto> products = new();
     private bool loading = true;
     private string searchTerm = string.Empty;
-    private Product? productToDelete;
+    private ProductDto? productToDelete;
 
     protected override async Task OnInitializedAsync()
     {
@@ -148,18 +147,7 @@ else
         StateHasChanged();
         try
         {
-            var query = DbContext.Products.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                query = query.Where(p => p.Name.Contains(searchTerm) || 
-                                        p.Description!.Contains(searchTerm) || 
-                                        p.SKU!.Contains(searchTerm));
-            }
-
-            products = await query
-                .OrderBy(p => p.Name)
-                .ToListAsync();
+            products = await ProductsClient.GetProductsAsync(string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm);
         }
         catch (Exception ex)
         {
@@ -195,7 +183,7 @@ else
         Navigation.NavigateTo($"/products/edit/{productId}");
     }
 
-    private void ConfirmDeleteProduct(Product product)
+    private void ConfirmDeleteProduct(ProductDto product)
     {
         productToDelete = product;
         StateHasChanged();
@@ -213,8 +201,7 @@ else
         {
             try
             {
-                DbContext.Products.Remove(productToDelete);
-                await DbContext.SaveChangesAsync();
+                await ProductsClient.DeleteProductAsync(productToDelete.Id);
                 productToDelete = null;
                 await LoadProducts();
                 StateHasChanged();

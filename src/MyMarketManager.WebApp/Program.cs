@@ -1,7 +1,7 @@
 using MyMarketManager.Data;
 using MyMarketManager.WebApp.Components;
 using MyMarketManager.WebApp.Services;
-using MyMarketManager.ApiClient.Extensions;
+using MyMarketManager.ApiClient;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,11 +24,21 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// Configure HttpClient for ProductsClient to use the local API
-builder.Services.AddProductsClient(client =>
+// Add HttpContextAccessor to get the base URL
+builder.Services.AddHttpContextAccessor();
+
+// Configure HttpClient for ProductsClient
+builder.Services.AddHttpClient<ProductsClient>((serviceProvider, client) =>
 {
-    // Since the API is hosted in the same app, we'll use a relative base address
-    // The HttpClient will automatically use the current host
+    // Get the current HttpContext to determine the base URL
+    var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+    var httpContext = httpContextAccessor.HttpContext;
+    
+    if (httpContext != null)
+    {
+        var request = httpContext.Request;
+        client.BaseAddress = new Uri($"{request.Scheme}://{request.Host}");
+    }
 });
 
 var app = builder.Build();
