@@ -1,21 +1,44 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Aspire.Hosting;
+using Aspire.Hosting.Testing;
 using Xunit;
 
 namespace MyMarketManager.Integration.Tests;
 
 /// <summary>
-/// Integration tests for the GraphQL endpoint
+/// Integration tests for the GraphQL endpoint using Aspire hosting
 /// </summary>
-public class GraphQLEndpointTests : IClassFixture<GraphQLWebApplicationFactory>
+public class GraphQLEndpointTests : IAsyncLifetime
 {
-    private readonly HttpClient _client;
+    private DistributedApplication? _app;
+    private HttpClient? _httpClient;
 
-    public GraphQLEndpointTests(GraphQLWebApplicationFactory factory)
+    public async ValueTask InitializeAsync()
     {
-        _client = factory.CreateClient();
+        // Set environment to Testing so SQLite is used
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
+        
+        // Create the Aspire app with Testing environment to use SQLite
+        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>();
+
+        // Build and start the app
+        _app = await appHost.BuildAsync();
+        await _app.StartAsync();
+
+        // Get the WebApp resource and create an HTTP client
+        _httpClient = _app.CreateHttpClient("webapp");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _httpClient?.Dispose();
+        if (_app != null)
+        {
+            await _app.StopAsync();
+            await _app.DisposeAsync();
+        }
     }
 
     [Fact]
@@ -33,7 +56,7 @@ public class GraphQLEndpointTests : IClassFixture<GraphQLWebApplicationFactory>
             "application/json");
 
         // Act
-        var response = await _client.PostAsync("/graphql", content);
+        var response = await _httpClient!.PostAsync("/graphql", content);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -66,7 +89,7 @@ public class GraphQLEndpointTests : IClassFixture<GraphQLWebApplicationFactory>
             "application/json");
 
         // Act
-        var response = await _client.PostAsync("/graphql", content);
+        var response = await _httpClient!.PostAsync("/graphql", content);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -99,7 +122,7 @@ public class GraphQLEndpointTests : IClassFixture<GraphQLWebApplicationFactory>
             "application/json");
 
         // Act
-        var response = await _client.PostAsync("/graphql", content);
+        var response = await _httpClient!.PostAsync("/graphql", content);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -137,7 +160,7 @@ public class GraphQLEndpointTests : IClassFixture<GraphQLWebApplicationFactory>
             "application/json");
 
         // Act
-        var response = await _client.PostAsync("/graphql", content);
+        var response = await _httpClient!.PostAsync("/graphql", content);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -164,7 +187,7 @@ public class GraphQLEndpointTests : IClassFixture<GraphQLWebApplicationFactory>
             "application/json");
 
         // Act
-        var response = await _client.PostAsync("/graphql", content);
+        var response = await _httpClient!.PostAsync("/graphql", content);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode); // GraphQL returns 200 even for errors

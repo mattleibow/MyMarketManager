@@ -13,21 +13,10 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Configure database based on environment or configuration
-var useSqlite = builder.Configuration.GetValue<bool>("UseSqlite");
-if (useSqlite)
-{
-    // Use SQLite for development/testing
-    var sqliteConnectionString = builder.Configuration.GetConnectionString("sqlite") 
-        ?? "Data Source=mymarketmanager.db";
-    builder.Services.AddDbContext<MyMarketManagerDbContext>(options =>
-        options.UseSqlite(sqliteConnectionString));
-}
-else
-{
-    // Use SQL Server with Aspire
-    builder.AddSqlServerDbContext<MyMarketManagerDbContext>("mymarketmanager");
-}
+// Add DbContext - will be configured by Aspire based on the resource reference
+// The connection will be enriched by Aspire based on the database resource (SQLite or SQL Server)
+// from the AppHost configuration
+builder.AddSqlServerDbContext<MyMarketManagerDbContext>("mymarketmanager");
 
 // Add database migration as a hosted service (runs in all environments)
 builder.Services.AddHostedService<DatabaseMigrationService>();

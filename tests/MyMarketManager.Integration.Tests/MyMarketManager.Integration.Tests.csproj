@@ -18,6 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Testing" Version="9.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.9" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="StrawberryShake.Transport.Http" Version="15.1.10" />
@@ -36,6 +37,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MyMarketManager.WebApp\MyMarketManager.WebApp.csproj" />
     <ProjectReference Include="..\..\src\MyMarketManager.GraphQL.Client\MyMarketManager.GraphQL.Client.csproj" />
+    <ProjectReference Include="..\..\src\MyMarketManager.AppHost\MyMarketManager.AppHost.csproj" />
   </ItemGroup>
 
 </Project>

@@ -7,9 +7,11 @@ bool.TryParse(builder.Configuration["UseSqlite"], out useSqlite);
 if (useSqlite)
 {
     // For testing: use SQLite (no external dependencies)
+    var sqlite = builder.AddSqlite("mymarketmanager")
+        .WithSqliteWeb();
+    
     builder.AddProject<Projects.MyMarketManager_WebApp>("webapp")
-        .WithEnvironment("UseSqlite", "true")
-        .WithEnvironment("ConnectionStrings__sqlite", "Data Source=mymarketmanager_test.db");
+        .WithReference(sqlite);
 }
 else
 {
