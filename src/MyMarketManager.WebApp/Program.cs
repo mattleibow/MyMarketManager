@@ -13,8 +13,21 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Add Entity Framework with Aspire
-builder.AddSqlServerDbContext<MyMarketManagerDbContext>("mymarketmanager");
+// Configure database based on environment or configuration
+var useSqlite = builder.Configuration.GetValue<bool>("UseSqlite");
+if (useSqlite)
+{
+    // Use SQLite for development/testing
+    var sqliteConnectionString = builder.Configuration.GetConnectionString("sqlite") 
+        ?? "Data Source=mymarketmanager.db";
+    builder.Services.AddDbContext<MyMarketManagerDbContext>(options =>
+        options.UseSqlite(sqliteConnectionString));
+}
+else
+{
+    // Use SQL Server with Aspire
+    builder.AddSqlServerDbContext<MyMarketManagerDbContext>("mymarketmanager");
+}
 
 // Add database migration as a hosted service (runs in all environments)
 builder.Services.AddHostedService<DatabaseMigrationService>();
@@ -58,3 +71,6 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+// Make the implicit Program class public for testing
+public partial class Program { }
