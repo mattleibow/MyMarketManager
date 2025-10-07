@@ -420,8 +420,3 @@ FodyWeavers.xsd
 # GraphQL generated schemas (should be generated on the fly)
 *.graphql.schema
 **/schema.graphql
-
-# SQLite databases (for testing)
-*.db
-*.db-shm
-*.db-wal

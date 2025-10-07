@@ -9,9 +9,9 @@ public class StagingSale : EntityBase
 {
     public Guid StagingBatchId { get; set; }
     public StagingBatch StagingBatch { get; set; } = null!;
-    
+
     public DateTimeOffset SaleDate { get; set; }
-    
+
     [Required]
     public string RawData { get; set; } = string.Empty;
     public bool IsImported { get; set; }

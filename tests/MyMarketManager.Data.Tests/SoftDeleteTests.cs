@@ -1,13 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
-using Microsoft.EntityFrameworkCore;
-using Xunit;
 
 namespace MyMarketManager.Data.Tests;
 
-/// <summary>
-/// Tests for soft delete functionality using SQLite in-memory database.
-/// </summary>
 public class SoftDeleteTests : SqliteTestBase
 {
     [Fact]
@@ -44,7 +40,7 @@ public class SoftDeleteTests : SqliteTestBase
     {
         // Arrange
         var beforeCreate = DateTimeOffset.UtcNow.AddSeconds(-1);
-        
+
         var product = new Product
         {
             Id = Guid.NewGuid(),
@@ -100,7 +96,7 @@ public class SoftDeleteTests : SqliteTestBase
         // Arrange
         var supplier1 = new Supplier { Id = Guid.NewGuid(), Name = "Active Supplier" };
         var supplier2 = new Supplier { Id = Guid.NewGuid(), Name = "Deleted Supplier" };
-        
+
         Context.Suppliers.AddRange(supplier1, supplier2);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -115,7 +111,7 @@ public class SoftDeleteTests : SqliteTestBase
         // Assert
         Assert.Single(activeSuppliers);
         Assert.Equal("Active Supplier", activeSuppliers[0].Name);
-        
+
         Assert.Equal(2, allSuppliers.Count);
     }
 }

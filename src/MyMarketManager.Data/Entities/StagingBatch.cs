@@ -10,9 +10,9 @@ public class StagingBatch : EntityBase
 {
     public Guid SupplierId { get; set; }
     public Supplier Supplier { get; set; } = null!;
-    
+
     public DateTimeOffset UploadDate { get; set; }
-    
+
     [Required]
     public string FileHash { get; set; } = string.Empty;
     public ProcessingStatus Status { get; set; }

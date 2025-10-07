@@ -9,10 +9,10 @@ public class DeliveryItem : EntityBase
 {
     public Guid DeliveryId { get; set; }
     public Delivery Delivery { get; set; } = null!;
-    
+
     public Guid ProductId { get; set; }
     public Product Product { get; set; } = null!;
-    
+
     public int Quantity { get; set; }
     public ProductQuality Quality { get; set; }
     public string? Notes { get; set; }

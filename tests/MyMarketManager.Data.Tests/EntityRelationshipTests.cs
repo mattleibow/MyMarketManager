@@ -1,13 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
-using Microsoft.EntityFrameworkCore;
-using Xunit;
 
 namespace MyMarketManager.Data.Tests;
 
-/// <summary>
-/// Tests for entity relationships using SQLite in-memory database.
-/// </summary>
 public class EntityRelationshipTests : SqliteTestBase
 {
     [Fact]

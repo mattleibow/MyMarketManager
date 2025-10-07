@@ -9,7 +9,7 @@ public class ProductPhoto : EntityBase
 {
     public Guid ProductId { get; set; }
     public Product Product { get; set; } = null!;
-    
+
     [Required]
     public string Url { get; set; } = string.Empty;
     public string? Caption { get; set; }

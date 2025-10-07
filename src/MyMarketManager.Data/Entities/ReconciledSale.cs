@@ -7,10 +7,10 @@ public class ReconciledSale : EntityBase
 {
     public Guid ProductId { get; set; }
     public Product Product { get; set; } = null!;
-    
+
     public Guid MarketEventId { get; set; }
     public MarketEvent MarketEvent { get; set; } = null!;
-    
+
     public int Quantity { get; set; }
     public decimal SalePrice { get; set; }
 }

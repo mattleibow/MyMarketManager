@@ -1,8 +1,8 @@
 using MyMarketManager.Data;
+using MyMarketManager.Data.Services;
 using MyMarketManager.WebApp.Components;
-using MyMarketManager.WebApp.Services;
 using MyMarketManager.WebApp.GraphQL;
-using Microsoft.EntityFrameworkCore;
+using MyMarketManager.WebApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,12 +13,11 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Add DbContext - will be configured by Aspire based on the resource reference
-// The connection will be enriched by Aspire based on the database resource (SQLite or SQL Server)
-// from the AppHost configuration
-builder.AddSqlServerDbContext<MyMarketManagerDbContext>("mymarketmanager");
+// Configure DbContext to use the connection string provided by Aspire
+builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 
 // Add database migration as a hosted service (runs in all environments)
+builder.Services.AddScoped<MyMarketManagerDbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -60,6 +59,3 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
-
-// Make the implicit Program class public for testing
-public partial class Program { }

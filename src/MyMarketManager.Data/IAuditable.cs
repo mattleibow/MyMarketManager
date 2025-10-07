@@ -9,12 +9,12 @@ public interface IAuditable
     /// When the entity was created.
     /// </summary>
     DateTimeOffset CreatedAt { get; set; }
-    
+
     /// <summary>
     /// When the entity was last updated.
     /// </summary>
     DateTimeOffset UpdatedAt { get; set; }
-    
+
     /// <summary>
     /// When the entity was soft deleted. Null if not deleted.
     /// </summary>
