@@ -1,10 +1,11 @@
 @page "/products/add"
 @page "/products/edit/{productId:guid}"
 @rendermode InteractiveServer
-@using MyMarketManager.Api.Models
+@using MyMarketManager.Data
+@using MyMarketManager.Data.Entities
 @using MyMarketManager.Data.Enums
-@using MyMarketManager.ApiClient
-@inject ProductsClient ProductsClient
+@using Microsoft.EntityFrameworkCore
+@inject MyMarketManagerDbContext DbContext
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -21,7 +22,7 @@
 
         <h1>@(ProductId.HasValue ? "Edit Product" : "Add Product")</h1>
 
-        <EditForm Model="@productRequest" OnValidSubmit="@SaveProduct" FormName="ProductForm">
+        <EditForm Model="@product" OnValidSubmit="@SaveProduct" FormName="ProductForm">
             <DataAnnotationsValidator />
             <ValidationSummary class="alert alert-danger" />
 
@@ -29,42 +30,42 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="sku" class="form-label">SKU</label>
-                        <InputText id="sku" class="form-control" @bind-Value="productRequest.SKU" placeholder="Optional product SKU" />
-                        <ValidationMessage For="@(() => productRequest.SKU)" />
+                        <InputText id="sku" class="form-control" @bind-Value="product.SKU" placeholder="Optional product SKU" />
+                        <ValidationMessage For="@(() => product.SKU)" />
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="quality" class="form-label">Quality Rating</label>
-                        <InputSelect id="quality" class="form-select" @bind-Value="productRequest.Quality">
+                        <InputSelect id="quality" class="form-select" @bind-Value="product.Quality">
                             @foreach (var quality in Enum.GetValues<ProductQuality>())
                             {
                                 <option value="@quality">@quality</option>
                             }
                         </InputSelect>
-                        <ValidationMessage For="@(() => productRequest.Quality)" />
+                        <ValidationMessage For="@(() => product.Quality)" />
                     </div>
                 </div>
             </div>
 
             <div class="mb-3">
                 <label for="name" class="form-label">Product Name <span class="text-danger">*</span></label>
-                <InputText id="name" class="form-control" @bind-Value="productRequest.Name" placeholder="Enter product name" />
-                <ValidationMessage For="@(() => productRequest.Name)" />
+                <InputText id="name" class="form-control" @bind-Value="product.Name" placeholder="Enter product name" />
+                <ValidationMessage For="@(() => product.Name)" />
             </div>
 
             <div class="mb-3">
                 <label for="description" class="form-label">Description</label>
-                <InputTextArea id="description" class="form-control" rows="3" @bind-Value="productRequest.Description" placeholder="Product description (optional)" />
-                <ValidationMessage For="@(() => productRequest.Description)" />
+                <InputTextArea id="description" class="form-control" rows="3" @bind-Value="product.Description" placeholder="Product description (optional)" />
+                <ValidationMessage For="@(() => product.Description)" />
             </div>
 
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="stock" class="form-label">Stock on Hand</label>
-                        <InputNumber id="stock" class="form-control" @bind-Value="productRequest.StockOnHand" min="0" />
-                        <ValidationMessage For="@(() => productRequest.StockOnHand)" />
+                        <InputNumber id="stock" class="form-control" @bind-Value="product.StockOnHand" min="0" />
+                        <ValidationMessage For="@(() => product.StockOnHand)" />
                         <div class="form-text">Current inventory level</div>
                     </div>
                 </div>
@@ -72,8 +73,8 @@
 
             <div class="mb-3">
                 <label for="notes" class="form-label">Notes</label>
-                <InputTextArea id="notes" class="form-control" rows="2" @bind-Value="productRequest.Notes" placeholder="Additional notes (optional)" />
-                <ValidationMessage For="@(() => productRequest.Notes)" />
+                <InputTextArea id="notes" class="form-control" rows="2" @bind-Value="product.Notes" placeholder="Additional notes (optional)" />
+                <ValidationMessage For="@(() => product.Notes)" />
             </div>
 
             <div class="d-flex gap-2">
@@ -132,26 +133,19 @@
 @code {
     [Parameter] public Guid? ProductId { get; set; }
 
-    private UpdateProductRequest productRequest = new();
+    private Product product = new();
     private bool saving = false;
 
     protected override async Task OnInitializedAsync()
     {
         if (ProductId.HasValue)
         {
-            var existingProduct = await ProductsClient.GetProductAsync(ProductId.Value);
+            var existingProduct = await DbContext.Products
+                .FirstOrDefaultAsync(p => p.Id == ProductId.Value);
             
             if (existingProduct != null)
             {
-                productRequest = new UpdateProductRequest
-                {
-                    SKU = existingProduct.SKU,
-                    Name = existingProduct.Name,
-                    Description = existingProduct.Description,
-                    Quality = existingProduct.Quality,
-                    Notes = existingProduct.Notes,
-                    StockOnHand = existingProduct.StockOnHand
-                };
+                product = existingProduct;
             }
             else
             {
@@ -162,9 +156,8 @@
         else
         {
             // Initialize default values for new product
-            productRequest = new UpdateProductRequest
+            product = new Product
             {
-                Name = string.Empty,
                 Quality = ProductQuality.Good,
                 StockOnHand = 0
             };
@@ -179,23 +172,15 @@
             if (ProductId.HasValue)
             {
                 // Update existing product
-                await ProductsClient.UpdateProductAsync(ProductId.Value, productRequest);
+                DbContext.Products.Update(product);
             }
             else
             {
-                // Add new product (convert to CreateProductRequest)
-                var createRequest = new CreateProductRequest
-                {
-                    SKU = productRequest.SKU,
-                    Name = productRequest.Name,
-                    Description = productRequest.Description,
-                    Quality = productRequest.Quality,
-                    Notes = productRequest.Notes,
-                    StockOnHand = productRequest.StockOnHand
-                };
-                await ProductsClient.CreateProductAsync(createRequest);
+                // Add new product
+                DbContext.Products.Add(product);
             }
 
+            await DbContext.SaveChangesAsync();
             Navigation.NavigateTo("/products");
         }
         catch (Exception ex)
