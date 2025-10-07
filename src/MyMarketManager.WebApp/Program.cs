@@ -1,6 +1,7 @@
 using MyMarketManager.Data;
 using MyMarketManager.WebApp.Components;
 using MyMarketManager.WebApp.Services;
+using MyMarketManager.ApiClient.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,9 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Add API controllers
+builder.Services.AddControllers();
+
 // Add Entity Framework with Aspire
 builder.AddSqlServerDbContext<MyMarketManagerDbContext>("mymarketmanager");
 
@@ -20,10 +24,20 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// Configure HttpClient for ProductsClient to use the local API
+builder.Services.AddProductsClient(client =>
+{
+    // Since the API is hosted in the same app, we'll use a relative base address
+    // The HttpClient will automatically use the current host
+});
+
 var app = builder.Build();
 
 // Map Aspire default endpoints (health checks)
 app.MapDefaultEndpoints();
+
+// Map API controllers
+app.MapControllers();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
