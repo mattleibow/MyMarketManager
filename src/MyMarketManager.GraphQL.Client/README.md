@@ -65,27 +65,24 @@ public class ProductsViewModel
 ### Regenerate Client Code
 
 ```bash
-# 1. Start the GraphQL server
-dotnet run --project src/MyMarketManager.AppHost
+# 1. Navigate to the client project directory
+cd src/MyMarketManager.GraphQL.Client
 
-# 2. Build the client (downloads schema and generates code)
-dotnet build src/MyMarketManager.GraphQL.Client
+# 2. (Optional) Download the latest schema from the locally running app
+#    Only needed when queries or mutations have changed
+#    Requires the app to be started first
+dotnet graphql update
+
+# 3. Generate the new client using the schema
+dotnet graphql generate
 ```
 
-### Clean Rebuild
-
-If generated code is stale:
-
-```bash
-dotnet clean
-rm -rf src/MyMarketManager.GraphQL.Client/obj src/MyMarketManager.GraphQL.Client/bin
-dotnet build src/MyMarketManager.GraphQL.Client
-```
+**Note:** The schema doesn't need to be downloaded every time - only when queries or mutations change. If there's a schema change, start the app first and wait for the `/graphql` endpoint to become available.
 
 ## Adding New Operations
 
 1. Create/edit `.graphql` file in `GraphQL/` folder
-2. Build the project
+2. Generate the client code: `cd src/MyMarketManager.GraphQL.Client && dotnet graphql generate`
 3. Use the generated operation via `IMyMarketManagerClient`
 
 Example:
@@ -100,7 +97,7 @@ query GetProductsByQuality($quality: ProductQuality!) {
 }
 ```
 
-After building, use in code:
+After generating, use in code:
 
 ```csharp
 var result = await _client.GetProductsByQuality.ExecuteAsync(ProductQuality.Excellent);

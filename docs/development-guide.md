@@ -187,8 +187,10 @@ public async Task<Product> AdjustStock(
 
 **Workflow:**
 1. Define GraphQL operation in `.graphql` file
-2. Build the project to generate typed client code
+2. Generate typed client code with `dotnet graphql generate`
 3. Use the generated operation in your app
+
+**Note:** If you've changed the GraphQL schema (server-side), you'll need to download the updated schema first with `dotnet graphql update` before generating.
 
 **Adding a New Operation:**
 
@@ -203,10 +205,11 @@ mutation AdjustStock($productId: UUID!, $adjustment: Int!) {
 }
 ```
 
-Build the project:
+Generate the client code:
 
 ```bash
-dotnet build src/MyMarketManager.GraphQL.Client
+cd src/MyMarketManager.GraphQL.Client
+dotnet graphql generate
 ```
 
 Use in code:
@@ -341,13 +344,15 @@ builder.Services.AddDbContext<MyMarketManagerDbContext>(options =>
 
 **Problem:** "Schema not found" error in GraphQL.Client
 
-**Solution:** Ensure GraphQL server is running before building client:
+**Solution:** Download the schema from the running server:
 ```bash
 # Terminal 1: Start server
 dotnet run --project src/MyMarketManager.AppHost
 
-# Terminal 2: Build client
-dotnet build src/MyMarketManager.GraphQL.Client
+# Terminal 2: Update schema and generate client
+cd src/MyMarketManager.GraphQL.Client
+dotnet graphql update
+dotnet graphql generate
 ```
 
 **Problem:** Migration build errors

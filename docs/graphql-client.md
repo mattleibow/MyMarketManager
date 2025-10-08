@@ -370,23 +370,31 @@ if (!result.IsSuccess && result.Errors != null)
 
 ### Automatic Generation
 
-The client code is automatically generated when:
-1. The WebApp project is built (generates schema from running server)
-2. The GraphQL.Client project is built (generates C# client code from schema)
+The client code is automatically generated when the GraphQL.Client project is built. The build process uses a cached schema file.
 
 ### Manual Generation
 
 To manually regenerate the client:
 
 ```bash
-# 1. Start the GraphQL server
-dotnet run --project src/MyMarketManager.AppHost
+# 1. Navigate to the client project directory
+cd src/MyMarketManager.GraphQL.Client
 
-# 2. Generate the schema (StrawberryShake will download it)
-dotnet build src/MyMarketManager.GraphQL.Client
+# 2. (Optional) Download the latest schema from the locally running app
+#    This requires the app to be started first and is only needed when
+#    queries or mutations have changed
+dotnet graphql update
 
-# 3. The generated code will be in Generated/MyMarketManagerClient.Client.cs
+# 3. Generate the new client using the schema
+dotnet graphql generate
+
+# The generated code will be in Generated/MyMarketManagerClient.Client.cs
 ```
+
+**Note on Schema Updates:**
+- The schema does not always have to be downloaded - only when queries or mutations have changed
+- If there is a schema change, the app must be started first and the `/graphql` endpoint must be available (which may take some time after startup)
+- Once downloaded, the schema is cached and can be reused for code generation
 
 ## Testing
 
@@ -555,13 +563,36 @@ private async Task LoadProducts()
 
 ### "Schema not found" Error
 
-Ensure the GraphQL server is running when building the client project. The schema is downloaded at build time.
+Download the schema from the running GraphQL server:
+
+```bash
+# 1. Start the GraphQL server
+dotnet run --project src/MyMarketManager.AppHost
+
+# 2. Navigate to client project and download schema
+cd src/MyMarketManager.GraphQL.Client
+dotnet graphql update
+
+# 3. Generate the client code
+dotnet graphql generate
+```
 
 ### Generated Code Not Updated
 
-1. Clean the solution: `dotnet clean`
-2. Delete `obj/` and `bin/` folders
-3. Rebuild: `dotnet build`
+Regenerate the client code:
+
+```bash
+cd src/MyMarketManager.GraphQL.Client
+dotnet graphql generate
+```
+
+If schema changes aren't reflected, update the schema first:
+
+```bash
+cd src/MyMarketManager.GraphQL.Client
+dotnet graphql update
+dotnet graphql generate
+```
 
 ### Network Errors in MAUI
 
