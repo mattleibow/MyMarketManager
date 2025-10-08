@@ -9,18 +9,18 @@ public class PurchaseOrderItem : EntityBase
 {
     public Guid PurchaseOrderId { get; set; }
     public PurchaseOrder PurchaseOrder { get; set; } = null!;
-    
+
     public Guid? ProductId { get; set; }
     public Product? Product { get; set; }
-    
+
     public string? SupplierReference { get; set; }
     public string? SupplierProductUrl { get; set; }
-    
+
     [Required]
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int Quantity { get; set; }
-    
+
     public decimal ListedUnitPrice { get; set; }
     public decimal ActualUnitPrice { get; set; }
     public decimal AllocatedUnitOverhead { get; set; }

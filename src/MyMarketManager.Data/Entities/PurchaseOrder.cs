@@ -9,15 +9,15 @@ public class PurchaseOrder : EntityBase
 {
     public Guid SupplierId { get; set; }
     public Supplier Supplier { get; set; } = null!;
-    
+
     public DateTimeOffset OrderDate { get; set; }
     public ProcessingStatus Status { get; set; }
-    
+
     public decimal ShippingFees { get; set; }
     public decimal ImportFees { get; set; }
     public decimal InsuranceFees { get; set; }
     public decimal AdditionalFees { get; set; }
-    
+
     public string? Notes { get; set; }
 
     // Navigation properties

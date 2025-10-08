@@ -1,0 +1,20 @@
+{
+  "schema": "schema.graphql",
+  "documents": "GraphQL/**/*.graphql",
+  "extensions": {
+    "strawberryShake": {
+      "name": "MyMarketManagerClient",
+      "namespace": "MyMarketManager.GraphQL.Client",
+      "records": {
+        "inputs": true,
+        "entities": true
+      },
+      "transportProfiles": [
+        {
+          "default": "Http",
+          "subscription": "WebSocket"
+        }
+      ]
+    }
+  }
+}

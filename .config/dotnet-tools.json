@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "strawberryshake.tools": {
+      "version": "15.1.10",
+      "commands": [
+        "dotnet-graphql"
+      ],
+      "rollForward": false
+    },
+    "dotnet-ef": {
+      "version": "9.0.9",
+      "commands": [
+        "dotnet-ef"
+      ],
+      "rollForward": false
+    }
+  }
+}

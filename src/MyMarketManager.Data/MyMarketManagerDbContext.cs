@@ -35,18 +35,31 @@ public class MyMarketManagerDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure soft delete query filters for all entities
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            if (typeof(IAuditable).IsAssignableFrom(entityType.ClrType))
+            var clrType = entityType.ClrType;
+            var entity = modelBuilder.Entity(clrType);
+
+            // Configure decimal precision for all decimal properties
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(decimal) ||
+                    property.ClrType == typeof(decimal?))
+                {
+                    entity.Property(property.Name).HasPrecision(18, 4);
+                }
+            }
+
+            // Configure soft delete query filters for all entities
+            if (typeof(IAuditable).IsAssignableFrom(clrType))
             {
                 // Add query filter to exclude soft-deleted entities
-                var parameter = System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e");
+                var parameter = System.Linq.Expressions.Expression.Parameter(clrType, "e");
                 var property = System.Linq.Expressions.Expression.Property(parameter, nameof(IAuditable.DeletedAt));
                 var nullCheck = System.Linq.Expressions.Expression.Equal(property, System.Linq.Expressions.Expression.Constant(null, typeof(DateTimeOffset?)));
                 var lambda = System.Linq.Expressions.Expression.Lambda(nullCheck, parameter);
-                
-                modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+
+                entity.HasQueryFilter(lambda);
             }
         }
     }
@@ -54,12 +67,14 @@ public class MyMarketManagerDbContext : DbContext
     public override int SaveChanges()
     {
         UpdateAuditFields();
+
         return base.SaveChanges();
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         UpdateAuditFields();
+
         return base.SaveChangesAsync(cancellationToken);
     }
 

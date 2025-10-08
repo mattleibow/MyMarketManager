@@ -9,7 +9,7 @@ public class Delivery : EntityBase
 {
     public Guid? PurchaseOrderId { get; set; }
     public PurchaseOrder? PurchaseOrder { get; set; }
-    
+
     public DateTimeOffset DeliveryDate { get; set; }
     public string? Courier { get; set; }
     public string? TrackingNumber { get; set; }

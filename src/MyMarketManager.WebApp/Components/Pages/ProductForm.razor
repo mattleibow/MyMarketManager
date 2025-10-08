@@ -1,0 +1,201 @@
+@page "/products/add"
+@page "/products/edit/{productId:guid}"
+@rendermode InteractiveServer
+@using MyMarketManager.Data
+@using MyMarketManager.Data.Entities
+@using MyMarketManager.Data.Enums
+@using Microsoft.EntityFrameworkCore
+@inject MyMarketManagerDbContext DbContext
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@(ProductId.HasValue ? "Edit Product" : "Add Product")</PageTitle>
+
+<div class="row">
+    <div class="col-md-8">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/products">Products</a></li>
+                <li class="breadcrumb-item active">@(ProductId.HasValue ? "Edit" : "Add")</li>
+            </ol>
+        </nav>
+
+        <h1>@(ProductId.HasValue ? "Edit Product" : "Add Product")</h1>
+
+        <EditForm Model="@product" OnValidSubmit="@SaveProduct" FormName="ProductForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="alert alert-danger" />
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="sku" class="form-label">SKU</label>
+                        <InputText id="sku" class="form-control" @bind-Value="product.SKU" placeholder="Optional product SKU" />
+                        <ValidationMessage For="@(() => product.SKU)" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="quality" class="form-label">Quality Rating</label>
+                        <InputSelect id="quality" class="form-select" @bind-Value="product.Quality">
+                            @foreach (var quality in Enum.GetValues<ProductQuality>())
+                            {
+                                <option value="@quality">@quality</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => product.Quality)" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="name" class="form-label">Product Name <span class="text-danger">*</span></label>
+                <InputText id="name" class="form-control" @bind-Value="product.Name" placeholder="Enter product name" />
+                <ValidationMessage For="@(() => product.Name)" />
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <InputTextArea id="description" class="form-control" rows="3" @bind-Value="product.Description" placeholder="Product description (optional)" />
+                <ValidationMessage For="@(() => product.Description)" />
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="stock" class="form-label">Stock on Hand</label>
+                        <InputNumber id="stock" class="form-control" @bind-Value="product.StockOnHand" min="0" />
+                        <ValidationMessage For="@(() => product.StockOnHand)" />
+                        <div class="form-text">Current inventory level</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="notes" class="form-label">Notes</label>
+                <InputTextArea id="notes" class="form-control" rows="2" @bind-Value="product.Notes" placeholder="Additional notes (optional)" />
+                <ValidationMessage For="@(() => product.Notes)" />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" disabled="@saving">
+                    @if (saving)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-check-circle"></i>
+                        <span>@(ProductId.HasValue ? "Update Product" : "Create Product")</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick="Cancel">
+                    Cancel
+                </button>
+            </div>
+        </EditForm>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quality Guide</h5>
+            </div>
+            <div class="card-body">
+                <div class="small">
+                    <div class="mb-2">
+                        <span class="badge bg-success">Excellent</span>
+                        <div class="text-muted">Superior condition, no defects</div>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-primary">Good</span>
+                        <div class="text-muted">Minor imperfections, fully functional</div>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-warning">Fair</span>
+                        <div class="text-muted">Noticeable flaws but acceptable</div>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-danger">Poor</span>
+                        <div class="text-muted">Significant defects, limited usability</div>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-dark">Terrible</span>
+                        <div class="text-muted">Severe damage, may not be sellable</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid? ProductId { get; set; }
+
+    private Product product = new();
+    private bool saving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ProductId.HasValue)
+        {
+            var existingProduct = await DbContext.Products
+                .FirstOrDefaultAsync(p => p.Id == ProductId.Value);
+            
+            if (existingProduct != null)
+            {
+                product = existingProduct;
+            }
+            else
+            {
+                // Product not found, redirect to products list
+                Navigation.NavigateTo("/products");
+            }
+        }
+        else
+        {
+            // Initialize default values for new product
+            product = new Product
+            {
+                Quality = ProductQuality.Good,
+                StockOnHand = 0
+            };
+        }
+    }
+
+    private async Task SaveProduct()
+    {
+        saving = true;
+        try
+        {
+            if (ProductId.HasValue)
+            {
+                // Update existing product
+                DbContext.Products.Update(product);
+            }
+            else
+            {
+                // Add new product
+                DbContext.Products.Add(product);
+            }
+
+            await DbContext.SaveChangesAsync();
+            Navigation.NavigateTo("/products");
+        }
+        catch (Exception ex)
+        {
+            // Handle error - in production, use proper logging
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving product: {ex.Message}");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/products");
+    }
+}

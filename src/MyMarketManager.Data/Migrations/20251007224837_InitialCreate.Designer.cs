@@ -12,7 +12,7 @@ using MyMarketManager.Data;
 namespace MyMarketManager.Data.Migrations
 {
     [DbContext(typeof(MyMarketManagerDbContext))]
-    [Migration("20251006161823_InitialCreate")]
+    [Migration("20251007224837_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -216,7 +216,8 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("AdditionalFees")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -225,10 +226,12 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<decimal>("ImportFees")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<decimal>("InsuranceFees")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
@@ -237,7 +240,8 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<decimal>("ShippingFees")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -262,10 +266,12 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("ActualUnitPrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<decimal>("AllocatedUnitOverhead")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -277,7 +283,8 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("ListedUnitPrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -299,7 +306,8 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("TotalUnitCost")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
@@ -335,7 +343,8 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("SalePrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
@@ -437,7 +446,8 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("ActualUnitPrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -452,7 +462,8 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal>("ListedUnitPrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -556,7 +567,8 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("ProductDescription")
                         .IsRequired()

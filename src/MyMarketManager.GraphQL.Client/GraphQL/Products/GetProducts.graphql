@@ -1,0 +1,11 @@
+query GetProducts {
+  products {
+    id
+    sku
+    name
+    description
+    quality
+    notes
+    stockOnHand
+  }
+}

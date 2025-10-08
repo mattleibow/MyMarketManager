@@ -11,7 +11,7 @@ namespace MyMarketManager.Data.Entities;
 public class Product : EntityBase
 {
     public string? SKU { get; set; }
-    
+
     [Required]
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }

@@ -18,7 +18,7 @@ MyMarketManager.Data is a .NET 10 class library project that contains:
 ## Project Structure
 
 ```
-MyMarketManager.Data/
+src/MyMarketManager.Data/
 ├── Entities/              # Entity classes
 │   ├── Supplier.cs
 │   ├── PurchaseOrder.cs
@@ -76,14 +76,7 @@ MyMarketManager.Data/
 To apply migrations to your database:
 
 ```bash
-cd MyMarketManager.Data
-dotnet ef database update
-```
-
-Or from the solution root:
-
-```bash
-dotnet ef database update --project MyMarketManager.Data
+dotnet ef database update --project src/MyMarketManager.Data
 ```
 
 ### Creating New Migrations
@@ -91,6 +84,5 @@ dotnet ef database update --project MyMarketManager.Data
 When you make changes to entities:
 
 ```bash
-cd MyMarketManager.Data
-dotnet ef migrations add YourMigrationName
+dotnet ef migrations add YourMigrationName --project src/MyMarketManager.Data
 ```

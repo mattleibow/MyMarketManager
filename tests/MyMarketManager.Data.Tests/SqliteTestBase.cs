@@ -4,33 +4,39 @@ using Microsoft.EntityFrameworkCore;
 namespace MyMarketManager.Data.Tests;
 
 /// <summary>
-/// Base class for tests that use SQLite in-memory database.
-/// Based on https://learn.microsoft.com/en-us/ef/core/testing/testing-without-the-database#sqlite-in-memory
+/// Base class for tests using SQLite in-memory database.
+/// SQLite in-memory databases only exist while the connection is open,
+/// so we need to keep the connection open for the lifetime of the test class.
 /// </summary>
-public abstract class SqliteTestBase : IDisposable
+public abstract class SqliteTestBase(bool createSchema = true) : IAsyncLifetime
 {
-    private readonly SqliteConnection _connection;
-    protected readonly MyMarketManagerDbContext Context;
+    protected SqliteConnection Connection { get; private set; } = null!;
 
-    protected SqliteTestBase()
+    protected MyMarketManagerDbContext Context { get; private set; } = null!;
+
+    public async ValueTask InitializeAsync()
     {
         // SQLite in-memory database only exists while the connection is open
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
+        Connection = new SqliteConnection("DataSource=:memory:");
+        Connection.Open();
 
         var options = new DbContextOptionsBuilder<MyMarketManagerDbContext>()
-            .UseSqlite(_connection)
+            .UseSqlite(Connection)
             .Options;
 
         Context = new MyMarketManagerDbContext(options);
-        
+
         // Create the schema
-        Context.Database.EnsureCreated();
+        if (createSchema)
+        {
+            await Context.Database.EnsureCreatedAsync();
+        }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        Context?.Dispose();
-        _connection?.Dispose();
+        await Context.DisposeAsync();
+
+        await Connection.DisposeAsync();
     }
 }

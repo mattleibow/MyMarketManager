@@ -9,22 +9,22 @@ public abstract class EntityBase : IAuditable
     /// Unique identifier for the entity.
     /// </summary>
     public Guid Id { get; set; }
-    
+
     /// <summary>
     /// When the entity was created.
     /// </summary>
     public DateTimeOffset CreatedAt { get; set; }
-    
+
     /// <summary>
     /// When the entity was last updated.
     /// </summary>
     public DateTimeOffset UpdatedAt { get; set; }
-    
+
     /// <summary>
     /// When the entity was soft deleted. Null if not deleted.
     /// </summary>
     public DateTimeOffset? DeletedAt { get; set; }
-    
+
     /// <summary>
     /// Whether the entity is deleted (soft delete).
     /// </summary>
