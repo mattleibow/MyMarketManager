@@ -4,75 +4,158 @@ My Market Manager is a mobile and web application for managing weekend market op
 
 ## Project Structure
 
-- **MyMarketManager.Data** - Data layer with Entity Framework Core entities, DbContext, and migrations for Azure SQL Server
-- **MyMarketManager.WebApp** - Blazor web application with integrated GraphQL server
-- **MyMarketManager.GraphQL.Client** - Standalone GraphQL client library compatible with MAUI, Blazor WASM, and other .NET applications
-- **MyMarketManager.ServiceDefaults** - Shared Aspire service defaults
-- **MyMarketManager.AppHost** - .NET Aspire app host for orchestration
+- **MyMarketManager.Data** - Data layer with Entity Framework Core entities, DbContext, and migrations for SQL Server
+- **MyMarketManager.WebApp** - Blazor Server web application with integrated GraphQL API server
+- **MyMarketManager.GraphQL.Client** - Standalone GraphQL client library (StrawberryShake) compatible with MAUI, Blazor WASM, and other .NET applications
+- **MyMarketManager.ServiceDefaults** - Shared .NET Aspire service defaults
+- **MyMarketManager.AppHost** - .NET Aspire app host for local development orchestration
+- **MyMarketManager.Integration.Tests** - Integration tests using Aspire.Hosting.Testing
 
 ## Architecture
 
-MyMarketManager uses a **GraphQL API** architecture powered by [HotChocolate](https://chillicream.com/docs/hotchocolate) and [StrawberryShake](https://chillicream.com/docs/strawberryshake).
+MyMarketManager uses a **GraphQL API** architecture powered by [HotChocolate](https://chillicream.com/docs/hotchocolate) (server) and [StrawberryShake](https://chillicream.com/docs/strawberryshake) (client).
 
-### GraphQL Server
+### GraphQL Server (HotChocolate)
 
 The GraphQL server is hosted within MyMarketManager.WebApp at the `/graphql` endpoint. It provides:
 
 - **Strongly-typed schema** based on C# entity classes
 - **Efficient data fetching** with precise client-side queries
 - **Single endpoint** for all API operations
-- **Schema introspection** for tooling support
-- **Banana Cake Pop** GraphQL IDE (development mode)
+- **Schema introspection** for tooling and code generation
+- **Banana Cake Pop** GraphQL IDE (available at `/graphql` in development mode)
 
-Key Features:
-- Query products with flexible filtering
-- Create, update, and delete products via mutations
-- Direct Entity Framework Core integration
-- Type-safe operations with compile-time checking
+**Current Implementation:**
+- `ProductQueries` class with query operations (getProducts, getProductById)
+- `ProductMutations` class with mutation operations (createProduct, updateProduct, deleteProduct)
+- Direct Entity Framework Core integration via injected `MyMarketManagerDbContext`
+- Input types: `CreateProductInput`, `UpdateProductInput`
 
-### GraphQL Client
+### GraphQL Client Library (StrawberryShake)
 
 The MyMarketManager.GraphQL.Client library provides:
 
-- **Type-safe client** generated from GraphQL schema
-- **Cross-platform support** for .NET 10, MAUI, Blazor WASM
-- **Dependency injection** ready
+- **Type-safe client** with generated code from GraphQL schema
+- **Cross-platform support** for .NET 10, MAUI, Blazor WASM, Blazor Server
+- **Dependency injection** ready with `AddMyMarketManagerClient()` extension
 - **Async/await** patterns throughout
+- **Generated client interface** `IMyMarketManagerClient` for easy mocking and testing
+
+**Current State:**
+- Client code is generated from the running GraphQL server schema
+- Located in `src/MyMarketManager.GraphQL.Client/Generated/`
+- Ready for use in MAUI mobile apps and other .NET clients
+- Currently registered in WebApp but Razor pages still use DbContext directly (migration in progress)
+
+### .NET Aspire Integration
+
+The application uses .NET Aspire for:
+- **Local development orchestration** via MyMarketManager.AppHost
+- **SQL Server containerization** with automatic database provisioning
+- **Service discovery** and configuration management
+- **Observability** with built-in health checks and telemetry
 
 ## Getting Started
 
 ### Prerequisites
 
 - .NET 10 SDK
-- SQL Server or Azure SQL Database
-- (Optional) .NET Aspire Workload for orchestration
+- Docker Desktop (for containerized SQL Server)
+- .NET Aspire Workload: `dotnet workload install aspire`
 
 ### Running the Application
 
-```bash
-# Run with Aspire (recommended)
-dotnet run --project src/MyMarketManager.AppHost
+**Using Aspire (Recommended):**
 
-# Or run WebApp directly
-dotnet run --project src/MyMarketManager.WebApp
+```bash
+# Run the Aspire AppHost (starts all dependencies including SQL Server)
+dotnet run --project src/MyMarketManager.AppHost
 ```
 
-The GraphQL API will be available at `https://localhost:5001/graphql`
+This will:
+1. Start SQL Server in a Docker container
+2. Apply EF Core migrations automatically
+3. Launch the WebApp with proper configuration
+4. Open the Aspire Dashboard showing all resources and telemetry
+
+The application will be available at the URL shown in the Aspire Dashboard (typically `https://localhost:7xxx`).
+
+**Direct WebApp Execution (Not Recommended):**
+
+The WebApp should always be run through the AppHost for proper configuration and dependency management.
 
 ### Using the GraphQL IDE
 
-In development mode, navigate to `/graphql` in your browser to access Banana Cake Pop, where you can:
-- Explore the schema
-- Test queries and mutations
-- View documentation
-- Execute operations with variables
+Once the application is running:
 
-### Example GraphQL Queries
+1. Navigate to `/graphql` in your browser
+2. Banana Cake Pop IDE will open
+3. Explore the schema, test queries, and view documentation
+
+### Example GraphQL Operations
 
 **Get all products:**
 ```graphql
-query {
+query GetProducts {
   products {
+    id
+    name
+    sku
+    quality
+    stockOnHand
+    description
+    notes
+    createdAt
+    updatedAt
+  }
+}
+```
+
+**Get a specific product:**
+```graphql
+query GetProduct($id: UUID!) {
+  productById(id: $id) {
+    id
+    name
+    sku
+    quality
+    stockOnHand
+    description
+    notes
+  }
+}
+```
+
+**Create a product:**
+```graphql
+mutation CreateProduct {
+  createProduct(input: {
+    name: "New Product"
+    sku: "PROD-001"
+    quality: GOOD
+    stockOnHand: 100
+    description: "A sample product"
+  }) {
+    id
+    name
+    sku
+  }
+}
+```
+
+**Update a product:**
+```graphql
+mutation UpdateProduct($id: UUID!) {
+  updateProduct(
+    id: $id
+    input: {
+      name: "Updated Product Name"
+      sku: "PROD-001-V2"
+      quality: EXCELLENT
+      stockOnHand: 150
+      description: "Updated description"
+    }
+  ) {
     id
     name
     sku
@@ -82,18 +165,10 @@ query {
 }
 ```
 
-**Create a product:**
+**Delete a product:**
 ```graphql
-mutation {
-  createProduct(input: {
-    name: "New Product"
-    sku: "PROD-001"
-    quality: GOOD
-    stockOnHand: 100
-  }) {
-    id
-    name
-  }
+mutation DeleteProduct($id: UUID!) {
+  deleteProduct(id: $id)
 }
 ```
 
