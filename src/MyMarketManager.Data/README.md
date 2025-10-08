@@ -1,88 +1,49 @@
-# MyMarketManager.Data Project
+# MyMarketManager.Data
 
-This document provides information about the MyMarketManager.Data project that has been created for the MyMarketManager application.
+Data layer for MyMarketManager with Entity Framework Core entities, DbContext, and migrations.
 
-## Project Overview
+## What's Here
 
-MyMarketManager.Data is a .NET 10 class library project that contains:
-- Entity Framework Core entities
-- Database context configuration
-- EF Core migrations for Azure SQL Server
+- **Entities/** - EF Core entity classes representing the domain model
+- **Enums/** - Enumeration types (ProcessingStatus, CandidateStatus, ProductQuality)
+- **Migrations/** - EF Core database migrations for SQL Server
+- **MyMarketManagerDbContext.cs** - Main database context
 
-## Technology Stack
+## Essential Commands
 
-- **.NET 10.0**: Target framework
-- **Entity Framework Core 9.0.9**: ORM for data access
-- **SQL Server**: Database provider (compatible with Azure SQL)
-
-## Project Structure
-
-```
-src/MyMarketManager.Data/
-├── Entities/              # Entity classes
-│   ├── Supplier.cs
-│   ├── PurchaseOrder.cs
-│   ├── PurchaseOrderItem.cs
-│   ├── Product.cs
-│   ├── ProductPhoto.cs
-│   ├── Delivery.cs
-│   ├── DeliveryItem.cs
-│   ├── MarketEvent.cs
-│   ├── ReconciledSale.cs
-│   ├── StagingBatch.cs
-│   ├── StagingPurchaseOrder.cs
-│   ├── StagingPurchaseOrderItem.cs
-│   ├── StagingSale.cs
-│   └── StagingSaleItem.cs
-├── Enums/                 # Enumeration types
-│   ├── ProcessingStatus.cs
-│   ├── CandidateStatus.cs
-│   └── ProductQuality.cs
-├── Migrations/            # EF Core migrations
-│   └── 20251006142907_InitialCreate.cs
-└── MyMarketManagerDbContext.cs        # Main DbContext
-```
-
-## Entity Overview
-
-### Core Entities
-- **Supplier**: Vendors from which goods are purchased
-- **PurchaseOrder**: Orders placed with suppliers
-- **PurchaseOrderItem**: Line items within purchase orders
-- **Product**: Catalog items that can be purchased, delivered, and sold
-- **ProductPhoto**: Images associated with products
-- **Delivery**: Shipments or receipts of goods
-- **DeliveryItem**: Individual items received in deliveries
-- **MarketEvent**: Market days or events where sales occur
-- **ReconciledSale**: Confirmed sales linked to products and market events
-
-### Staging Entities
-- **StagingBatch**: Supplier or sales data uploads
-- **StagingPurchaseOrder**: Parsed supplier orders awaiting validation
-- **StagingPurchaseOrderItem**: Line items from supplier orders in staging
-- **StagingSale**: Parsed sales awaiting validation
-- **StagingSaleItem**: Raw sales data from third-party reports
-
-## Enumerations
-
-- **ProcessingStatus**: Pending, Partial, Complete
-- **CandidateStatus**: Pending, Linked, Ignored
-- **ProductQuality**: Excellent, Good, Fair, Poor, Terrible
-
-## Using the Project
-
-### Running Migrations
-
-To apply migrations to your database:
+### Apply Migrations
 
 ```bash
 dotnet ef database update --project src/MyMarketManager.Data
 ```
 
-### Creating New Migrations
+When running via Aspire (recommended), migrations are applied automatically.
 
-When you make changes to entities:
+### Create New Migration
 
 ```bash
 dotnet ef migrations add YourMigrationName --project src/MyMarketManager.Data
 ```
+
+### View Migration SQL
+
+```bash
+dotnet ef migrations script --project src/MyMarketManager.Data
+```
+
+## Technology
+
+- .NET 10.0
+- Entity Framework Core 9.0
+- SQL Server provider (Azure SQL compatible)
+
+## Documentation
+
+See [Data Layer Documentation](../../docs/data-layer.md) for detailed information on:
+- Entity overview and relationships
+- Working with migrations
+- Best practices
+- Performance considerations
+- Testing strategies
+
+See [Data Model](../../docs/data-model.md) for complete entity field definitions and relationships.
