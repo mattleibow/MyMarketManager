@@ -1,11 +1,8 @@
 @page "/products/add"
 @page "/products/edit/{productId:guid}"
 @rendermode InteractiveServer
-@using MyMarketManager.Data
-@using MyMarketManager.Data.Entities
-@using MyMarketManager.Data.Enums
-@using Microsoft.EntityFrameworkCore
-@inject MyMarketManagerDbContext DbContext
+@using MyMarketManager.GraphQL.Client
+@inject IMyMarketManagerClient GraphQLClient
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -38,7 +35,7 @@
                     <div class="mb-3">
                         <label for="quality" class="form-label">Quality Rating</label>
                         <InputSelect id="quality" class="form-select" @bind-Value="product.Quality">
-                            @foreach (var quality in Enum.GetValues<ProductQuality>())
+                            @foreach (var quality in Enum.GetValues<MyMarketManager.GraphQL.Client.ProductQuality>())
                             {
                                 <option value="@quality">@quality</option>
                             }
@@ -133,32 +130,61 @@
 @code {
     [Parameter] public Guid? ProductId { get; set; }
 
-    private Product product = new();
+    private ProductFormModel product = new();
     private bool saving = false;
+
+    // Form model for product data
+    private class ProductFormModel
+    {
+        public Guid? Id { get; set; }
+        public string? SKU { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public MyMarketManager.GraphQL.Client.ProductQuality Quality { get; set; } = MyMarketManager.GraphQL.Client.ProductQuality.Good;
+        public string? Notes { get; set; }
+        public int StockOnHand { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
         if (ProductId.HasValue)
         {
-            var existingProduct = await DbContext.Products
-                .FirstOrDefaultAsync(p => p.Id == ProductId.Value);
-            
-            if (existingProduct != null)
+            try
             {
-                product = existingProduct;
+                var result = await GraphQLClient.GetProductById.ExecuteAsync(ProductId.Value);
+                
+                if (result.Data?.ProductById != null)
+                {
+                    var p = result.Data.ProductById;
+                    product = new ProductFormModel
+                    {
+                        Id = p.Id,
+                        SKU = p.Sku,
+                        Name = p.Name,
+                        Description = p.Description,
+                        Quality = p.Quality,
+                        Notes = p.Notes,
+                        StockOnHand = p.StockOnHand
+                    };
+                }
+                else
+                {
+                    // Product not found, redirect to products list
+                    Navigation.NavigateTo("/products");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // Product not found, redirect to products list
+                await JSRuntime.InvokeVoidAsync("console.error", "Error loading product:", ex.Message);
                 Navigation.NavigateTo("/products");
             }
         }
         else
         {
             // Initialize default values for new product
-            product = new Product
+            product = new ProductFormModel
             {
-                Quality = ProductQuality.Good,
+                Quality = MyMarketManager.GraphQL.Client.ProductQuality.Good,
                 StockOnHand = 0
             };
         }
@@ -172,16 +198,51 @@
             if (ProductId.HasValue)
             {
                 // Update existing product
-                DbContext.Products.Update(product);
+                var input = new UpdateProductInput
+                {
+                    Sku = product.SKU,
+                    Name = product.Name,
+                    Description = product.Description,
+                    Quality = product.Quality,
+                    Notes = product.Notes,
+                    StockOnHand = product.StockOnHand
+                };
+
+                var result = await GraphQLClient.UpdateProduct.ExecuteAsync(ProductId.Value, input);
+                
+                if (result.Data?.UpdateProduct != null)
+                {
+                    Navigation.NavigateTo("/products");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Failed to update product");
+                }
             }
             else
             {
                 // Add new product
-                DbContext.Products.Add(product);
-            }
+                var input = new CreateProductInput
+                {
+                    Sku = product.SKU,
+                    Name = product.Name,
+                    Description = product.Description,
+                    Quality = product.Quality,
+                    Notes = product.Notes,
+                    StockOnHand = product.StockOnHand
+                };
 
-            await DbContext.SaveChangesAsync();
-            Navigation.NavigateTo("/products");
+                var result = await GraphQLClient.CreateProduct.ExecuteAsync(input);
+                
+                if (result.Data?.CreateProduct != null)
+                {
+                    Navigation.NavigateTo("/products");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Failed to create product");
+                }
+            }
         }
         catch (Exception ex)
         {

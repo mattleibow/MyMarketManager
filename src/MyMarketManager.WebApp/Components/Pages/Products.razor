@@ -1,10 +1,7 @@
 @page "/products"
 @rendermode InteractiveServer
-@using MyMarketManager.Data
-@using MyMarketManager.Data.Entities
-@using MyMarketManager.Data.Enums
-@using Microsoft.EntityFrameworkCore
-@inject MyMarketManagerDbContext DbContext
+@using MyMarketManager.GraphQL.Client
+@inject IMyMarketManagerClient GraphQLClient
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -132,10 +129,21 @@ else
 }
 
 @code {
-    private List<Product> products = new();
+    private List<ProductDto> products = new();
     private bool loading = true;
     private string searchTerm = string.Empty;
-    private Product? productToDelete;
+    private ProductDto? productToDelete;
+
+    // DTO class to hold product data from GraphQL
+    private class ProductDto
+    {
+        public Guid Id { get; set; }
+        public string? SKU { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public MyMarketManager.GraphQL.Client.ProductQuality Quality { get; set; }
+        public int StockOnHand { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -148,22 +156,46 @@ else
         StateHasChanged();
         try
         {
-            var query = DbContext.Products.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
+            var result = await GraphQLClient.GetProducts.ExecuteAsync();
+            
+            if (result.Data?.Products != null)
             {
-                query = query.Where(p => p.Name.Contains(searchTerm) || 
-                                        p.Description!.Contains(searchTerm) || 
-                                        p.SKU!.Contains(searchTerm));
-            }
+                // Filter by search term if provided
+                var allProducts = result.Data.Products
+                    .Select(p => new ProductDto
+                    {
+                        Id = p.Id,
+                        SKU = p.Sku,
+                        Name = p.Name,
+                        Description = p.Description,
+                        Quality = p.Quality,
+                        StockOnHand = p.StockOnHand
+                    })
+                    .ToList();
 
-            products = await query
-                .OrderBy(p => p.Name)
-                .ToListAsync();
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    products = allProducts
+                        .Where(p => p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || 
+                                   (p.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) || 
+                                   (p.SKU?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
+                        .OrderBy(p => p.Name)
+                        .ToList();
+                }
+                else
+                {
+                    products = allProducts.OrderBy(p => p.Name).ToList();
+                }
+            }
+            else
+            {
+                products = new List<ProductDto>();
+            }
         }
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("console.error", "Error loading products:", ex.Message);
+            products = new List<ProductDto>();
         }
         finally
         {
@@ -195,7 +227,7 @@ else
         Navigation.NavigateTo($"/products/edit/{productId}");
     }
 
-    private void ConfirmDeleteProduct(Product product)
+    private void ConfirmDeleteProduct(ProductDto product)
     {
         productToDelete = product;
         StateHasChanged();
@@ -213,11 +245,18 @@ else
         {
             try
             {
-                DbContext.Products.Remove(productToDelete);
-                await DbContext.SaveChangesAsync();
-                productToDelete = null;
-                await LoadProducts();
-                StateHasChanged();
+                var result = await GraphQLClient.DeleteProduct.ExecuteAsync(productToDelete.Id);
+                
+                if (result.Data?.DeleteProduct == true)
+                {
+                    productToDelete = null;
+                    await LoadProducts();
+                    StateHasChanged();
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Failed to delete product");
+                }
             }
             catch (Exception ex)
             {
@@ -227,15 +266,15 @@ else
         }
     }
 
-    private string GetQualityBadgeClass(ProductQuality quality)
+    private string GetQualityBadgeClass(MyMarketManager.GraphQL.Client.ProductQuality quality)
     {
         return quality switch
         {
-            ProductQuality.Excellent => "bg-success",
-            ProductQuality.Good => "bg-primary",
-            ProductQuality.Fair => "bg-warning",
-            ProductQuality.Poor => "bg-danger",
-            ProductQuality.Terrible => "bg-dark",
+            MyMarketManager.GraphQL.Client.ProductQuality.Excellent => "bg-success",
+            MyMarketManager.GraphQL.Client.ProductQuality.Good => "bg-primary",
+            MyMarketManager.GraphQL.Client.ProductQuality.Fair => "bg-warning",
+            MyMarketManager.GraphQL.Client.ProductQuality.Poor => "bg-danger",
+            MyMarketManager.GraphQL.Client.ProductQuality.Terrible => "bg-dark",
             _ => "bg-secondary"
         };
     }
