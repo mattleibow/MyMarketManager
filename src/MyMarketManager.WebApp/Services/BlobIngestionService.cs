@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data;
@@ -8,8 +7,8 @@ using MyMarketManager.Data.Enums;
 namespace MyMarketManager.WebApp.Services;
 
 /// <summary>
-/// Background service that monitors blob storage for new supplier data files
-/// and processes them by creating StagingBatch records.
+/// Background service that processes pending staging batches.
+/// Looks for batches with Status = Pending and processes them.
 /// </summary>
 public class BlobIngestionService : BackgroundService
 {
@@ -36,11 +35,11 @@ public class BlobIngestionService : BackgroundService
         {
             try
             {
-                await ProcessNewBlobsAsync(stoppingToken);
+                await ProcessPendingBatchesAsync(stoppingToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing blobs");
+                _logger.LogError(ex, "Error processing pending batches");
             }
 
             await Task.Delay(_pollInterval, stoppingToken);
@@ -49,113 +48,70 @@ public class BlobIngestionService : BackgroundService
         _logger.LogInformation("Blob ingestion service stopped");
     }
 
-    private async Task ProcessNewBlobsAsync(CancellationToken cancellationToken)
+    private async Task ProcessPendingBatchesAsync(CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
         var blobService = scope.ServiceProvider.GetRequiredService<BlobStorageService>();
         var dbContext = scope.ServiceProvider.GetRequiredService<MyMarketManagerDbContext>();
 
-        var blobs = await blobService.ListBlobsAsync(cancellationToken);
-        _logger.LogInformation("Found {Count} blobs in storage", blobs.Count);
+        // Find all pending batches
+        var pendingBatches = await dbContext.StagingBatches
+            .Where(b => b.Status == ProcessingStatus.Pending)
+            .ToListAsync(cancellationToken);
 
-        foreach (var blob in blobs)
+        _logger.LogInformation("Found {Count} pending batches to process", pendingBatches.Count);
+
+        foreach (var batch in pendingBatches)
         {
             try
             {
-                var blobUrl = blobService.GetBlobUrl(blob.Name);
-
-                // Check if this blob has already been processed by checking the URL
-                var existingBatch = await dbContext.StagingBatches
-                    .FirstOrDefaultAsync(b => b.BlobStorageUrl == blobUrl, cancellationToken);
-
-                if (existingBatch != null)
-                {
-                    _logger.LogDebug("Blob {BlobName} already processed", blob.Name);
-                    continue;
-                }
-
-                _logger.LogInformation("Processing new blob: {BlobName}", blob.Name);
-                await ProcessBlobAsync(blobUrl, blob.Name, blobService, dbContext, cancellationToken);
+                _logger.LogInformation("Processing batch {BatchId}", batch.Id);
+                await ProcessBatchAsync(batch, blobService, dbContext, cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing blob {BlobName}", blob.Name);
+                _logger.LogError(ex, "Error processing batch {BatchId}", batch.Id);
+                
+                // Update batch status to indicate error
+                batch.Status = ProcessingStatus.Partial;
+                batch.Notes = $"Processing error: {ex.Message}";
+                await dbContext.SaveChangesAsync(cancellationToken);
             }
         }
     }
 
-    private async Task ProcessBlobAsync(
-        string blobUrl,
-        string blobName,
+    private async Task ProcessBatchAsync(
+        StagingBatch batch,
         BlobStorageService blobService,
         MyMarketManagerDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(batch.BlobStorageUrl))
+        {
+            _logger.LogWarning("Batch {BatchId} has no blob storage URL", batch.Id);
+            batch.Status = ProcessingStatus.Partial;
+            batch.Notes = "No blob storage URL provided";
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
         // Download the blob
-        using var blobStream = await blobService.DownloadFileAsync(blobUrl, cancellationToken);
+        using var blobStream = await blobService.DownloadFileAsync(batch.BlobStorageUrl, cancellationToken);
         using var memoryStream = new MemoryStream();
         await blobStream.CopyToAsync(memoryStream, cancellationToken);
         memoryStream.Position = 0;
 
-        // Calculate file hash for deduplication
-        var fileHash = await ComputeFileHashAsync(memoryStream, cancellationToken);
-        memoryStream.Position = 0;
+        // TODO: Extract ZIP file and parse supplier-specific data
+        // For now, just mark as complete
+        // In future iterations, this will:
+        // 1. Extract password-protected ZIP
+        // 2. Parse supplier data format
+        // 3. Create StagingPurchaseOrder and StagingPurchaseOrderItem records
 
-        // Check if file hash already exists
-        var existingBatchByHash = await dbContext.StagingBatches
-            .FirstOrDefaultAsync(b => b.FileHash == fileHash, cancellationToken);
-
-        if (existingBatchByHash != null)
-        {
-            _logger.LogWarning(
-                "File {BlobName} has same hash as existing batch {BatchId}, skipping",
-                blobName,
-                existingBatchByHash.Id);
-            return;
-        }
-
-        // For now, we'll create a basic staging batch
-        // In a real implementation, we would extract and parse the ZIP file here
-        // For Shein, the file is password-protected, so that logic would go here
-
-        // Get or create a default supplier for testing
-        // In production, we would need to identify the supplier from the file or metadata
-        var supplier = await dbContext.Suppliers.FirstOrDefaultAsync(cancellationToken);
-        if (supplier == null)
-        {
-            supplier = new Supplier
-            {
-                Id = Guid.NewGuid(),
-                Name = "Default Supplier"
-            };
-            dbContext.Suppliers.Add(supplier);
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-
-        // Create the staging batch
-        var stagingBatch = new StagingBatch
-        {
-            Id = Guid.NewGuid(),
-            SupplierId = supplier.Id,
-            UploadDate = DateTimeOffset.UtcNow,
-            FileHash = fileHash,
-            BlobStorageUrl = blobUrl,
-            Status = ProcessingStatus.Pending,
-            Notes = $"Imported from blob: {blobName}"
-        };
-
-        dbContext.StagingBatches.Add(stagingBatch);
+        batch.Status = ProcessingStatus.Complete;
+        batch.Notes = $"Processed on {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}";
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation(
-            "Created staging batch {BatchId} for blob {BlobName}",
-            stagingBatch.Id,
-            blobName);
-    }
-
-    private static async Task<string> ComputeFileHashAsync(Stream stream, CancellationToken cancellationToken)
-    {
-        var hash = await SHA256.HashDataAsync(stream, cancellationToken);
-        return Convert.ToHexString(hash);
+        _logger.LogInformation("Completed processing batch {BatchId}", batch.Id);
     }
 }

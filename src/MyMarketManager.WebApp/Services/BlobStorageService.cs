@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -28,6 +29,46 @@ public class BlobStorageService
         var containerClient = _blobServiceClient.GetBlobContainerClient(SupplierUploadsContainer);
         await containerClient.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
         _logger.LogInformation("Ensured container {ContainerName} exists", SupplierUploadsContainer);
+    }
+
+    /// <summary>
+    /// Computes SHA-256 hash of a file stream.
+    /// </summary>
+    public static async Task<string> ComputeFileHashAsync(Stream fileStream, CancellationToken cancellationToken = default)
+    {
+        var hash = await SHA256.HashDataAsync(fileStream, cancellationToken);
+        return Convert.ToHexString(hash);
+    }
+
+    /// <summary>
+    /// Uploads a file stream to blob storage with a unique name based on hash.
+    /// Returns the blob URL and file hash.
+    /// </summary>
+    public async Task<(string BlobUrl, string FileHash)> UploadFileWithHashAsync(
+        string originalFileName,
+        Stream fileStream,
+        CancellationToken cancellationToken = default)
+    {
+        // Compute hash before upload
+        var fileHash = await ComputeFileHashAsync(fileStream, cancellationToken);
+        fileStream.Position = 0; // Reset stream position
+
+        // Generate unique blob name with timestamp and original extension
+        var extension = System.IO.Path.GetExtension(originalFileName);
+        var timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss");
+        var blobName = $"{timestamp}_{fileHash.Substring(0, 8)}{extension}";
+
+        await EnsureContainerExistsAsync(cancellationToken);
+
+        var containerClient = _blobServiceClient.GetBlobContainerClient(SupplierUploadsContainer);
+        var blobClient = containerClient.GetBlobClient(blobName);
+
+        await blobClient.UploadAsync(fileStream, overwrite: false, cancellationToken);
+
+        _logger.LogInformation("Uploaded file {FileName} (hash: {FileHash}) to blob storage as {BlobName}", 
+            originalFileName, fileHash, blobName);
+
+        return (blobClient.Uri.ToString(), fileHash);
     }
 
     /// <summary>

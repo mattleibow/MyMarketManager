@@ -24,6 +24,7 @@ public class StagingEntityTests : SqliteTestBase
             SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "abc123",
+            BatchType = BatchType.SupplierData,
             Status = ProcessingStatus.Pending
         };
         Context.StagingBatches.Add(batch);
@@ -78,6 +79,7 @@ public class StagingEntityTests : SqliteTestBase
             SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "xyz789",
+            BatchType = BatchType.SupplierData,
             Status = ProcessingStatus.Pending
         };
         Context.StagingBatches.Add(batch);
@@ -159,6 +161,7 @@ public class StagingEntityTests : SqliteTestBase
             SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "sale123",
+            BatchType = BatchType.SalesData,
             Status = ProcessingStatus.Pending
         };
         Context.StagingBatches.Add(batch);
@@ -222,6 +225,7 @@ public class StagingEntityTests : SqliteTestBase
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "blob123",
             BlobStorageUrl = blobUrl,
+            BatchType = BatchType.SupplierData,
             Status = ProcessingStatus.Pending
         };
         Context.StagingBatches.Add(batch);

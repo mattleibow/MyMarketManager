@@ -16,6 +16,7 @@ public class StagingBatch : EntityBase
     [Required]
     public string FileHash { get; set; } = string.Empty;
     public string? BlobStorageUrl { get; set; }
+    public BatchType BatchType { get; set; }
     public ProcessingStatus Status { get; set; }
     public string? Notes { get; set; }
 
