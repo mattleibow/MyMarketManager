@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
 using MyMarketManager.Data.Services;
+using NSubstitute;
 
 namespace MyMarketManager.Data.Tests.Services;
 
@@ -14,10 +15,11 @@ public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlS
     public async Task ProcessPendingBatchesAsync_WithNoPendingBatches_ReturnsZero()
     {
         // Arrange
-        var processor = new BatchIngestionProcessor(Context, _logger);
+        var mockBlobService = CreateMockBlobStorageService();
+        var processor = new BatchIngestionProcessor(Context, mockBlobService, _logger);
 
         // Act
-        var result = await processor.ProcessPendingBatchesAsync(MockDownloadAsync, Cancel);
+        var result = await processor.ProcessPendingBatchesAsync(Cancel);
 
         // Assert
         Assert.Equal(0, result);
@@ -30,10 +32,11 @@ public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlS
         var supplier = await CreateSupplierAsync();
         var batch = await CreatePendingBatchAsync(supplier.Id, "https://blob/test.zip");
         
-        var processor = new BatchIngestionProcessor(Context, _logger);
+        var mockBlobService = CreateMockBlobStorageService();
+        var processor = new BatchIngestionProcessor(Context, mockBlobService, _logger);
 
         // Act
-        var result = await processor.ProcessPendingBatchesAsync(MockDownloadAsync, Cancel);
+        var result = await processor.ProcessPendingBatchesAsync(Cancel);
 
         // Assert
         Assert.Equal(1, result);
@@ -54,10 +57,11 @@ public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlS
         var batch2 = await CreatePendingBatchAsync(supplier.Id, "https://blob/test2.zip");
         var batch3 = await CreatePendingBatchAsync(supplier.Id, "https://blob/test3.zip");
         
-        var processor = new BatchIngestionProcessor(Context, _logger);
+        var mockBlobService = CreateMockBlobStorageService();
+        var processor = new BatchIngestionProcessor(Context, mockBlobService, _logger);
 
         // Act
-        var result = await processor.ProcessPendingBatchesAsync(MockDownloadAsync, Cancel);
+        var result = await processor.ProcessPendingBatchesAsync(Cancel);
 
         // Assert
         Assert.Equal(3, result);
@@ -75,10 +79,11 @@ public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlS
         var pendingBatch = await CreatePendingBatchAsync(supplier.Id, "https://blob/pending.zip");
         var completedBatch = await CreateBatchAsync(supplier.Id, "https://blob/completed.zip", ProcessingStatus.Complete);
         
-        var processor = new BatchIngestionProcessor(Context, _logger);
+        var mockBlobService = CreateMockBlobStorageService();
+        var processor = new BatchIngestionProcessor(Context, mockBlobService, _logger);
 
         // Act
-        var result = await processor.ProcessPendingBatchesAsync(MockDownloadAsync, Cancel);
+        var result = await processor.ProcessPendingBatchesAsync(Cancel);
 
         // Assert - Only pending batch should be processed
         Assert.Equal(1, result);
@@ -91,10 +96,11 @@ public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlS
         var supplier = await CreateSupplierAsync();
         var batch = await CreatePendingBatchAsync(supplier.Id, "https://blob/test.zip");
         
-        var processor = new BatchIngestionProcessor(Context, _logger);
+        var mockBlobService = CreateMockBlobStorageService();
+        var processor = new BatchIngestionProcessor(Context, mockBlobService, _logger);
 
         // Act
-        await processor.ProcessBatchAsync(batch, MockDownloadAsync, Cancel);
+        await processor.ProcessBatchAsync(batch, Cancel);
 
         // Assert
         var updatedBatch = await Context.StagingBatches.FindAsync(batch.Id);
@@ -110,10 +116,11 @@ public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlS
         var supplier = await CreateSupplierAsync();
         var batch = await CreatePendingBatchAsync(supplier.Id, blobUrl: null);
         
-        var processor = new BatchIngestionProcessor(Context, _logger);
+        var mockBlobService = CreateMockBlobStorageService();
+        var processor = new BatchIngestionProcessor(Context, mockBlobService, _logger);
 
         // Act
-        await processor.ProcessBatchAsync(batch, MockDownloadAsync, Cancel);
+        await processor.ProcessBatchAsync(batch, Cancel);
 
         // Assert
         var updatedBatch = await Context.StagingBatches.FindAsync(batch.Id);
@@ -129,15 +136,16 @@ public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlS
         var supplier = await CreateSupplierAsync();
         var batch = await CreatePendingBatchAsync(supplier.Id, "https://blob/test.zip");
         
-        var processor = new BatchIngestionProcessor(Context, _logger);
+        var mockBlobService = Substitute.For<BlobStorageService>(Substitute.For<ILogger<BlobStorageService>>());
+        mockBlobService.DownloadFileAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns<Stream>(_ => throw new InvalidOperationException("Download failed"));
+        
+        var processor = new BatchIngestionProcessor(Context, mockBlobService, _logger);
 
         // Act & Assert - Exception should be thrown by ProcessBatchAsync
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
-            await processor.ProcessBatchAsync(
-                batch, 
-                (url, ct) => throw new InvalidOperationException("Download failed"),
-                Cancel);
+            await processor.ProcessBatchAsync(batch, Cancel);
         });
     }
 
@@ -147,17 +155,23 @@ public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlS
         // Arrange
         var supplier = await CreateSupplierAsync();
         var batch1 = await CreatePendingBatchAsync(supplier.Id, "https://blob/test1.zip");
-        var batch2 = await CreatePendingBatchAsync(supplier.Id, "fail"); // Will trigger error
+        var batch2 = await CreatePendingBatchAsync(supplier.Id, "fail");
         var batch3 = await CreatePendingBatchAsync(supplier.Id, "https://blob/test3.zip");
         
-        var processor = new BatchIngestionProcessor(Context, _logger);
+        var mockBlobService = Substitute.For<BlobStorageService>(Substitute.For<ILogger<BlobStorageService>>());
+        mockBlobService.DownloadFileAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(call =>
+            {
+                var url = call.Arg<string>();
+                if (url == "fail")
+                    throw new InvalidOperationException("Download failed");
+                return Task.FromResult<Stream>(new MemoryStream("Mock content"u8.ToArray()));
+            });
+        
+        var processor = new BatchIngestionProcessor(Context, mockBlobService, _logger);
 
         // Act
-        var result = await processor.ProcessPendingBatchesAsync(
-            (url, ct) => url == "fail" 
-                ? throw new InvalidOperationException("Download failed")
-                : MockDownloadAsync(url, ct),
-            Cancel);
+        var result = await processor.ProcessPendingBatchesAsync(Cancel);
 
         // Assert - Should process 2 successful batches
         Assert.Equal(2, result);
@@ -176,20 +190,20 @@ public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlS
         var supplier = await CreateSupplierAsync();
         var batch = await CreatePendingBatchAsync(supplier.Id, "https://blob/test.zip");
         var testContent = "Test file content"u8.ToArray();
-        
-        var processor = new BatchIngestionProcessor(Context, _logger);
         var downloadCalled = false;
-
-        // Act
-        await processor.ProcessBatchAsync(
-            batch,
-            async (url, ct) =>
+        
+        var mockBlobService = Substitute.For<BlobStorageService>(Substitute.For<ILogger<BlobStorageService>>());
+        mockBlobService.DownloadFileAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(call =>
             {
                 downloadCalled = true;
-                await Task.CompletedTask;
-                return new MemoryStream(testContent);
-            },
-            Cancel);
+                return Task.FromResult<Stream>(new MemoryStream(testContent));
+            });
+        
+        var processor = new BatchIngestionProcessor(Context, mockBlobService, _logger);
+
+        // Act
+        await processor.ProcessBatchAsync(batch, Cancel);
 
         // Assert
         Assert.True(downloadCalled, "Download function should be called");
@@ -237,9 +251,11 @@ public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlS
         return batch;
     }
 
-    private static Task<Stream> MockDownloadAsync(string url, CancellationToken cancellationToken)
+    private static BlobStorageService CreateMockBlobStorageService()
     {
-        var content = "Mock file content"u8.ToArray();
-        return Task.FromResult<Stream>(new MemoryStream(content));
+        var mockBlobService = Substitute.For<BlobStorageService>(Substitute.For<ILogger<BlobStorageService>>());
+        mockBlobService.DownloadFileAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult<Stream>(new MemoryStream("Mock file content"u8.ToArray())));
+        return mockBlobService;
     }
 }

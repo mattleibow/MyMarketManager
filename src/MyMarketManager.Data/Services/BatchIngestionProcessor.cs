@@ -11,22 +11,23 @@ namespace MyMarketManager.Data.Services;
 public class BatchIngestionProcessor
 {
     private readonly MyMarketManagerDbContext _context;
+    private readonly BlobStorageService _blobStorageService;
     private readonly ILogger<BatchIngestionProcessor> _logger;
 
     public BatchIngestionProcessor(
         MyMarketManagerDbContext context,
+        BlobStorageService blobStorageService,
         ILogger<BatchIngestionProcessor> logger)
     {
         _context = context;
+        _blobStorageService = blobStorageService;
         _logger = logger;
     }
 
     /// <summary>
     /// Processes all pending staging batches.
     /// </summary>
-    public async Task<int> ProcessPendingBatchesAsync(
-        Func<string, CancellationToken, Task<Stream>> downloadBlobAsync,
-        CancellationToken cancellationToken = default)
+    public async Task<int> ProcessPendingBatchesAsync(CancellationToken cancellationToken = default)
     {
         // Find all pending batches
         var pendingBatches = await _context.StagingBatches
@@ -42,7 +43,7 @@ public class BatchIngestionProcessor
             try
             {
                 _logger.LogInformation("Processing batch {BatchId}", batch.Id);
-                await ProcessBatchAsync(batch, downloadBlobAsync, cancellationToken);
+                await ProcessBatchAsync(batch, cancellationToken);
                 processedCount++;
             }
             catch (Exception ex)
@@ -64,7 +65,6 @@ public class BatchIngestionProcessor
     /// </summary>
     public async Task ProcessBatchAsync(
         StagingBatch batch,
-        Func<string, CancellationToken, Task<Stream>> downloadBlobAsync,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(batch.BlobStorageUrl))
@@ -77,7 +77,7 @@ public class BatchIngestionProcessor
         }
 
         // Download the blob
-        using var blobStream = await downloadBlobAsync(batch.BlobStorageUrl, cancellationToken);
+        using var blobStream = await _blobStorageService.DownloadFileAsync(batch.BlobStorageUrl, cancellationToken);
         using var memoryStream = new MemoryStream();
         await blobStream.CopyToAsync(memoryStream, cancellationToken);
         memoryStream.Position = 0;

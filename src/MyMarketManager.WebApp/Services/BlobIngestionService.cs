@@ -46,12 +46,9 @@ public class BlobIngestionService : BackgroundService
     private async Task ProcessBatchesAsync(CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
-        var blobService = scope.ServiceProvider.GetRequiredService<BlobStorageService>();
         var processor = scope.ServiceProvider.GetRequiredService<BatchIngestionProcessor>();
 
-        var processedCount = await processor.ProcessPendingBatchesAsync(
-            blobService.DownloadFileAsync,
-            cancellationToken);
+        var processedCount = await processor.ProcessPendingBatchesAsync(cancellationToken);
 
         if (processedCount > 0)
         {

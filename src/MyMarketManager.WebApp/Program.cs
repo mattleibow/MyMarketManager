@@ -24,7 +24,7 @@ builder.Services.AddScoped<MyMarketManagerDbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
 // Add blob storage services
-builder.Services.AddSingleton<BlobStorageService>();
+builder.Services.AddSingleton<MyMarketManager.Data.Services.BlobStorageService, AzureBlobStorageService>();
 builder.Services.AddScoped<BatchIngestionProcessor>();
 builder.Services.AddHostedService<BlobIngestionService>();
 
