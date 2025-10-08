@@ -141,7 +141,7 @@ else
         public string? SKU { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public MyMarketManager.GraphQL.Client.ProductQuality Quality { get; set; }
+        public ProductQuality Quality { get; set; }
         public int StockOnHand { get; set; }
     }
 
@@ -266,15 +266,15 @@ else
         }
     }
 
-    private string GetQualityBadgeClass(MyMarketManager.GraphQL.Client.ProductQuality quality)
+    private string GetQualityBadgeClass(ProductQuality quality)
     {
         return quality switch
         {
-            MyMarketManager.GraphQL.Client.ProductQuality.Excellent => "bg-success",
-            MyMarketManager.GraphQL.Client.ProductQuality.Good => "bg-primary",
-            MyMarketManager.GraphQL.Client.ProductQuality.Fair => "bg-warning",
-            MyMarketManager.GraphQL.Client.ProductQuality.Poor => "bg-danger",
-            MyMarketManager.GraphQL.Client.ProductQuality.Terrible => "bg-dark",
+            ProductQuality.Excellent => "bg-success",
+            ProductQuality.Good => "bg-primary",
+            ProductQuality.Fair => "bg-warning",
+            ProductQuality.Poor => "bg-danger",
+            ProductQuality.Terrible => "bg-dark",
             _ => "bg-secondary"
         };
     }

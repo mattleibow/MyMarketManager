@@ -35,7 +35,7 @@
                     <div class="mb-3">
                         <label for="quality" class="form-label">Quality Rating</label>
                         <InputSelect id="quality" class="form-select" @bind-Value="product.Quality">
-                            @foreach (var quality in Enum.GetValues<MyMarketManager.GraphQL.Client.ProductQuality>())
+                            @foreach (var quality in Enum.GetValues<ProductQuality>())
                             {
                                 <option value="@quality">@quality</option>
                             }
@@ -140,7 +140,7 @@
         public string? SKU { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public MyMarketManager.GraphQL.Client.ProductQuality Quality { get; set; } = MyMarketManager.GraphQL.Client.ProductQuality.Good;
+        public ProductQuality Quality { get; set; } = ProductQuality.Good;
         public string? Notes { get; set; }
         public int StockOnHand { get; set; }
     }
@@ -184,7 +184,7 @@
             // Initialize default values for new product
             product = new ProductFormModel
             {
-                Quality = MyMarketManager.GraphQL.Client.ProductQuality.Good,
+                Quality = ProductQuality.Good,
                 StockOnHand = 0
             };
         }
