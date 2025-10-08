@@ -197,10 +197,13 @@ public async Task<List<Product>> SearchProducts(
             .ToListAsync(cancellationToken);
     }
 
+    // Use EF.Functions.Like for case-insensitive search
+    var searchPattern = $"%{searchTerm}%";
+    
     return await context.Products
-        .Where(p => p.Name.Contains(searchTerm) ||
-                   (p.Description != null && p.Description.Contains(searchTerm)) ||
-                   (p.SKU != null && p.SKU.Contains(searchTerm)))
+        .Where(p => EF.Functions.Like(p.Name, searchPattern) ||
+                   (p.Description != null && EF.Functions.Like(p.Description, searchPattern)) ||
+                   (p.SKU != null && EF.Functions.Like(p.SKU, searchPattern)))
         .OrderBy(p => p.Name)
         .ToListAsync(cancellationToken);
 }
@@ -208,7 +211,7 @@ public async Task<List<Product>> SearchProducts(
 
 **Features:**
 - Server-side search filtering by product name, description, or SKU
-- Case-sensitive search (SQL Server default)
+- **Case-insensitive search** using `EF.Functions.Like`
 - Returns all products if search term is empty or whitespace
 - Results ordered by name
 - More efficient than client-side filtering for large datasets

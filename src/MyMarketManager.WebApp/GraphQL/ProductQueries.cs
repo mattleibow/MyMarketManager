@@ -29,7 +29,7 @@ public class ProductQueries
     }
 
     /// <summary>
-    /// Search products by name, description, or SKU
+    /// Search products by name, description, or SKU (case-insensitive)
     /// </summary>
     public async Task<List<Product>> SearchProducts(
         string searchTerm,
@@ -43,10 +43,13 @@ public class ProductQueries
                 .ToListAsync(cancellationToken);
         }
 
+        // Use EF.Functions.Like for case-insensitive search
+        var searchPattern = $"%{searchTerm}%";
+        
         return await context.Products
-            .Where(p => p.Name.Contains(searchTerm) ||
-                       (p.Description != null && p.Description.Contains(searchTerm)) ||
-                       (p.SKU != null && p.SKU.Contains(searchTerm)))
+            .Where(p => EF.Functions.Like(p.Name, searchPattern) ||
+                       (p.Description != null && EF.Functions.Like(p.Description, searchPattern)) ||
+                       (p.SKU != null && EF.Functions.Like(p.SKU, searchPattern)))
             .OrderBy(p => p.Name)
             .ToListAsync(cancellationToken);
     }
