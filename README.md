@@ -1,253 +1,74 @@
 # My Market Manager
 
-My Market Manager is a mobile and web application for managing weekend market operations — from supplier purchase orders and deliveries to inventory reconciliation, sales imports, and profitability analysis.
+A mobile and web application for managing weekend market operations — from supplier purchase orders and deliveries to inventory reconciliation, sales imports, and profitability analysis.
 
-## Project Structure
+## What It Does
 
-- **MyMarketManager.Data** - Data layer with Entity Framework Core entities, DbContext, and migrations for SQL Server
-- **MyMarketManager.WebApp** - Blazor Server web application with integrated GraphQL API server
-- **MyMarketManager.GraphQL.Client** - Standalone GraphQL client library (StrawberryShake) compatible with MAUI, Blazor WASM, and other .NET applications
-- **MyMarketManager.ServiceDefaults** - Shared .NET Aspire service defaults
-- **MyMarketManager.AppHost** - .NET Aspire app host for local development orchestration
-- **MyMarketManager.Integration.Tests** - Integration tests using Aspire.Hosting.Testing
+MyMarketManager helps market vendors:
+- **Track Purchases** - Record purchase orders and deliveries from suppliers
+- **Manage Inventory** - Monitor stock levels and product quality
+- **Reconcile Sales** - Import sales data and link to inventory via stocktakes
+- **Analyze Profitability** - Generate reports on profit margins and sales performance
 
-## Architecture
+## Key Features
 
-MyMarketManager uses a **GraphQL API** architecture powered by [HotChocolate](https://chillicream.com/docs/hotchocolate) (server) and [StrawberryShake](https://chillicream.com/docs/strawberryshake) (client).
+- **GraphQL API** - Modern, efficient API for flexible data access
+- **Cross-Platform Client** - Type-safe GraphQL client for MAUI, Blazor, and .NET apps
+- **Cloud-Native** - Built with .NET Aspire for scalable deployment
+- **Developer-Friendly** - Comprehensive documentation and built-in tools
 
-### GraphQL Server (HotChocolate)
+## Technology Stack
 
-The GraphQL server is hosted within MyMarketManager.WebApp at the `/graphql` endpoint. It provides:
+- **.NET 10** - Latest .NET framework
+- **Blazor Server** - Web UI framework
+- **Entity Framework Core 9** - Database ORM
+- **HotChocolate 15** - GraphQL server
+- **StrawberryShake 15** - GraphQL client code generator
+- **.NET Aspire** - Cloud-native orchestration
+- **SQL Server** - Database
 
-- **Strongly-typed schema** based on C# entity classes
-- **Efficient data fetching** with precise client-side queries
-- **Single endpoint** for all API operations
-- **Schema introspection** for tooling and code generation
-- **Nitro** GraphQL IDE (available at `/graphql` in development mode)
-
-**Current Implementation:**
-- `ProductQueries` class with query operations (getProducts, getProductById)
-- `ProductMutations` class with mutation operations (createProduct, updateProduct, deleteProduct)
-- Direct Entity Framework Core integration via injected `MyMarketManagerDbContext`
-- Input types: `CreateProductInput`, `UpdateProductInput`
-
-### GraphQL Client Library (StrawberryShake)
-
-The MyMarketManager.GraphQL.Client library provides:
-
-- **Type-safe client** with generated code from GraphQL schema
-- **Cross-platform support** for .NET 10, MAUI, Blazor WASM, Blazor Server
-- **Dependency injection** ready with `AddMyMarketManagerClient()` extension
-- **Async/await** patterns throughout
-- **Generated client interface** `IMyMarketManagerClient` for easy mocking and testing
-
-**Current State:**
-- Client code is generated from the running GraphQL server schema
-- Located in `src/MyMarketManager.GraphQL.Client/Generated/`
-- Ready for use in MAUI mobile apps and other .NET clients
-- Currently registered in WebApp but Razor pages still use DbContext directly (migration in progress)
-
-### .NET Aspire Integration
-
-The application uses .NET Aspire for:
-- **Local development orchestration** via MyMarketManager.AppHost
-- **SQL Server containerization** with automatic database provisioning
-- **Azure Blob Storage emulation** with Azurite for supplier data uploads
-- **Service discovery** and configuration management
-- **Observability** with built-in health checks and telemetry
-
-### Supplier Data Ingestion
-
-The application includes an automated ingestion pipeline for supplier data:
-- **Azure Blob Storage** for file upload and storage
-- **Background service** that monitors for new uploads every 5 minutes
-- **File deduplication** using SHA-256 hashing
-- **Staging batches** created automatically with links to blob storage
-- See [Blob Storage Ingestion Documentation](docs/blob-storage-ingestion.md) for details
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
 - .NET 10 SDK
-- Docker Desktop (for containerized SQL Server)
+- Docker Desktop
 - .NET Aspire Workload: `dotnet workload install aspire`
 
-### Running the Application
-
-**Using Aspire (Recommended):**
+### Run the Application
 
 ```bash
-# Run the Aspire AppHost (starts all dependencies including SQL Server)
 dotnet run --project src/MyMarketManager.AppHost
 ```
 
-This will:
-1. Start SQL Server in a Docker container
-2. Start Azurite (Azure Storage Emulator) in a Docker container
-3. Apply EF Core migrations automatically
-4. Launch the WebApp with proper configuration
-5. Start background services (database migration, blob ingestion)
-6. Open the Aspire Dashboard showing all resources and telemetry
+This starts the full application stack including SQL Server, applies migrations, and opens the Aspire Dashboard. Access the app at the URL shown in the dashboard (typically `https://localhost:7xxx`).
 
-The application will be available at the URL shown in the Aspire Dashboard (typically `https://localhost:7xxx`).
+### Try the GraphQL API
 
-**Direct WebApp Execution (Not Recommended):**
-
-The WebApp should always be run through the AppHost for proper configuration and dependency management.
-
-### Using the GraphQL IDE
-
-Once the application is running:
-
-1. Navigate to `/graphql` in your browser
-2. Nitro IDE will open
-3. Explore the schema, test queries, and view documentation
-
-### Example GraphQL Operations
-
-**Get all products:**
-```graphql
-query GetProducts {
-  products {
-    id
-    name
-    sku
-    quality
-    stockOnHand
-    description
-    notes
-    createdAt
-    updatedAt
-  }
-}
-```
-
-**Get a specific product:**
-```graphql
-query GetProduct($id: UUID!) {
-  productById(id: $id) {
-    id
-    name
-    sku
-    quality
-    stockOnHand
-    description
-    notes
-  }
-}
-```
-
-**Create a product:**
-```graphql
-mutation CreateProduct {
-  createProduct(input: {
-    name: "New Product"
-    sku: "PROD-001"
-    quality: GOOD
-    stockOnHand: 100
-    description: "A sample product"
-  }) {
-    id
-    name
-    sku
-  }
-}
-```
-
-**Update a product:**
-```graphql
-mutation UpdateProduct($id: UUID!) {
-  updateProduct(
-    id: $id
-    input: {
-      name: "Updated Product Name"
-      sku: "PROD-001-V2"
-      quality: EXCELLENT
-      stockOnHand: 150
-      description: "Updated description"
-    }
-  ) {
-    id
-    name
-    sku
-    quality
-    stockOnHand
-  }
-}
-```
-
-**Delete a product:**
-```graphql
-mutation DeleteProduct($id: UUID!) {
-  deleteProduct(id: $id)
-}
-```
-
-## Development
-
-### GraphQL Server
-
-Server implementation is in `src/MyMarketManager.WebApp/GraphQL/`:
-- `ProductQueries.cs` - Query operations
-- `ProductMutations.cs` - Mutation operations
-- See [GraphQL Server README](src/MyMarketManager.WebApp/GraphQL/README.md) for detailed documentation
-
-### GraphQL Client
-
-Client library is in `src/MyMarketManager.GraphQL.Client/`:
-- Type-safe operations for all GraphQL queries and mutations
-- Suitable for MAUI mobile apps and Blazor WASM
-- See [GraphQL Client README](src/MyMarketManager.GraphQL.Client/README.md) for usage examples
-
-### Using the Client in a MAUI App
-
-```csharp
-// In MauiProgram.cs
-using MyMarketManager.GraphQL.Client;
-
-builder.Services.AddMyMarketManagerGraphQLClient(
-    "https://your-api-url.com/graphql");
-
-// In your page/view model
-public class ProductsViewModel
-{
-    private readonly IMyMarketManagerClient _client;
-    
-    public ProductsViewModel(IMyMarketManagerClient client)
-    {
-        _client = client;
-    }
-    
-    public async Task LoadProducts()
-    {
-        var result = await _client.GetProducts.ExecuteAsync();
-        if (result.IsSuccess)
-        {
-            // Use result.Data.Products
-        }
-    }
-}
-```
-
-## Technologies
-
-- **.NET 10** - Latest .NET framework
-- **Blazor** - Web UI framework
-- **Entity Framework Core 9** - ORM
-- **HotChocolate 15** - GraphQL server
-- **StrawberryShake 15** - GraphQL client
-- **.NET Aspire** - Cloud-native orchestration
-- **SQL Server** - Database
-- **Azure Blob Storage** - File storage (Azurite emulator for local dev)
+Navigate to `/graphql` to open the Nitro IDE and explore the API interactively.
 
 ## Documentation
 
-- [Product Requirements Document](docs/product-requirements.md)
-- [Data Model](docs/data-model.md)
-- [Blob Storage Ingestion Pipeline](docs/blob-storage-ingestion.md)
-- [MyMarketManager.Data Project](src/MyMarketManager.Data/README.md)
-- [GraphQL Client Library](src/MyMarketManager.GraphQL.Client/README.md)
+- **[Getting Started](docs/getting-started.md)** - Setup and first steps
+- **[Architecture](docs/architecture.md)** - System design and technology choices
+- **[Development Guide](docs/development-guide.md)** - Development workflows and best practices
+- **[Data Model](docs/data-model.md)** - Database schema and entities
+- **[Product Requirements](docs/product-requirements.md)** - Feature requirements and user stories
+
+### API Documentation
+
+- **[GraphQL Server](docs/graphql-server.md)** - Server implementation and operations
+- **[GraphQL Client](docs/graphql-client.md)** - Client library usage and examples
+- **[Data Layer](docs/data-layer.md)** - Entity Framework and database management
+
+## Project Structure
+
+- **MyMarketManager.Data** - Data layer with EF Core entities and migrations
+- **MyMarketManager.WebApp** - Blazor Server web app with GraphQL API
+- **MyMarketManager.GraphQL.Client** - Standalone GraphQL client library
+- **MyMarketManager.ServiceDefaults** - Shared .NET Aspire service defaults
+- **MyMarketManager.AppHost** - .NET Aspire app host for orchestration
+- **MyMarketManager.Integration.Tests** - Integration tests
 
 ## License
 
