@@ -23,7 +23,7 @@ The GraphQL server is hosted within MyMarketManager.WebApp at the `/graphql` end
 - **Efficient data fetching** with precise client-side queries
 - **Single endpoint** for all API operations
 - **Schema introspection** for tooling and code generation
-- **Banana Cake Pop** GraphQL IDE (available at `/graphql` in development mode)
+- **Nitro** GraphQL IDE (available at `/graphql` in development mode)
 
 **Current Implementation:**
 - `ProductQueries` class with query operations (getProducts, getProductById)
@@ -89,7 +89,7 @@ The WebApp should always be run through the AppHost for proper configuration and
 Once the application is running:
 
 1. Navigate to `/graphql` in your browser
-2. Banana Cake Pop IDE will open
+2. Nitro IDE will open
 3. Explore the schema, test queries, and view documentation
 
 ### Example GraphQL Operations

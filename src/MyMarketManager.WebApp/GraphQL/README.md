@@ -10,7 +10,7 @@ The MyMarketManager GraphQL server provides a modern, efficient API for accessin
 - Type-safe schema based on C# entity classes
 - Direct Entity Framework Core integration
 - Single `/graphql` endpoint for all operations
-- Built-in Banana Cake Pop IDE for development
+- Built-in Nitro IDE for development
 - Full schema introspection support
 
 ## Architecture
@@ -352,7 +352,7 @@ public async Task<bool> DeleteProduct(
 
 ## Development Workflow
 
-### Using Banana Cake Pop IDE
+### Using Nitro IDE
 
 1. Run the application via Aspire:
    ```bash
@@ -361,7 +361,7 @@ public async Task<bool> DeleteProduct(
 
 2. Navigate to `https://localhost:<port>/graphql` (port shown in Aspire Dashboard)
 
-3. The Banana Cake Pop IDE will open, providing:
+3. The Nitro will open, providing:
    - **Schema Explorer**: Browse all types, queries, and mutations
    - **Operations Tab**: Write and execute GraphQL operations
    - **Variables Panel**: Define operation variables
@@ -370,7 +370,7 @@ public async Task<bool> DeleteProduct(
 
 ### Testing Queries
 
-Example workflow in Banana Cake Pop:
+Example workflow in Nitro:
 
 1. **List all products:**
    - Paste the GetProducts query
@@ -590,6 +590,7 @@ public async Task<Product> DeleteProduct(...)
 
 - [HotChocolate Documentation](https://chillicream.com/docs/hotchocolate)
 - [GraphQL Specification](https://spec.graphql.org/)
-- [Banana Cake Pop Features](https://chillicream.com/docs/bananacakepop)
+- [Nitro Features](https://chillicream.com/docs/nitro)
+- [Strawberry Shake Documentation](https://chillicream.com/docs/strawberryshake)
 - [Entity Framework Core](https://learn.microsoft.com/en-us/ef/core/)
 
