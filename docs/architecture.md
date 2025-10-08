@@ -11,6 +11,7 @@ MyMarketManager uses a modern, cloud-native architecture powered by GraphQL and 
 - **StrawberryShake 15** - GraphQL client
 - **.NET Aspire** - Cloud-native orchestration
 - **SQL Server** - Database
+- **Azure Blob Storage** - File storage (Azurite emulator for local development)
 
 ## Project Structure
 
@@ -77,14 +78,17 @@ The MyMarketManager.GraphQL.Client library provides:
 The application uses .NET Aspire for:
 - **Local development orchestration** via MyMarketManager.AppHost
 - **SQL Server containerization** with automatic database provisioning
+- **Azure Blob Storage emulation** with Azurite for supplier data uploads
 - **Service discovery** and configuration management
 - **Observability** with built-in health checks and telemetry
 
 Aspire manages:
 1. Starting SQL Server in Docker
-2. Applying database migrations
-3. Configuring service endpoints
-4. Providing a unified dashboard for monitoring
+2. Starting Azurite (Azure Storage Emulator) in Docker
+3. Applying database migrations
+4. Configuring service endpoints
+5. Starting background services (database migration, blob ingestion)
+6. Providing a unified dashboard for monitoring
 
 ## Data Layer Architecture
 
@@ -103,6 +107,40 @@ Entities are grouped into two categories:
 2. **Staging Entities** - Import/validation data (StagingBatch, StagingPurchaseOrder, StagingSale)
 
 See [Data Model](data-model.md) for complete entity documentation.
+
+## Blob Storage Ingestion Architecture
+
+The application includes an automated pipeline for processing supplier data files:
+
+### Components
+
+1. **BlobStorageService** - Manages Azure Blob Storage operations
+   - Upload files to `supplier-uploads` container
+   - Download files for processing
+   - List available blobs
+
+2. **BlobIngestionService** - Background worker
+   - Polls blob storage every 5 minutes
+   - Computes SHA-256 hash for deduplication
+   - Creates `StagingBatch` records with `BlobStorageUrl`
+
+3. **StagingBatch Entity** - Enhanced with blob storage tracking
+   - `BlobStorageUrl` property links to uploaded file
+   - Provides audit trail for data source
+
+### Processing Flow
+
+```
+User Upload → Blob Storage → Background Service (5 min poll)
+                ↓
+         Deduplication (SHA-256 + URL)
+                ↓
+         Create StagingBatch
+                ↓
+         Status: Pending → Ready for Processing
+```
+
+See [Blob Storage Ingestion](blob-storage-ingestion.md) for detailed documentation.
 
 ## Request Flow
 

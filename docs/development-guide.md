@@ -38,6 +38,8 @@ dotnet run --project src/MyMarketManager.AppHost
 
 This starts:
 - SQL Server container
+- Azurite storage emulator container
+- Background blob ingestion service
 - WebApp with GraphQL API
 - Aspire Dashboard (monitoring and logs)
 
@@ -261,6 +263,41 @@ Create migration:
 dotnet ef migrations add AddCategory --project src/MyMarketManager.Data
 ```
 
+### Blob Storage Development
+
+**Location:** `src/MyMarketManager.WebApp/Services/`
+
+**Key Services:**
+- `BlobStorageService` - Manages blob operations (upload, download, list)
+- `BlobIngestionService` - Background worker that processes new uploads
+
+**Local Development:**
+- Azurite emulator runs automatically via Aspire
+- Files stored in `supplier-uploads` container
+- Background service polls every 5 minutes
+
+**Testing Blob Upload:**
+
+1. Start the application via AppHost
+2. Access Azurite through Azure Storage Explorer or REST API
+3. Upload a file to the `supplier-uploads` container
+4. Background service will detect and create a `StagingBatch` record
+
+**Azurite Connection String:**
+```
+DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;
+```
+
+**Workflow for Adding File Processing Logic:**
+
+1. Modify `BlobIngestionService.ProcessBlobAsync()` method
+2. Add ZIP extraction logic (handle password protection)
+3. Parse supplier-specific data format
+4. Create `StagingPurchaseOrder` and `StagingPurchaseOrderItem` records
+5. Test with sample files from blob storage
+
+See [Blob Storage Ingestion](blob-storage-ingestion.md) for architecture details.
+
 ## Code Style and Standards
 
 ### C# Conventions
@@ -410,4 +447,5 @@ dotnet run --project src/MyMarketManager.AppHost
 - [GraphQL Client Documentation](graphql-client.md)
 - [Data Layer Documentation](data-layer.md)
 - [Data Model Reference](data-model.md)
+- [Blob Storage Ingestion](blob-storage-ingestion.md)
 - [Product Requirements](product-requirements.md)

@@ -25,6 +25,7 @@ The repository is organized into the following projects:
 - **StrawberryShake 15** - Type-safe GraphQL client with code generation
 - **.NET Aspire** - Cloud-native orchestration and development tools
 - **SQL Server** - Database (containerized via Docker for local development)
+- **Azure Blob Storage** - File storage (Azurite emulator for local development)
 - **xUnit** - Testing framework
 
 ## Prerequisites for Development
@@ -72,9 +73,11 @@ dotnet run --project src/MyMarketManager.AppHost
 
 This command:
 1. Starts SQL Server in a Docker container
-2. Applies EF Core migrations automatically
-3. Launches the WebApp with proper configuration
-4. Opens the Aspire Dashboard at a localhost URL showing all resources and telemetry
+2. Starts Azurite (Azure Storage Emulator) in a Docker container
+3. Applies EF Core migrations automatically
+4. Starts background services (database migration, blob ingestion)
+5. Launches the WebApp with proper configuration
+6. Opens the Aspire Dashboard at a localhost URL showing all resources and telemetry
 
 The application will be available at the URL shown in the Aspire Dashboard (typically `https://localhost:7xxx`).
 
@@ -160,11 +163,34 @@ Location: `src/MyMarketManager.AppHost/Program.cs`
 
 The AppHost orchestrates:
 - SQL Server container provisioning
+- Azurite storage emulator for blob storage
 - Service discovery for WebApp
 - Health check endpoints at `/health` and `/alive`
 - OpenTelemetry exporters for observability
 
 Service defaults are applied via `builder.AddServiceDefaults()` in each project.
+
+### Blob Storage Ingestion
+
+Location: `src/MyMarketManager.WebApp/Services/`
+
+Key services:
+- `BlobStorageService` - Manages Azure Blob Storage operations (upload, download, list)
+- `BlobIngestionService` - Background worker that monitors blob storage every 5 minutes
+
+The ingestion pipeline:
+1. Users upload supplier data files (ZIP format) to Azure Blob Storage
+2. Files are stored in the `supplier-uploads` container
+3. `BlobIngestionService` polls for new files every 5 minutes
+4. Service downloads files, computes SHA-256 hash for deduplication
+5. Creates `StagingBatch` records with `BlobStorageUrl` property linking to the blob
+6. Batch marked as "Pending" for further processing
+
+Deduplication:
+- SHA-256 file hash prevents duplicate processing of identical content
+- Blob URL tracking prevents reprocessing the same blob
+
+Local development uses Azurite emulator automatically started by Aspire.
 
 ## Coding Standards
 
@@ -212,13 +238,14 @@ Both workflows:
 
 ## Important Notes
 
-- **Always run through Aspire AppHost**: Direct execution of WebApp will fail due to missing SQL Server connection
-- **Docker is required**: SQL Server runs in a container; ensure Docker Desktop is running
+- **Always run through Aspire AppHost**: Direct execution of WebApp will fail due to missing SQL Server and Azurite connections
+- **Docker is required**: SQL Server and Azurite run in containers; ensure Docker Desktop is running
 - **Migrations run automatically**: No need to manually run `dotnet ef database update`
 - **GraphQL client generation is manual**: Use `dotnet graphql generate` to regenerate client code after schema changes
 - **Test filter is critical**: Always use `--filter "Category!=LongRunning"` to exclude slow integration tests
 - **No authentication**: Current implementation has no auth; suitable for local development only
 - **.NET 10 is preview**: Using RC SDK version, expect preview warnings in build output
+- **Blob ingestion runs automatically**: Background service processes uploads every 5 minutes
 
 ## Additional Documentation
 
@@ -231,4 +258,5 @@ Both workflows:
 - GraphQL Client: `/docs/graphql-client.md`
 - Data Layer: `/docs/data-layer.md`
 - Data Model: `/docs/data-model.md`
+- Blob Storage Ingestion: `/docs/blob-storage-ingestion.md`
 - Product Requirements: `/docs/product-requirements.md`

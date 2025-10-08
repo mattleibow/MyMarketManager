@@ -24,6 +24,7 @@ Detailed technical documentation:
 
 - **[Data Model](data-model.md)** - Complete database schema with entity definitions and relationships
 - **[Product Requirements](product-requirements.md)** - Feature requirements and user stories
+- **[Blob Storage Ingestion](blob-storage-ingestion.md)** - Automated supplier data file processing pipeline
 
 ## Quick Links by Role
 
@@ -41,6 +42,11 @@ Detailed technical documentation:
 1. [Data Layer](data-layer.md) - EF Core and migrations
 2. [Data Model](data-model.md) - Entity reference
 3. [Development Guide](development-guide.md#working-with-the-database) - Database workflows
+
+### I'm Working on Data Ingestion
+1. [Blob Storage Ingestion](blob-storage-ingestion.md) - Supplier file upload pipeline
+2. [Data Model](data-model.md) - Staging entities and batch processing
+3. [Product Requirements](product-requirements.md#57-supplier-data-ingestion) - Feature requirements
 
 ### I'm Building a Mobile App
 1. [GraphQL Client](graphql-client.md) - Using the client library
