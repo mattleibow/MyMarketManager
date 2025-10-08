@@ -150,7 +150,7 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
 
         var response = await WebAppHttpClient.PostAsync("/graphql", content, Cancel);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(expectedStatusCode, response.StatusCode);
 
         return response;
     }

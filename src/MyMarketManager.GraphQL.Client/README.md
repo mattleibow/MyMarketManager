@@ -258,6 +258,7 @@ builder.Services.AddMyMarketManagerGraphQLClient((sp, client) =>
 When the GraphQL schema changes, regenerate the client:
 
 ```bash
+cd src/MyMarketManager.GraphQL.Client
 dotnet graphql update
 dotnet graphql generate
 ```

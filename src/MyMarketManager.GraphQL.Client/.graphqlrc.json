@@ -4,10 +4,10 @@
   "extensions": {
     "strawberryShake": {
       "name": "MyMarketManagerClient",
-      "namespace": "MyMarketManager.GraphQL.Client.Generated",
+      "namespace": "MyMarketManager.GraphQL.Client",
       "records": {
-        "inputs": false,
-        "entities": false
+        "inputs": true,
+        "entities": true
       },
       "transportProfiles": [
         {

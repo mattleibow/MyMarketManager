@@ -1,0 +1,305 @@
+schema {
+  query: ProductQueries
+  mutation: ProductMutations
+}
+
+type Delivery {
+  purchaseOrderId: UUID
+  purchaseOrder: PurchaseOrder
+  deliveryDate: DateTime!
+  courier: String
+  trackingNumber: String
+  status: ProcessingStatus!
+  items: [DeliveryItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type DeliveryItem {
+  deliveryId: UUID!
+  delivery: Delivery!
+  productId: UUID!
+  product: Product!
+  quantity: Int!
+  quality: ProductQuality!
+  notes: String
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type MarketEvent {
+  name: String!
+  date: DateTime!
+  location: String
+  notes: String
+  reconciledSales: [ReconciledSale!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type Product {
+  sku: String
+  name: String!
+  description: String
+  quality: ProductQuality!
+  notes: String
+  stockOnHand: Int!
+  photos: [ProductPhoto!]!
+  purchaseOrderItems: [PurchaseOrderItem!]!
+  deliveryItems: [DeliveryItem!]!
+  reconciledSales: [ReconciledSale!]!
+  stagingPurchaseOrderItems: [StagingPurchaseOrderItem!]!
+  stagingSaleItems: [StagingSaleItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type ProductMutations {
+  createProduct(input: CreateProductInput!): Product! @cost(weight: "10")
+  updateProduct(id: UUID! input: UpdateProductInput!): Product! @cost(weight: "10")
+  deleteProduct(id: UUID!): Boolean! @cost(weight: "10")
+}
+
+type ProductPhoto {
+  productId: UUID!
+  product: Product!
+  url: String!
+  caption: String
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type ProductQueries {
+  products: [Product!]! @cost(weight: "10")
+  productById(id: UUID!): Product @cost(weight: "10")
+}
+
+type PurchaseOrder {
+  supplierId: UUID!
+  supplier: Supplier!
+  orderDate: DateTime!
+  status: ProcessingStatus!
+  shippingFees: Decimal!
+  importFees: Decimal!
+  insuranceFees: Decimal!
+  additionalFees: Decimal!
+  notes: String
+  items: [PurchaseOrderItem!]!
+  deliveries: [Delivery!]!
+  stagingPurchaseOrders: [StagingPurchaseOrder!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type PurchaseOrderItem {
+  purchaseOrderId: UUID!
+  purchaseOrder: PurchaseOrder!
+  productId: UUID
+  product: Product
+  supplierReference: String
+  supplierProductUrl: String
+  name: String!
+  description: String
+  quantity: Int!
+  listedUnitPrice: Decimal!
+  actualUnitPrice: Decimal!
+  allocatedUnitOverhead: Decimal!
+  totalUnitCost: Decimal!
+  stagingPurchaseOrderItems: [StagingPurchaseOrderItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type ReconciledSale {
+  productId: UUID!
+  product: Product!
+  marketEventId: UUID!
+  marketEvent: MarketEvent!
+  quantity: Int!
+  salePrice: Decimal!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type StagingBatch {
+  supplierId: UUID!
+  supplier: Supplier!
+  uploadDate: DateTime!
+  fileHash: String!
+  status: ProcessingStatus!
+  notes: String
+  stagingPurchaseOrders: [StagingPurchaseOrder!]!
+  stagingSales: [StagingSale!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type StagingPurchaseOrder {
+  stagingBatchId: UUID!
+  stagingBatch: StagingBatch!
+  purchaseOrderId: UUID
+  purchaseOrder: PurchaseOrder
+  supplierReference: String
+  orderDate: DateTime!
+  rawData: String!
+  isImported: Boolean!
+  items: [StagingPurchaseOrderItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type StagingPurchaseOrderItem {
+  stagingPurchaseOrderId: UUID!
+  stagingPurchaseOrder: StagingPurchaseOrder!
+  productId: UUID
+  product: Product
+  supplierId: UUID
+  supplier: Supplier
+  purchaseOrderItemId: UUID
+  purchaseOrderItem: PurchaseOrderItem
+  supplierReference: String
+  supplierProductUrl: String
+  name: String!
+  description: String
+  quantity: Int!
+  listedUnitPrice: Decimal!
+  actualUnitPrice: Decimal!
+  rawData: String!
+  isImported: Boolean!
+  status: CandidateStatus!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type StagingSale {
+  stagingBatchId: UUID!
+  stagingBatch: StagingBatch!
+  saleDate: DateTime!
+  rawData: String!
+  isImported: Boolean!
+  items: [StagingSaleItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type StagingSaleItem {
+  stagingSaleId: UUID!
+  stagingSale: StagingSale!
+  productId: UUID
+  product: Product
+  productDescription: String!
+  saleDate: DateTime!
+  price: Decimal!
+  quantity: Int!
+  marketEventName: String
+  rawData: String!
+  isImported: Boolean!
+  status: CandidateStatus!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type Supplier {
+  name: String!
+  websiteUrl: String
+  contactInfo: String
+  purchaseOrders: [PurchaseOrder!]!
+  stagingBatches: [StagingBatch!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+input CreateProductInput {
+  sku: String
+  name: String!
+  description: String
+  quality: ProductQuality!
+  notes: String
+  stockOnHand: Int!
+}
+
+input UpdateProductInput {
+  sku: String
+  name: String!
+  description: String
+  quality: ProductQuality!
+  notes: String
+  stockOnHand: Int!
+}
+
+enum CandidateStatus {
+  PENDING
+  LINKED
+  IGNORED
+}
+
+enum ProcessingStatus {
+  PENDING
+  PARTIAL
+  COMPLETE
+}
+
+enum ProductQuality {
+  UNKNOWN
+  TERRIBLE
+  POOR
+  FAIR
+  GOOD
+  EXCELLENT
+}
+
+"The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response."
+directive @cost("The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc." weight: String!) on SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM | INPUT_FIELD_DEFINITION
+
+"The `@specifiedBy` directive is used within the type system definition language to provide a URL for specifying the behavior of custom scalar definitions."
+directive @specifiedBy("The specifiedBy URL points to a human-readable specification. This field will only read a result for scalar types." url: String!) on SCALAR
+
+"The `DateTime` scalar represents an ISO-8601 compliant date time type."
+scalar DateTime @specifiedBy(url: "https:\/\/www.graphql-scalars.com\/date-time")
+
+"The `Decimal` scalar type represents a decimal floating-point number."
+scalar Decimal
+
+scalar UUID @specifiedBy(url: "https:\/\/tools.ietf.org\/html\/rfc4122")

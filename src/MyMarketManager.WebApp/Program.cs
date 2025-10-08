@@ -22,6 +22,9 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// Add the GraphQL client to be used by the web app to call the GraphQL API
+builder.Services.AddMyMarketManagerClient();
+
 // Add GraphQL server with HotChocolate
 builder.Services
     .AddGraphQLServer()

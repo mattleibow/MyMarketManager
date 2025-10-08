@@ -1,0 +1,11 @@
+query GetProductById($id: UUID!) {
+  productById(id: $id) {
+    id
+    sku
+    name
+    description
+    quality
+    notes
+    stockOnHand
+  }
+}

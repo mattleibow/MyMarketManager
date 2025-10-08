@@ -1,0 +1,11 @@
+mutation UpdateProduct($id: UUID!, $input: UpdateProductInput!) {
+  updateProduct(id: $id, input: $input) {
+    id
+    sku
+    name
+    description
+    quality
+    notes
+    stockOnHand
+  }
+}
