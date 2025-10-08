@@ -90,16 +90,23 @@ dotnet ef migrations add <MigrationName> --project src/MyMarketManager.Data
 dotnet ef database update --project src/MyMarketManager.Data
 ```
 
-### GraphQL Schema Generation
+### GraphQL Client Code Generation
 
-The GraphQL client (StrawberryShake) automatically generates code at build time from the running server. If you need to manually regenerate:
+The GraphQL client code is generated manually using the StrawberryShake CLI tools. To regenerate:
 
 ```bash
-# Ensure the server is running first via Aspire AppHost
+# 1. Navigate to the client project directory
 cd src/MyMarketManager.GraphQL.Client
+
+# 2. (Optional) Download the latest schema from the running app
+#    Only needed when the server schema has changed
 dotnet graphql update
+
+# 3. Generate the client code
 dotnet graphql generate
 ```
+
+**Note**: The schema only needs to be downloaded when the GraphQL server schema changes (new queries, mutations, or types). Once downloaded, it's cached locally.
 
 ## Key Configuration Files
 
@@ -131,7 +138,7 @@ Location: `src/MyMarketManager.GraphQL.Client/`
 Generated code is in `Generated/` subdirectory. The client provides:
 - Type-safe client interface: `IMyMarketManagerClient`
 - Dependency injection via `AddMyMarketManagerClient()` extension method
-- Auto-generated types from server schema at build time
+- Generated types from server schema (manually generated using `dotnet graphql generate`)
 
 ### Database Context
 
@@ -183,7 +190,7 @@ From `.editorconfig`:
 1. Add query/mutation method to appropriate class in `src/MyMarketManager.WebApp/GraphQL/`
 2. Run the application to make schema available
 3. Add `.graphql` operation file to `src/MyMarketManager.GraphQL.Client/GraphQL/`
-4. Rebuild client project to generate types
+4. Generate client code: `cd src/MyMarketManager.GraphQL.Client && dotnet graphql generate`
 
 ### Testing GraphQL API
 
@@ -208,7 +215,7 @@ Both workflows:
 - **Always run through Aspire AppHost**: Direct execution of WebApp will fail due to missing SQL Server connection
 - **Docker is required**: SQL Server runs in a container; ensure Docker Desktop is running
 - **Migrations run automatically**: No need to manually run `dotnet ef database update`
-- **GraphQL schema must be running**: Client code generation requires the server to be running
+- **GraphQL client generation is manual**: Use `dotnet graphql generate` to regenerate client code after schema changes
 - **Test filter is critical**: Always use `--filter "Category!=LongRunning"` to exclude slow integration tests
 - **No authentication**: Current implementation has no auth; suitable for local development only
 - **.NET 10 is preview**: Using RC SDK version, expect preview warnings in build output
@@ -216,7 +223,12 @@ Both workflows:
 ## Additional Documentation
 
 - Main README: `/README.md`
-- GraphQL Server: `/src/MyMarketManager.WebApp/GraphQL/README.md`
-- GraphQL Client: `/src/MyMarketManager.GraphQL.Client/README.md`
+- Documentation Index: `/docs/README.md`
+- Getting Started: `/docs/getting-started.md`
+- Architecture: `/docs/architecture.md`
+- Development Guide: `/docs/development-guide.md`
+- GraphQL Server: `/docs/graphql-server.md`
+- GraphQL Client: `/docs/graphql-client.md`
+- Data Layer: `/docs/data-layer.md`
 - Data Model: `/docs/data-model.md`
 - Product Requirements: `/docs/product-requirements.md`
