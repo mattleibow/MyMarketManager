@@ -52,8 +52,18 @@ The MyMarketManager.GraphQL.Client library provides:
 The application uses .NET Aspire for:
 - **Local development orchestration** via MyMarketManager.AppHost
 - **SQL Server containerization** with automatic database provisioning
+- **Azure Blob Storage emulation** with Azurite for supplier data uploads
 - **Service discovery** and configuration management
 - **Observability** with built-in health checks and telemetry
+
+### Supplier Data Ingestion
+
+The application includes an automated ingestion pipeline for supplier data:
+- **Azure Blob Storage** for file upload and storage
+- **Background service** that monitors for new uploads every 5 minutes
+- **File deduplication** using SHA-256 hashing
+- **Staging batches** created automatically with links to blob storage
+- See [Blob Storage Ingestion Documentation](docs/blob-storage-ingestion.md) for details
 
 ## Getting Started
 
@@ -74,9 +84,11 @@ dotnet run --project src/MyMarketManager.AppHost
 
 This will:
 1. Start SQL Server in a Docker container
-2. Apply EF Core migrations automatically
-3. Launch the WebApp with proper configuration
-4. Open the Aspire Dashboard showing all resources and telemetry
+2. Start Azurite (Azure Storage Emulator) in a Docker container
+3. Apply EF Core migrations automatically
+4. Launch the WebApp with proper configuration
+5. Start background services (database migration, blob ingestion)
+6. Open the Aspire Dashboard showing all resources and telemetry
 
 The application will be available at the URL shown in the Aspire Dashboard (typically `https://localhost:7xxx`).
 
@@ -227,6 +239,15 @@ public class ProductsViewModel
 - **StrawberryShake 15** - GraphQL client
 - **.NET Aspire** - Cloud-native orchestration
 - **SQL Server** - Database
+- **Azure Blob Storage** - File storage (Azurite emulator for local dev)
+
+## Documentation
+
+- [Product Requirements Document](docs/product-requirements.md)
+- [Data Model](docs/data-model.md)
+- [Blob Storage Ingestion Pipeline](docs/blob-storage-ingestion.md)
+- [MyMarketManager.Data Project](src/MyMarketManager.Data/README.md)
+- [GraphQL Client Library](src/MyMarketManager.GraphQL.Client/README.md)
 
 ## License
 
