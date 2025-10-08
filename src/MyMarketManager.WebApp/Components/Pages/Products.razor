@@ -156,40 +156,54 @@ else
         StateHasChanged();
         try
         {
-            var result = await GraphQLClient.GetProducts.ExecuteAsync();
-            
-            if (result.Data?.Products != null)
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                // Filter by search term if provided
-                var allProducts = result.Data.Products
-                    .Select(p => new ProductDto
-                    {
-                        Id = p.Id,
-                        SKU = p.Sku,
-                        Name = p.Name,
-                        Description = p.Description,
-                        Quality = p.Quality,
-                        StockOnHand = p.StockOnHand
-                    })
-                    .ToList();
-
-                if (!string.IsNullOrWhiteSpace(searchTerm))
+                // Use search query when search term is provided
+                var result = await GraphQLClient.SearchProducts.ExecuteAsync(searchTerm);
+                
+                if (result.Data?.SearchProducts != null)
                 {
-                    products = allProducts
-                        .Where(p => p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || 
-                                   (p.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) || 
-                                   (p.SKU?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
+                    products = result.Data.SearchProducts
+                        .Select(p => new ProductDto
+                        {
+                            Id = p.Id,
+                            SKU = p.Sku,
+                            Name = p.Name,
+                            Description = p.Description,
+                            Quality = p.Quality,
+                            StockOnHand = p.StockOnHand
+                        })
+                        .ToList();
+                }
+                else
+                {
+                    products = new List<ProductDto>();
+                }
+            }
+            else
+            {
+                // Use get all products query when no search term
+                var result = await GraphQLClient.GetProducts.ExecuteAsync();
+                
+                if (result.Data?.Products != null)
+                {
+                    products = result.Data.Products
+                        .Select(p => new ProductDto
+                        {
+                            Id = p.Id,
+                            SKU = p.Sku,
+                            Name = p.Name,
+                            Description = p.Description,
+                            Quality = p.Quality,
+                            StockOnHand = p.StockOnHand
+                        })
                         .OrderBy(p => p.Name)
                         .ToList();
                 }
                 else
                 {
-                    products = allProducts.OrderBy(p => p.Name).ToList();
+                    products = new List<ProductDto>();
                 }
-            }
-            else
-            {
-                products = new List<ProductDto>();
             }
         }
         catch (Exception ex)

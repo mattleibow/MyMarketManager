@@ -87,6 +87,7 @@ type ProductPhoto {
 type ProductQueries {
   products: [Product!]! @cost(weight: "10")
   productById(id: UUID!): Product @cost(weight: "10")
+  searchProducts(searchTerm: String!): [Product!]! @cost(weight: "10")
 }
 
 type PurchaseOrder {

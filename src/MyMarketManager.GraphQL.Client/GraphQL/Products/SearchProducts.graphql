@@ -1,0 +1,11 @@
+query SearchProducts($searchTerm: String!) {
+  searchProducts(searchTerm: $searchTerm) {
+    id
+    sku
+    name
+    description
+    quality
+    notes
+    stockOnHand
+  }
+}
