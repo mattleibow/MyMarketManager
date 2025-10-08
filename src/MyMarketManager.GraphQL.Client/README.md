@@ -5,9 +5,9 @@ Standalone GraphQL client library for MyMarketManager, compatible with MAUI, Bla
 ## What's Here
 
 - **GraphQL/*.graphql** - GraphQL operation definitions (queries and mutations)
-- **Generated/** - Auto-generated client code (do not edit manually)
+- **Generated/** - Generated client code (do not edit manually)
 - **.graphqlrc.json** - StrawberryShake configuration
-- **schema.graphql** - Downloaded schema (generated at build time, not committed)
+- **schema.graphql** - Downloaded schema (cached locally, not committed)
 
 ## Quick Start
 
@@ -56,28 +56,30 @@ public class ProductsViewModel
 
 - **Type-Safe** - All operations strongly typed with generated C# classes
 - **Cross-Platform** - Works with .NET 10, MAUI, Blazor WASM, Blazor Server
-- **Auto-Generated** - Client code generated from GraphQL schema at build time
+- **Code Generation** - Client code generated from GraphQL schema using StrawberryShake CLI
 - **Dependency Injection** - First-class DI support
 - **Error Handling** - Structured error information
 
 ## Essential Commands
 
-### Regenerate Client Code
+### Generate Client Code
+
+Client code must be generated manually using the StrawberryShake CLI:
 
 ```bash
 # 1. Navigate to the client project directory
 cd src/MyMarketManager.GraphQL.Client
 
-# 2. (Optional) Download the latest schema from the locally running app
-#    Only needed when queries or mutations have changed
+# 2. (Optional) Download the latest schema from the running app
+#    Only needed when the server schema has changed
 #    Requires the app to be started first
 dotnet graphql update
 
-# 3. Generate the new client using the schema
+# 3. Generate the client code
 dotnet graphql generate
 ```
 
-**Note:** The schema doesn't need to be downloaded every time - only when queries or mutations change. If there's a schema change, start the app first and wait for the `/graphql` endpoint to become available.
+**Note:** Only update the schema when the GraphQL server schema changes. Once downloaded, it's cached locally. See [detailed documentation](../../docs/graphql-client.md#code-generation) for more information.
 
 ## Adding New Operations
 

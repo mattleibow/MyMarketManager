@@ -9,7 +9,7 @@ The MyMarketManager.GraphQL.Client library provides a strongly-typed GraphQL cli
 **Key Features:**
 - **Type-Safe**: All GraphQL operations are strongly typed with generated C# classes
 - **Cross-Platform**: Works with .NET 10, MAUI, Blazor WASM, Blazor Server, ASP.NET Core
-- **Auto-Generated**: Client code is automatically generated from the running GraphQL server schema
+- **Code Generation**: Client code is generated from the GraphQL schema using StrawberryShake CLI
 - **Dependency Injection**: First-class support for `Microsoft.Extensions.DependencyInjection`
 - **Async/Await**: All operations use Task-based asynchronous patterns
 - **Error Handling**: Structured error handling with detailed error information
@@ -368,13 +368,11 @@ if (!result.IsSuccess && result.Errors != null)
 
 ## Code Generation
 
-### Automatic Generation
+The GraphQL client code is generated manually using the StrawberryShake CLI tools. The generation process uses a locally cached schema file.
 
-The client code is automatically generated when the GraphQL.Client project is built. The build process uses a cached schema file.
+### Generating the Client
 
-### Manual Generation
-
-To manually regenerate the client:
+To generate or regenerate the client code:
 
 ```bash
 # 1. Navigate to the client project directory
@@ -382,19 +380,24 @@ cd src/MyMarketManager.GraphQL.Client
 
 # 2. (Optional) Download the latest schema from the locally running app
 #    This requires the app to be started first and is only needed when
-#    queries or mutations have changed
+#    the server schema has changed (new queries/mutations/types added)
 dotnet graphql update
 
-# 3. Generate the new client using the schema
+# 3. Generate the client code using the schema
 dotnet graphql generate
 
 # The generated code will be in Generated/MyMarketManagerClient.Client.cs
 ```
 
-**Note on Schema Updates:**
-- The schema does not always have to be downloaded - only when queries or mutations have changed
-- If there is a schema change, the app must be started first and the `/graphql` endpoint must be available (which may take some time after startup)
-- Once downloaded, the schema is cached and can be reused for code generation
+**When to Update the Schema:**
+- Only when the GraphQL server schema changes (new queries, mutations, or types added)
+- The app must be running and the `/graphql` endpoint must be available (may take some time after startup)
+- Once downloaded, the schema is cached locally and can be reused for multiple generations
+
+**When to Generate the Client:**
+- After updating `.graphql` operation files
+- After downloading an updated schema
+- When setting up the project for the first time
 
 ## Testing
 

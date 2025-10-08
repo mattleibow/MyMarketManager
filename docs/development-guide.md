@@ -183,14 +183,14 @@ public async Task<Product> AdjustStock(
 **Key Files:**
 - `GraphQL/*.graphql` - Operation definitions
 - `.graphqlrc.json` - StrawberryShake configuration
-- `Generated/` - Auto-generated client code (don't edit manually)
+- `Generated/` - Generated client code (don't edit manually)
 
 **Workflow:**
 1. Define GraphQL operation in `.graphql` file
-2. Generate typed client code with `dotnet graphql generate`
+2. Generate typed client code with `dotnet graphql generate` (see [Code Generation](graphql-client.md#code-generation))
 3. Use the generated operation in your app
 
-**Note:** If you've changed the GraphQL schema (server-side), you'll need to download the updated schema first with `dotnet graphql update` before generating.
+**Note:** If you've changed the GraphQL schema (server-side), download the updated schema first with `dotnet graphql update`.
 
 **Adding a New Operation:**
 
