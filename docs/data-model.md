@@ -31,6 +31,14 @@ Used to rate the quality of products and delivered items.
 | Poor | Significant defects, limited usability |
 | Terrible | Severe damage, may not be sellable |
 
+### BatchType
+Used to distinguish the type of data in a staging batch.
+
+| Value | Description |
+|-------|-------------|
+| SupplierData | Supplier purchase order data (e.g., Shein export) |
+| SalesData | Sales data from point-of-sale systems (e.g., Yoco API) |
+
 ## Entities
 
 ## Supplier
@@ -155,7 +163,8 @@ Description: Represents a single supplier data upload (e.g. Shein ZIP) or sales 
 | UploadDate | DateTime | When file was uploaded | — |
 | FileHash | Text | Hash for deduplication | — |
 | BlobStorageUrl | Text (nullable) | Azure Blob Storage URL for the uploaded file | — |
-| Status | ProcessingStatus | Batch state | — |
+| BatchType | BatchType enum | Type of data: SupplierData or SalesData | — |
+| Status | ProcessingStatus | Batch state (Pending, Partial, Complete) | — |
 | Notes | Text (nullable) | Free‑form notes | — |
 
 

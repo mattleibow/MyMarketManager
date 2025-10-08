@@ -176,19 +176,24 @@ Location: `src/MyMarketManager.WebApp/Services/`
 
 Key services:
 - `BlobStorageService` - Manages Azure Blob Storage operations (upload, download, list)
-- `BlobIngestionService` - Background worker that monitors blob storage every 5 minutes
+- `BlobIngestionService` - Background worker that processes pending batches every 5 minutes
 
 The ingestion pipeline:
-1. Users upload supplier data files (ZIP format) to Azure Blob Storage
-2. Files are stored in the `supplier-uploads` container
-3. `BlobIngestionService` polls for new files every 5 minutes
-4. Service downloads files, computes SHA-256 hash for deduplication
-5. Creates `StagingBatch` records with `BlobStorageUrl` property linking to the blob
-6. Batch marked as "Pending" for further processing
+1. Users upload supplier data files (ZIP format) via `/upload-supplier-data` page
+2. System computes SHA-256 hash and checks for duplicates before upload
+3. If not duplicate, file is uploaded to `supplier-uploads` container with unique timestamped name
+4. `StagingBatch` record created immediately with `BatchType` (SupplierData/SalesData), `BlobStorageUrl`, and `Status = Pending`
+5. `BlobIngestionService` polls database for pending batches every 5 minutes
+6. Service downloads file from blob storage, processes data, and marks batch as `Complete`
 
 Deduplication:
-- SHA-256 file hash prevents duplicate processing of identical content
-- Blob URL tracking prevents reprocessing the same blob
+- SHA-256 file hash computed before upload
+- Database check prevents duplicate uploads
+- Saves storage space and processing time
+
+BatchType enum:
+- `SupplierData` - Supplier purchase order data (e.g., Shein export)
+- `SalesData` - Sales data from point-of-sale systems (e.g., Yoco API)
 
 Local development uses Azurite emulator automatically started by Aspire.
 
