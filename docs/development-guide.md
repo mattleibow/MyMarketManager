@@ -103,8 +103,25 @@ dotnet test
 
 #### Run Specific Test Project
 
+**Data Layer Tests:**
+```bash
+dotnet test tests/MyMarketManager.Data.Tests
+```
+
+**Component Tests:**
+```bash
+dotnet test tests/MyMarketManager.Components.Tests
+```
+
+**Integration Tests:**
 ```bash
 dotnet test tests/MyMarketManager.Integration.Tests
+```
+
+#### Run Tests Excluding Long-Running Ones
+
+```bash
+dotnet test --filter "Category!=LongRunning"
 ```
 
 #### Run Tests with Coverage
@@ -112,6 +129,52 @@ dotnet test tests/MyMarketManager.Integration.Tests
 ```bash
 dotnet test --collect:"XPlat Code Coverage"
 ```
+
+### 6. Component Testing with bUnit
+
+**Location:** `tests/MyMarketManager.Components.Tests/`
+
+The project uses **bUnit** for testing Blazor components with **NSubstitute** for mocking the GraphQL client.
+
+**Key Features:**
+- Test component rendering and interactions
+- Mock `IMyMarketManagerClient` for isolated testing
+- Verify GraphQL operations are called correctly
+- Test user interactions (clicks, form submissions)
+
+**Example Test:**
+```csharp
+[Fact]
+public void LoadProducts_SuccessfulQuery_DisplaysProducts()
+{
+    // Arrange
+    var mockClient = Substitute.For<IMyMarketManagerClient>();
+    var mockQuery = Substitute.For<IGetProductsQuery>();
+    var mockResult = Substitute.For<IOperationResult<IGetProductsResult>>();
+    var mockData = Substitute.For<IGetProductsResult>();
+
+    mockData.Products.Returns(products);
+    mockResult.Data.Returns(mockData);
+    mockQuery.ExecuteAsync(Arg.Any<CancellationToken>())
+        .Returns(Task.FromResult(mockResult));
+    mockClient.GetProducts.Returns(mockQuery);
+
+    Services.AddSingleton(mockClient);
+
+    // Act
+    var cut = RenderComponent<Products>();
+
+    // Assert
+    cut.WaitForState(() => cut.FindAll("tbody tr").Count == 2);
+    Assert.Equal(2, cut.FindAll("tbody tr").Count);
+}
+```
+
+**Best Practices:**
+- Always mock the GraphQL client, never use real database connections
+- Use `WaitForState()` for asynchronous rendering
+- Test user interactions, not implementation details
+- Verify GraphQL operations are called with correct parameters
 
 ## Project-Specific Development
 

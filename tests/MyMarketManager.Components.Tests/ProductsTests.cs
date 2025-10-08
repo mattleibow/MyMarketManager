@@ -10,7 +10,7 @@ namespace MyMarketManager.Components.Tests;
 public class ProductsTests : Bunit.TestContext
 {
     [Fact]
-    public async Task LoadProducts_SuccessfulQuery_DisplaysProducts()
+    public void LoadProducts_SuccessfulQuery_DisplaysProducts()
     {
         // Arrange
         var mockClient = Substitute.For<IMyMarketManagerClient>();
@@ -43,7 +43,7 @@ public class ProductsTests : Bunit.TestContext
     }
 
     [Fact]
-    public async Task LoadProducts_EmptyResult_DisplaysNoProductsMessage()
+    public void LoadProducts_EmptyResult_DisplaysNoProductsMessage()
     {
         // Arrange
         var mockClient = Substitute.For<IMyMarketManagerClient>();

@@ -47,6 +47,11 @@ Detailed technical documentation:
 2. [Getting Started](getting-started.md#using-the-graphql-api) - API examples
 3. [GraphQL Server](graphql-server.md) - Available operations
 
+### I'm Testing Components
+1. [Development Guide](development-guide.md#component-testing-with-bunit) - Component testing with bUnit
+2. [GraphQL Client](graphql-client.md) - Mocking the GraphQL client
+3. [Architecture](architecture.md) - Understanding component architecture
+
 ## Documentation Standards
 
 When contributing documentation:
@@ -64,3 +69,5 @@ When contributing documentation:
 - [StrawberryShake Documentation](https://chillicream.com/docs/strawberryshake)
 - [Entity Framework Core Documentation](https://learn.microsoft.com/en-us/ef/core/)
 - [.NET Aspire Documentation](https://learn.microsoft.com/en-us/dotnet/aspire/)
+- [bUnit Documentation](https://bunit.dev/) - Blazor component testing
+- [NSubstitute Documentation](https://nsubstitute.github.io/) - Mocking framework

@@ -11,7 +11,7 @@ namespace MyMarketManager.Components.Tests;
 public class ProductFormTests : Bunit.TestContext
 {
     [Fact]
-    public async Task AddProduct_DisplaysCorrectTitle()
+    public void AddProduct_DisplaysCorrectTitle()
     {
         // Arrange
         var mockClient = Substitute.For<IMyMarketManagerClient>();
@@ -25,7 +25,7 @@ public class ProductFormTests : Bunit.TestContext
     }
 
     [Fact]
-    public async Task EditProduct_LoadsProductData()
+    public void EditProduct_LoadsProductData()
     {
         // Arrange
         var mockClient = Substitute.For<IMyMarketManagerClient>();
@@ -162,7 +162,7 @@ public class ProductFormTests : Bunit.TestContext
     }
 
     [Fact]
-    public async Task CancelButton_NavigatesToProducts()
+    public void CancelButton_NavigatesToProducts()
     {
         // Arrange
         var mockClient = Substitute.For<IMyMarketManagerClient>();

@@ -206,6 +206,48 @@ public async Task<Product?> GetProductById(Guid productId)
 }
 ```
 
+#### SearchProducts
+
+Search for products by name, description, or SKU with server-side filtering.
+
+**Generated Method:**
+```csharp
+IOperationResult<ISearchProductsResult> result = 
+    await client.SearchProducts.ExecuteAsync(searchTerm, cancellationToken);
+```
+
+**Example Usage:**
+```csharp
+public async Task<List<Product>> SearchProducts(string searchTerm)
+{
+    var result = await _client.SearchProducts.ExecuteAsync(searchTerm);
+    
+    if (result.Data?.SearchProducts != null)
+    {
+        return result.Data.SearchProducts
+            .Select(p => new Product
+            {
+                Id = p.Id,
+                Name = p.Name,
+                SKU = p.Sku,
+                Quality = p.Quality,
+                StockOnHand = p.StockOnHand,
+                Description = p.Description,
+                Notes = p.Notes
+            })
+            .ToList();
+    }
+    
+    return new List<Product>();
+}
+```
+
+**Benefits of SearchProducts:**
+- Server-side filtering reduces data transfer for large datasets
+- More efficient than client-side filtering with LINQ
+- Consistent search behavior across all client platforms
+- Returns all products if search term is empty
+
 ### Mutations
 
 #### CreateProduct

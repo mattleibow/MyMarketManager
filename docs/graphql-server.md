@@ -159,6 +159,60 @@ public async Task<Product?> GetProductById(
 - The product if found
 - `null` if not found (serialized as `null` in GraphQL response)
 
+#### Search Products
+
+**Operation:**
+```graphql
+query SearchProducts($searchTerm: String!) {
+  searchProducts(searchTerm: $searchTerm) {
+    id
+    name
+    sku
+    quality
+    stockOnHand
+    description
+    notes
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "searchTerm": "widget"
+}
+```
+
+**Implementation:**
+```csharp
+public async Task<List<Product>> SearchProducts(
+    string searchTerm,
+    MyMarketManagerDbContext context,
+    CancellationToken cancellationToken)
+{
+    if (string.IsNullOrWhiteSpace(searchTerm))
+    {
+        return await context.Products
+            .OrderBy(p => p.Name)
+            .ToListAsync(cancellationToken);
+    }
+
+    return await context.Products
+        .Where(p => p.Name.Contains(searchTerm) ||
+                   (p.Description != null && p.Description.Contains(searchTerm)) ||
+                   (p.SKU != null && p.SKU.Contains(searchTerm)))
+        .OrderBy(p => p.Name)
+        .ToListAsync(cancellationToken);
+}
+```
+
+**Features:**
+- Server-side search filtering by product name, description, or SKU
+- Case-sensitive search (SQL Server default)
+- Returns all products if search term is empty or whitespace
+- Results ordered by name
+- More efficient than client-side filtering for large datasets
+
 ### Mutations
 
 #### Create Product

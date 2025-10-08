@@ -14,6 +14,7 @@ The repository is organized into the following projects:
 - **src/MyMarketManager.ServiceDefaults** - Shared .NET Aspire service defaults for health checks, telemetry, and service discovery
 - **src/MyMarketManager.AppHost** - .NET Aspire app host for local development orchestration
 - **tests/MyMarketManager.Data.Tests** - Unit tests for data layer using xUnit
+- **tests/MyMarketManager.Components.Tests** - Blazor component tests using bUnit, xUnit, and NSubstitute
 - **tests/MyMarketManager.Integration.Tests** - Integration tests using Aspire.Hosting.Testing
 
 ## Technology Stack
@@ -26,6 +27,8 @@ The repository is organized into the following projects:
 - **.NET Aspire** - Cloud-native orchestration and development tools
 - **SQL Server** - Database (containerized via Docker for local development)
 - **xUnit** - Testing framework
+- **bUnit** - Blazor component testing library
+- **NSubstitute** - Mocking framework for tests
 
 ## Prerequisites for Development
 
@@ -125,7 +128,7 @@ dotnet graphql generate
 Location: `src/MyMarketManager.WebApp/GraphQL/`
 
 Key files:
-- `ProductQueries.cs` - Query operations (getProducts, getProductById)
+- `ProductQueries.cs` - Query operations (getProducts, getProductById, searchProducts)
 - `ProductMutations.cs` - Mutation operations (createProduct, updateProduct, deleteProduct)
 - Input types: `CreateProductInput`, `UpdateProductInput`
 
@@ -139,6 +142,21 @@ Generated code is in `Generated/` subdirectory. The client provides:
 - Type-safe client interface: `IMyMarketManagerClient`
 - Dependency injection via `AddMyMarketManagerClient()` extension method
 - Generated types from server schema (manually generated using `dotnet graphql generate`)
+
+### Blazor Components
+
+Location: `src/MyMarketManager.WebApp/Components/Pages/`
+
+**All Blazor components use the GraphQL client (`IMyMarketManagerClient`) instead of directly accessing the database.** This ensures:
+- Components are ready for deployment in WASM and MAUI applications
+- Clear separation of concerns between UI and data access
+- Type-safe API communication with generated client code
+
+Key components:
+- `Products.razor` - Product list with search functionality using `GetProducts` and `SearchProducts` queries
+- `ProductForm.razor` - Product creation/editing using `GetProductById`, `CreateProduct`, and `UpdateProduct` operations
+
+**Important**: UI components should never inject `MyMarketManagerDbContext` or use Data layer types directly. Always use the GraphQL client.
 
 ### Database Context
 

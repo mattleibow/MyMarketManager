@@ -21,6 +21,8 @@ The solution is organized into the following projects:
 - **MyMarketManager.GraphQL.Client** - Standalone GraphQL client library (StrawberryShake) compatible with MAUI, Blazor WASM, and other .NET applications
 - **MyMarketManager.ServiceDefaults** - Shared .NET Aspire service defaults
 - **MyMarketManager.AppHost** - .NET Aspire app host for local development orchestration
+- **MyMarketManager.Data.Tests** - Unit tests for the data layer
+- **MyMarketManager.Components.Tests** - Blazor component tests using bUnit
 - **MyMarketManager.Integration.Tests** - Integration tests using Aspire.Hosting.Testing
 
 ## GraphQL API Architecture
@@ -38,7 +40,10 @@ The GraphQL server is hosted within MyMarketManager.WebApp at the `/graphql` end
 - **Nitro IDE** available at `/graphql` in development mode
 
 **Current Implementation:**
-- `ProductQueries` class with query operations (getProducts, getProductById)
+- `ProductQueries` class with query operations:
+  - `getProducts` - Returns all products ordered by name
+  - `getProductById` - Returns a single product by ID
+  - `searchProducts` - Server-side search by name, description, or SKU
 - `ProductMutations` class with mutation operations (createProduct, updateProduct, deleteProduct)
 - Direct Entity Framework Core integration via injected `MyMarketManagerDbContext`
 - Input types: `CreateProductInput`, `UpdateProductInput`
@@ -67,10 +72,11 @@ The MyMarketManager.GraphQL.Client library provides:
 - **Generated client interface** `IMyMarketManagerClient` for easy mocking and testing
 
 **Current State:**
-- Client code is generated from the running GraphQL server schema
+- Client code is generated from the GraphQL server schema
 - Located in `src/MyMarketManager.GraphQL.Client/Generated/`
-- Ready for use in MAUI mobile apps and other .NET clients
-- Currently registered in WebApp but Razor pages still use DbContext directly (migration in progress)
+- Ready for use in MAUI mobile apps, Blazor WASM, and other .NET clients
+- **All Blazor components in WebApp use the GraphQL client exclusively** - no direct database access from UI
+- Components: `Products.razor` and `ProductForm.razor` use `IMyMarketManagerClient` for all data operations
 
 ## .NET Aspire Integration
 
