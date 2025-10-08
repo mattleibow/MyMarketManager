@@ -84,10 +84,10 @@ The application automatically applies migrations on startup via `DatabaseMigrati
 
 ```bash
 # Add a new migration
-dotnet ef migrations add <MigrationName> --project src/MyMarketManager.Data --startup-project src/MyMarketManager.WebApp
+dotnet ef migrations add <MigrationName> --project src/MyMarketManager.Data
 
 # Update database (not typically needed as migrations run automatically)
-dotnet ef database update --project src/MyMarketManager.Data --startup-project src/MyMarketManager.WebApp
+dotnet ef database update --project src/MyMarketManager.Data
 ```
 
 ### GraphQL Schema Generation
@@ -96,7 +96,9 @@ The GraphQL client (StrawberryShake) automatically generates code at build time 
 
 ```bash
 # Ensure the server is running first via Aspire AppHost
-dotnet graphql generate --project src/MyMarketManager.GraphQL.Client
+cd src/MyMarketManager.GraphQL.Client
+dotnet graphql update
+dotnet graphql generate
 ```
 
 ## Key Configuration Files
