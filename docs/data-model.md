@@ -154,6 +154,7 @@ Description: Represents a single supplier data upload (e.g. Shein ZIP) or sales 
 | SupplierId | Integer (FK) | Supplier reference | → Supplier |
 | UploadDate | DateTime | When file was uploaded | — |
 | FileHash | Text | Hash for deduplication | — |
+| BlobStorageUrl | Text (nullable) | Azure Blob Storage URL for the uploaded file | — |
 | Status | ProcessingStatus | Batch state | — |
 | Notes | Text (nullable) | Free‑form notes | — |
 

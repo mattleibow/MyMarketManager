@@ -16,9 +16,16 @@ builder.Services.AddRazorComponents()
 // Configure DbContext to use the connection string provided by Aspire
 builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 
+// Configure Azure Blob Storage client provided by Aspire
+builder.AddAzureBlobServiceClient("blobs");
+
 // Add database migration as a hosted service (runs in all environments)
 builder.Services.AddScoped<MyMarketManagerDbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
+
+// Add blob storage services
+builder.Services.AddSingleton<BlobStorageService>();
+builder.Services.AddHostedService<BlobIngestionService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

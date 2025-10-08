@@ -86,10 +86,16 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 - Compute reconciled units sold, total revenue, and profit per product for the event.  
 
 ### 5.7 Supplier Data Ingestion
-- Support upload of supplier ZIP files (starting with Shein “Request My Data”).  
+- Support upload of supplier ZIP files (starting with Shein "Request My Data").  
+- Upload workflow:
+  - Users manually upload password-protected ZIP files via the web interface.
+  - Files are stored in Azure Blob Storage in a dedicated container.
+  - Background service monitors blob storage for new uploads every 5 minutes.
+  - Service downloads, extracts, and processes files to create staging batches.
 - Parse ZIP contents into normalized staging entities: StagingBatch, StagingPurchaseOrder, StagingPurchaseOrderItem.  
-- Deduplicate by SupplierOrderId and SupplierReferenceNumber.  
+- Deduplicate by file hash and SupplierOrderId/SupplierReferenceNumber.  
 - Preserve raw supplier rows as JSON in staging for audit.  
+- Store blob storage URL in StagingBatch for reference and audit trail.
 - Attempt smart linking of items to existing products by supplier reference number or product URL.  
 - Create StagingProductCandidate entries for unresolved items.  
 
