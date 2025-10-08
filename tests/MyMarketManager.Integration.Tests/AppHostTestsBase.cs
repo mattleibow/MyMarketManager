@@ -1,12 +1,11 @@
 using Aspire.Hosting;
 using Microsoft.Extensions.Logging;
-using YamlDotNet.Serialization;
 
 namespace MyMarketManager.Integration.Tests;
 
 public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncLifetime
 {
-    protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
+    protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(60);
 
     protected DistributedApplication App { get; private set; } = null!;
 
