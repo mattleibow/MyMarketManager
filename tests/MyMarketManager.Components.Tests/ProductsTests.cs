@@ -33,7 +33,6 @@ public class ProductsTests : Bunit.TestContext
 
         // Act
         var cut = RenderComponent<Products>();
-        await Task.Delay(100); // Give time for async operations
 
         // Assert
         cut.WaitForState(() => cut.FindAll("tbody tr").Count == 2, TimeSpan.FromSeconds(2));
@@ -61,7 +60,6 @@ public class ProductsTests : Bunit.TestContext
 
         // Act
         var cut = RenderComponent<Products>();
-        await Task.Delay(100); // Give time for async operations
 
         // Assert
         cut.WaitForState(() => cut.Markup.Contains("No products found"), TimeSpan.FromSeconds(2));
@@ -102,7 +100,6 @@ public class ProductsTests : Bunit.TestContext
 
         // Act
         var cut = RenderComponent<Products>();
-        await Task.Delay(100); // Give time for async operations
 
         // Find and click delete button
         cut.WaitForState(() => cut.FindAll("button[title='Delete Product']").Count > 0, TimeSpan.FromSeconds(2));
@@ -110,7 +107,6 @@ public class ProductsTests : Bunit.TestContext
         deleteButton.Click();
 
         // Confirm deletion in modal
-        await Task.Delay(50);
         var confirmButton = cut.Find("button.btn-danger");
         confirmButton.Click();
 

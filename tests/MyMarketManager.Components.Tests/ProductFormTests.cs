@@ -19,7 +19,6 @@ public class ProductFormTests : Bunit.TestContext
 
         // Act
         var cut = RenderComponent<ProductForm>();
-        await Task.Delay(100); // Give time for async operations
 
         // Assert
         Assert.Contains("Add Product", cut.Markup);
@@ -54,7 +53,6 @@ public class ProductFormTests : Bunit.TestContext
         // Act
         var cut = RenderComponent<ProductForm>(parameters => parameters
             .Add(p => p.ProductId, productId));
-        await Task.Delay(100); // Give time for async operations
 
         // Assert
         cut.WaitForState(() => cut.Markup.Contains("Edit Product"), TimeSpan.FromSeconds(2));
@@ -86,7 +84,6 @@ public class ProductFormTests : Bunit.TestContext
 
         // Act
         var cut = RenderComponent<ProductForm>();
-        await Task.Delay(100); // Give time for async operations
 
         // Fill in the form
         var nameInput = cut.Find("#name");
@@ -145,7 +142,6 @@ public class ProductFormTests : Bunit.TestContext
         // Act
         var cut = RenderComponent<ProductForm>(parameters => parameters
             .Add(p => p.ProductId, productId));
-        await Task.Delay(100); // Give time for async operations
 
         // Wait for product to load
         cut.WaitForState(() => cut.Markup.Contains("Original Product"), TimeSpan.FromSeconds(2));
@@ -176,7 +172,6 @@ public class ProductFormTests : Bunit.TestContext
 
         // Act
         var cut = RenderComponent<ProductForm>();
-        await Task.Delay(100); // Give time for async operations
 
         var cancelButton = cut.Find("button.btn-secondary");
         cancelButton.Click();

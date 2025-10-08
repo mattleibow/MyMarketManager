@@ -3,48 +3,28 @@ schema {
   mutation: ProductMutations
 }
 
-type Delivery {
-  purchaseOrderId: UUID
-  purchaseOrder: PurchaseOrder
-  deliveryDate: DateTime!
-  courier: String
-  trackingNumber: String
-  status: ProcessingStatus!
-  items: [DeliveryItem!]!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
+type ProductQueries {
+  products: [Product!]!
+  productById(id: UUID!): Product
+  searchProducts(searchTerm: String!): [Product!]!
 }
 
-type DeliveryItem {
-  deliveryId: UUID!
-  delivery: Delivery!
-  productId: UUID!
-  product: Product!
-  quantity: Int!
+type ProductMutations {
+  createProduct(input: CreateProductInput!): Product!
+  updateProduct(id: UUID! input: UpdateProductInput!): Product!
+  deleteProduct(id: UUID!): Boolean!
+}
+
+input CreateProductInput {
+  sku: String
+  name: String!
+  description: String
   quality: ProductQuality!
   notes: String
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
+  stockOnHand: Int!
 }
 
-type MarketEvent {
-  name: String!
-  date: DateTime!
-  location: String
-  notes: String
-  reconciledSales: [ReconciledSale!]!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
+scalar UUID
 
 type Product {
   sku: String
@@ -66,48 +46,13 @@ type Product {
   isDeleted: Boolean!
 }
 
-type ProductMutations {
-  createProduct(input: CreateProductInput!): Product! @cost(weight: "10")
-  updateProduct(id: UUID! input: UpdateProductInput!): Product! @cost(weight: "10")
-  deleteProduct(id: UUID!): Boolean! @cost(weight: "10")
-}
-
-type ProductPhoto {
-  productId: UUID!
-  product: Product!
-  url: String!
-  caption: String
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
-
-type ProductQueries {
-  products: [Product!]! @cost(weight: "10")
-  productById(id: UUID!): Product @cost(weight: "10")
-  searchProducts(searchTerm: String!): [Product!]! @cost(weight: "10")
-}
-
-type PurchaseOrder {
-  supplierId: UUID!
-  supplier: Supplier!
-  orderDate: DateTime!
-  status: ProcessingStatus!
-  shippingFees: Decimal!
-  importFees: Decimal!
-  insuranceFees: Decimal!
-  additionalFees: Decimal!
+input UpdateProductInput {
+  sku: String
+  name: String!
+  description: String
+  quality: ProductQuality!
   notes: String
-  items: [PurchaseOrderItem!]!
-  deliveries: [Delivery!]!
-  stagingPurchaseOrders: [StagingPurchaseOrder!]!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
+  stockOnHand: Int!
 }
 
 type PurchaseOrderItem {
@@ -132,6 +77,42 @@ type PurchaseOrderItem {
   isDeleted: Boolean!
 }
 
+type ProductPhoto {
+  productId: UUID!
+  product: Product!
+  url: String!
+  caption: String
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+enum ProductQuality {
+  UNKNOWN
+  TERRIBLE
+  POOR
+  FAIR
+  GOOD
+  EXCELLENT
+}
+
+type DeliveryItem {
+  deliveryId: UUID!
+  delivery: Delivery!
+  productId: UUID!
+  product: Product!
+  quantity: Int!
+  quality: ProductQuality!
+  notes: String
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
 type ReconciledSale {
   productId: UUID!
   product: Product!
@@ -139,39 +120,6 @@ type ReconciledSale {
   marketEvent: MarketEvent!
   quantity: Int!
   salePrice: Decimal!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
-
-type StagingBatch {
-  supplierId: UUID!
-  supplier: Supplier!
-  uploadDate: DateTime!
-  fileHash: String!
-  status: ProcessingStatus!
-  notes: String
-  stagingPurchaseOrders: [StagingPurchaseOrder!]!
-  stagingSales: [StagingSale!]!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
-
-type StagingPurchaseOrder {
-  stagingBatchId: UUID!
-  stagingBatch: StagingBatch!
-  purchaseOrderId: UUID
-  purchaseOrder: PurchaseOrder
-  supplierReference: String
-  orderDate: DateTime!
-  rawData: String!
-  isImported: Boolean!
-  items: [StagingPurchaseOrderItem!]!
   id: UUID!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -205,20 +153,6 @@ type StagingPurchaseOrderItem {
   isDeleted: Boolean!
 }
 
-type StagingSale {
-  stagingBatchId: UUID!
-  stagingBatch: StagingBatch!
-  saleDate: DateTime!
-  rawData: String!
-  isImported: Boolean!
-  items: [StagingSaleItem!]!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
-
 type StagingSaleItem {
   stagingSaleId: UUID!
   stagingSale: StagingSale!
@@ -239,6 +173,29 @@ type StagingSaleItem {
   isDeleted: Boolean!
 }
 
+"The `DateTime` scalar represents an ISO-8601 compliant date time type."
+scalar DateTime
+
+type StagingSale {
+  stagingBatchId: UUID!
+  stagingBatch: StagingBatch!
+  saleDate: DateTime!
+  rawData: String!
+  isImported: Boolean!
+  items: [StagingSaleItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+enum CandidateStatus {
+  PENDING
+  LINKED
+  IGNORED
+}
+
 type Supplier {
   name: String!
   websiteUrl: String
@@ -252,28 +209,72 @@ type Supplier {
   isDeleted: Boolean!
 }
 
-input CreateProductInput {
-  sku: String
-  name: String!
-  description: String
-  quality: ProductQuality!
-  notes: String
-  stockOnHand: Int!
+type StagingPurchaseOrder {
+  stagingBatchId: UUID!
+  stagingBatch: StagingBatch!
+  purchaseOrderId: UUID
+  purchaseOrder: PurchaseOrder
+  supplierReference: String
+  orderDate: DateTime!
+  rawData: String!
+  isImported: Boolean!
+  items: [StagingPurchaseOrderItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
 }
 
-input UpdateProductInput {
-  sku: String
+type MarketEvent {
   name: String!
-  description: String
-  quality: ProductQuality!
+  date: DateTime!
+  location: String
   notes: String
-  stockOnHand: Int!
+  reconciledSales: [ReconciledSale!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
 }
 
-enum CandidateStatus {
-  PENDING
-  LINKED
-  IGNORED
+type Delivery {
+  purchaseOrderId: UUID
+  purchaseOrder: PurchaseOrder
+  deliveryDate: DateTime!
+  courier: String
+  trackingNumber: String
+  status: ProcessingStatus!
+  items: [DeliveryItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+"The `Decimal` scalar type represents a decimal floating-point number."
+scalar Decimal
+
+type PurchaseOrder {
+  supplierId: UUID!
+  supplier: Supplier!
+  orderDate: DateTime!
+  status: ProcessingStatus!
+  shippingFees: Decimal!
+  importFees: Decimal!
+  insuranceFees: Decimal!
+  additionalFees: Decimal!
+  notes: String
+  items: [PurchaseOrderItem!]!
+  deliveries: [Delivery!]!
+  stagingPurchaseOrders: [StagingPurchaseOrder!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
 }
 
 enum ProcessingStatus {
@@ -282,25 +283,21 @@ enum ProcessingStatus {
   COMPLETE
 }
 
-enum ProductQuality {
-  UNKNOWN
-  TERRIBLE
-  POOR
-  FAIR
-  GOOD
-  EXCELLENT
+type StagingBatch {
+  supplierId: UUID!
+  supplier: Supplier!
+  uploadDate: DateTime!
+  fileHash: String!
+  status: ProcessingStatus!
+  notes: String
+  stagingPurchaseOrders: [StagingPurchaseOrder!]!
+  stagingSales: [StagingSale!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
 }
 
 "The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response."
 directive @cost("The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc." weight: String!) on SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM | INPUT_FIELD_DEFINITION
-
-"The `@specifiedBy` directive is used within the type system definition language to provide a URL for specifying the behavior of custom scalar definitions."
-directive @specifiedBy("The specifiedBy URL points to a human-readable specification. This field will only read a result for scalar types." url: String!) on SCALAR
-
-"The `DateTime` scalar represents an ISO-8601 compliant date time type."
-scalar DateTime @specifiedBy(url: "https:\/\/www.graphql-scalars.com\/date-time")
-
-"The `Decimal` scalar type represents a decimal floating-point number."
-scalar Decimal
-
-scalar UUID @specifiedBy(url: "https:\/\/tools.ietf.org\/html\/rfc4122")

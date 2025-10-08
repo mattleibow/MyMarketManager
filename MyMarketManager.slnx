@@ -7,6 +7,7 @@
     <Project Path="src/MyMarketManager.WebApp/MyMarketManager.WebApp.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/MyMarketManager.Components.Tests/MyMarketManager.Components.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Data.Tests/MyMarketManager.Data.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Integration.Tests/MyMarketManager.Integration.Tests.csproj" />
   </Folder>
