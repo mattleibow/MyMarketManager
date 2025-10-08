@@ -1,4 +1,4 @@
-name: Build
+name: Test
 
 on:
   push:
@@ -20,5 +20,5 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    - name: Build
-      run: dotnet build --configuration Release
+    - name: Test
+      run: dotnet test --configuration Release --verbosity normal
