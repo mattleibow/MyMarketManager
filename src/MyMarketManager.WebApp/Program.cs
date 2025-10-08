@@ -25,6 +25,7 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 
 // Add blob storage services
 builder.Services.AddSingleton<BlobStorageService>();
+builder.Services.AddScoped<BatchIngestionProcessor>();
 builder.Services.AddHostedService<BlobIngestionService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
