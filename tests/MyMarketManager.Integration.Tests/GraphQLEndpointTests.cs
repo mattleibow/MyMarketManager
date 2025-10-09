@@ -6,6 +6,7 @@ namespace MyMarketManager.Integration.Tests;
 public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsBase(outputHelper)
 {
     [Fact]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task Endpoint_IsAccessible()
     {
         // Arrange
@@ -32,6 +33,7 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
     }
 
     [Fact]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task Endpoint_ReturnsSchema()
     {
         // Arrange
@@ -64,6 +66,7 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
     }
 
     [Fact]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task Endpoint_CanQueryProducts()
     {
         // Arrange
@@ -90,6 +93,7 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
     }
 
     [Fact]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task Endpoint_CanCreateProduct()
     {
         // Arrange
@@ -123,6 +127,7 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
     }
 
     [Fact]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task Endpoint_ReturnsErrorForInvalidQuery()
     {
         // Arrange
