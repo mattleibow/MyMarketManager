@@ -1,19 +1,36 @@
 using Aspire.Hosting;
 using Microsoft.Extensions.Logging;
+using Testcontainers.MsSql;
 
 namespace MyMarketManager.Integration.Tests;
 
 public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncLifetime
 {
-    protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(60);
+    protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
 
     protected DistributedApplication App { get; private set; } = null!;
+
+    protected MsSqlContainer SqlContainer { get; private set; } = null!;
 
     protected CancellationToken Cancel => TestContext.Current.CancellationToken;
 
     public virtual async ValueTask InitializeAsync()
     {
-        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(["UseVolumes=False"], Cancel);
+        // Create and start SQL Server container first
+        SqlContainer = new MsSqlBuilder()
+            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            .WithPassword("Test123!")
+            .Build();
+
+        await SqlContainer.StartAsync(Cancel);
+
+        // Pass the connection string to the AppHost
+        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(
+            [
+                "UseVolumes=False",
+                $"DatabaseConnectionString={SqlContainer.GetConnectionString()}"
+            ],
+            Cancel);
 
         // Log everything for the tests
         appHost.Services.AddLogging(logging =>
@@ -41,7 +58,6 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
         await App
             .StartAsync(Cancel)
             .WaitAsync(DefaultTimeout, Cancel);
-
     }
 
     public virtual async ValueTask DisposeAsync()
@@ -49,6 +65,11 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
         if (App is not null)
         {
             await App.DisposeAsync();
+        }
+
+        if (SqlContainer is not null)
+        {
+            await SqlContainer.DisposeAsync();
         }
     }
 }
