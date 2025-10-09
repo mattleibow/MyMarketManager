@@ -3,6 +3,7 @@ using MyMarketManager.Data.Services;
 using MyMarketManager.WebApp.Components;
 using MyMarketManager.WebApp.GraphQL;
 using MyMarketManager.WebApp.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +14,23 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Configure DbContext to use the connection string provided by Aspire
-builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
+// Check if we should use SQLite (primarily for tests)
+var useSqlite = builder.Configuration.GetValue("UseSqliteDatabase", false);
+
+if (useSqlite)
+{
+    // Use SQLite in-memory database for tests
+    // Note: For in-memory SQLite to work across requests, we need to use a shared cache connection
+    var connectionString = builder.Configuration.GetConnectionString("database") ?? "Data Source=:memory:";
+    
+    builder.Services.AddDbContext<MyMarketManagerDbContext>(options =>
+        options.UseSqlite(connectionString));
+}
+else
+{
+    // Configure DbContext to use the connection string provided by Aspire
+    builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
+}
 
 // Add database migration as a hosted service (runs in all environments)
 builder.Services.AddScoped<MyMarketManagerDbContextMigrator>();

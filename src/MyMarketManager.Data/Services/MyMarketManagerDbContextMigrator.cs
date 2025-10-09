@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MyMarketManager.Data.Entities;
@@ -12,6 +13,7 @@ namespace MyMarketManager.Data.Services;
 public class MyMarketManagerDbContextMigrator(
     MyMarketManagerDbContext context,
     IHostEnvironment environment,
+    IConfiguration configuration,
     ILogger<MyMarketManagerDbContextMigrator> logger)
 {
     public async Task MigrateAsync(CancellationToken cancellationToken = default)
@@ -20,14 +22,27 @@ public class MyMarketManagerDbContextMigrator(
         {
             logger.LogInformation("Starting database migration...");
 
-            // Apply migrations using execution strategy for resilience
-            var strategy = context.Database.CreateExecutionStrategy();
-            await strategy.ExecuteAsync(async () =>
-            {
-                await context.Database.MigrateAsync(cancellationToken);
-            });
+            // Check if we're using SQLite (primarily for tests)
+            var useSqlite = configuration.GetValue("UseSqliteDatabase", false);
 
-            logger.LogInformation("Database migrations applied successfully.");
+            if (useSqlite)
+            {
+                // For SQLite, use EnsureCreated instead of migrations
+                logger.LogInformation("Using SQLite - creating database schema with EnsureCreated...");
+                await context.Database.EnsureCreatedAsync(cancellationToken);
+                logger.LogInformation("SQLite database schema created successfully.");
+            }
+            else
+            {
+                // Apply migrations using execution strategy for resilience
+                var strategy = context.Database.CreateExecutionStrategy();
+                await strategy.ExecuteAsync(async () =>
+                {
+                    await context.Database.MigrateAsync(cancellationToken);
+                });
+
+                logger.LogInformation("Database migrations applied successfully.");
+            }
 
             // Only seed sample data in development/testing environment
             if (!environment.IsProduction())

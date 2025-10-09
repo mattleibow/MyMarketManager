@@ -13,7 +13,7 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
 
     public virtual async ValueTask InitializeAsync()
     {
-        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(["UseVolumes=False"], Cancel);
+        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(["UseVolumes=False", "UseSqliteDatabase=True"], Cancel);
 
         // Log everything for the tests
         appHost.Services.AddLogging(logging =>
