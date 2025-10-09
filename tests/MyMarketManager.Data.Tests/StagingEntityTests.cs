@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
+using MyMarketManager.Tests.Shared;
 
 namespace MyMarketManager.Data.Tests;
 
+[Trait(TestCategories.Key, TestCategories.Values.Database)]
 public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper)
 {
     [Fact]

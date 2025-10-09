@@ -2,11 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MyMarketManager.Data.Services;
+using MyMarketManager.Tests.Shared;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
 namespace MyMarketManager.Data.Tests.Services;
 
+[Trait(TestCategories.Key, TestCategories.Values.Database)]
 public class DbContextMigratorTests(ITestOutputHelper outputHelper, bool createSchema = false) : SqlServerTestBase(outputHelper, createSchema)
 {
     private readonly ILogger<DbContextMigrator> _logger = outputHelper.ToLogger<DbContextMigrator>();

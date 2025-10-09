@@ -21,6 +21,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        include:
+          - os: windows-latest
+            filter: --filter "Requires!=SSL"
 
     steps:
       - name: Checkout code
@@ -42,4 +45,4 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test --no-build --configuration Release --verbosity normal
+        run: dotnet test --no-build --configuration Release --verbosity normal ${{ matrix.filter }}
