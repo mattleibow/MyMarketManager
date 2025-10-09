@@ -27,6 +27,10 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
+    - name: Trust developer certificates
+      # if: matrix.os == 'windows-latest' || matrix.os == 'macos-latest'
+      run: dotnet dev-certs https --trust
+
     - name: Restore dependencies
       run: dotnet restore
 
