@@ -1,5 +1,6 @@
 using Aspire.Hosting;
 using Microsoft.Extensions.Logging;
+using Testcontainers.MsSql;
 
 namespace MyMarketManager.Integration.Tests;
 
@@ -8,12 +9,26 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
     protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(60);
 
     protected DistributedApplication App { get; private set; } = null!;
+    
+    private MsSqlContainer? _sqlContainer;
 
     protected CancellationToken Cancel => TestContext.Current.CancellationToken;
 
     public virtual async ValueTask InitializeAsync()
     {
-        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(["UseVolumes=False", "UseSqliteDatabase=True"], Cancel);
+        // Start SQL Server container first using Testcontainers
+        _sqlContainer = new MsSqlBuilder()
+            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            .Build();
+        
+        await _sqlContainer.StartAsync(Cancel);
+        
+        var connectionString = _sqlContainer.GetConnectionString();
+
+        // Pass the connection string to AppHost
+        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(
+            ["UseVolumes=False", $"ConnectionStrings__database={connectionString}"], 
+            Cancel);
 
         // Log everything for the tests
         appHost.Services.AddLogging(logging =>
@@ -49,6 +64,11 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
         if (App is not null)
         {
             await App.DisposeAsync();
+        }
+        
+        if (_sqlContainer is not null)
+        {
+            await _sqlContainer.DisposeAsync();
         }
     }
 }
