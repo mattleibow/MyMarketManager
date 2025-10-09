@@ -18,7 +18,6 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
     {
         // Start SQL Server container first using Testcontainers
         _sqlContainer = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
         
         await _sqlContainer.StartAsync(Cancel);
@@ -27,7 +26,10 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
 
         // Pass the connection string to AppHost
         var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(
-            ["UseVolumes=False", $"ConnectionStrings__database={connectionString}"], 
+            [
+                "UseVolumes=False",
+                $"UseDatabaseConnectionString={connectionString}"
+            ], 
             Cancel);
 
         // Log everything for the tests

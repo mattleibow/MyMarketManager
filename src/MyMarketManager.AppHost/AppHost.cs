@@ -2,15 +2,12 @@ using Microsoft.Extensions.Configuration;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Check if a connection string is provided (e.g., from tests)
-var externalConnectionString = builder.Configuration.GetConnectionString("database");
-
 IResourceBuilder<IResourceWithConnectionString> database;
 
-if (!string.IsNullOrEmpty(externalConnectionString))
+if (builder.GetDevConfig("UseDatabaseConnectionString") is { } connStr)
 {
-    // Use the provided connection string (from Testcontainers in tests)
-    database = builder.AddConnectionString("database", externalConnectionString);
+    // Use the provided connection string (only in development)
+    database = builder.AddConnectionString("database", ReferenceExpression.Create($"{connStr}"));
 }
 else
 {
@@ -33,3 +30,14 @@ builder.AddProject<Projects.MyMarketManager_WebApp>("webapp")
     .WaitFor(database);
 
 builder.Build().Run();
+
+
+static class Extensions
+{
+    public static string? GetDevConfig(this IDistributedApplicationBuilder builder, string key) =>
+        builder.ExecutionContext.IsPublishMode ||
+        builder.Configuration.GetValue(key, "") is not { } value ||
+        string.IsNullOrEmpty(value)
+            ? null
+            : value;
+}
