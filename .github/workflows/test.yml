@@ -27,5 +27,11 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    - name: Test
-      run: dotnet test --configuration Release --verbosity normal
+    - name: Restore dependencies
+      run: dotnet restore src/MyMarketManager.sln
+
+    - name: Build solution
+      run: dotnet build src/MyMarketManager.sln --no-restore --configuration Release
+
+    - name: Run tests
+      run: dotnet test src/MyMarketManager.sln --no-build --configuration Release --verbosity normal

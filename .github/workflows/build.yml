@@ -23,5 +23,8 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    - name: Build
-      run: dotnet build --configuration Release
+    - name: Restore dependencies
+      run: dotnet restore src/MyMarketManager.sln
+
+    - name: Build solution
+      run: dotnet build src/MyMarketManager.sln --no-restore --configuration Release
