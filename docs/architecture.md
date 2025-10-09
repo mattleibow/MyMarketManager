@@ -23,7 +23,7 @@ The solution is organized into the following projects:
 - **MyMarketManager.AppHost** - .NET Aspire app host for local development orchestration
 - **MyMarketManager.Data.Tests** - Unit tests for the data layer
 - **MyMarketManager.Components.Tests** - Blazor component tests using bUnit
-- **MyMarketManager.Integration.Tests** - Integration tests using Aspire.Hosting.Testing
+- **MyMarketManager.Integration.Tests** - Integration tests using Aspire.Hosting.Testing and Playwright for end-to-end UI testing
 
 ## GraphQL API Architecture
 

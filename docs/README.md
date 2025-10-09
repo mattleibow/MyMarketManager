@@ -71,3 +71,4 @@ When contributing documentation:
 - [.NET Aspire Documentation](https://learn.microsoft.com/en-us/dotnet/aspire/)
 - [bUnit Documentation](https://bunit.dev/) - Blazor component testing
 - [NSubstitute Documentation](https://nsubstitute.github.io/) - Mocking framework
+- [Playwright for .NET Documentation](https://playwright.dev/dotnet/) - End-to-end testing

@@ -15,7 +15,7 @@ The repository is organized into the following projects:
 - **src/MyMarketManager.AppHost** - .NET Aspire app host for local development orchestration
 - **tests/MyMarketManager.Data.Tests** - Unit tests for data layer using xUnit
 - **tests/MyMarketManager.Components.Tests** - Blazor component tests using bUnit, xUnit, and NSubstitute
-- **tests/MyMarketManager.Integration.Tests** - Integration tests using Aspire.Hosting.Testing
+- **tests/MyMarketManager.Integration.Tests** - Integration tests using Aspire.Hosting.Testing and Playwright for end-to-end UI testing
 
 ## Technology Stack
 
@@ -29,6 +29,7 @@ The repository is organized into the following projects:
 - **xUnit** - Testing framework
 - **bUnit** - Blazor component testing library
 - **NSubstitute** - Mocking framework for tests
+- **Playwright** - End-to-end browser testing framework
 
 ## Prerequisites for Development
 
