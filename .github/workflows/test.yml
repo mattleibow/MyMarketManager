@@ -40,7 +40,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          $pfxPath = Join-Path -Path $(Agent.TempDirectory) -ChildPath 'cert.pfx'
+          $pfxPath = Join-Path -Path $env:RUNNER_TEMP -ChildPath 'cert.pfx'
           $password = (New-Guid).ToString("N")
           dotnet dev-certs https --export-path $pfxPath --password $password -v
           $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
