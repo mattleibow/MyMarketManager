@@ -20,6 +20,7 @@ else
         .RunAsContainer(container =>
         {
             container.WithImageTag("2022-latest");
+            container.WithLifetime(ContainerLifetime.Persistent);
 
             if (builder.Configuration.GetValue("UseVolumes", true))
                 container.WithDataVolume();
