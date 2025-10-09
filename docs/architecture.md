@@ -92,8 +92,24 @@ The data layer uses Entity Framework Core 9 with:
 
 - **Code-First approach** - Entities defined as C# classes
 - **Migrations** - Database schema versioned and managed through EF Core migrations
-- **SQL Server provider** - Compatible with Azure SQL
+- **SQL Server provider** - Compatible with Azure SQL in production
+- **SQLite provider** - Used for integration tests to eliminate SQL Server Docker dependency
 - **DbContext** - `MyMarketManagerDbContext` provides access to all entities
+
+### Database Configuration
+
+The application supports two database providers:
+
+1. **SQL Server** (default) - Used in development and production
+   - Managed by Aspire (Docker container in dev, Azure SQL in production)
+   - Uses EF Core migrations for schema updates
+   
+2. **SQLite** (tests) - Used in integration tests
+   - Configured via `UseSqliteDatabase=True` configuration parameter
+   - Uses `EnsureCreated()` instead of migrations
+   - Eliminates Docker/SQL Server startup time in tests
+
+The database provider is selected automatically based on the `UseSqliteDatabase` configuration value in the AppHost.
 
 ### Entity Organization
 

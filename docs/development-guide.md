@@ -101,10 +101,32 @@ dotnet run --project src/MyMarketManager.AppHost
 dotnet test
 ```
 
+#### Run Unit Tests Only (Faster)
+
+Integration tests are marked with `Category=LongRunning` and can be skipped:
+
+```bash
+dotnet test --filter "Category!=LongRunning"
+```
+
+#### Run Integration Tests
+
+Integration tests use .NET Aspire distributed application testing and can be configured to use SQLite instead of SQL Server:
+
+```bash
+# Run integration tests (requires Aspire DCP)
+dotnet test tests/MyMarketManager.Integration.Tests
+
+# Integration tests automatically use SQLite via UseSqliteDatabase=True configuration
+# This eliminates the need for SQL Server Docker container, making tests faster
+```
+
+**Note:** Integration tests require the .NET Aspire DCP (Distributed Application Control Plane) to be available. They are automatically configured to use SQLite instead of SQL Server to reduce startup time.
+
 #### Run Specific Test Project
 
 ```bash
-dotnet test tests/MyMarketManager.Integration.Tests
+dotnet test tests/MyMarketManager.Data.Tests
 ```
 
 #### Run Tests with Coverage
