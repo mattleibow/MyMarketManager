@@ -17,7 +17,7 @@ builder.Services.AddRazorComponents()
 builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 
 // Add database migration as a hosted service (runs in all environments)
-builder.Services.AddScoped<MyMarketManagerDbContextMigrator>();
+builder.Services.AddScoped<DbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();

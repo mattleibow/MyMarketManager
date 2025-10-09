@@ -4,7 +4,7 @@ using MyMarketManager.Data.Enums;
 
 namespace MyMarketManager.Data.Tests;
 
-public class StagingEntityTests : SqliteTestBase
+public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper)
 {
     [Fact]
     public async Task StagingBatch_CanContainMultiplePurchaseOrders()

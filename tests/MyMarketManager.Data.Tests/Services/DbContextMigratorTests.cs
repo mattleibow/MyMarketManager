@@ -7,9 +7,9 @@ using NSubstitute.ExceptionExtensions;
 
 namespace MyMarketManager.Data.Tests.Services;
 
-public class MyMarketManagerDbContextMigratorTests(ITestOutputHelper outputHelper, bool createSchema = false) : SqlServerTestBase(createSchema)
+public class DbContextMigratorTests(ITestOutputHelper outputHelper, bool createSchema = false) : SqlServerTestBase(outputHelper, createSchema)
 {
-    private readonly ILogger<MyMarketManagerDbContextMigrator> _logger = outputHelper.ToLogger<MyMarketManagerDbContextMigrator>();
+    private readonly ILogger<DbContextMigrator> _logger = outputHelper.ToLogger<DbContextMigrator>();
     private readonly IHostEnvironment _mockEnvironment = Substitute.For<IHostEnvironment>();
 
     [Fact]
@@ -17,7 +17,7 @@ public class MyMarketManagerDbContextMigratorTests(ITestOutputHelper outputHelpe
     {
         // Arrange
         _mockEnvironment.EnvironmentName.Returns(Environments.Development);
-        var migrator = new MyMarketManagerDbContextMigrator(Context, _mockEnvironment, _logger);
+        var migrator = new DbContextMigrator(Context, _mockEnvironment, _logger);
 
         // Ensure database tables don't exist yet
         Assert.False(await TableExistsAsync("Products"));
@@ -39,7 +39,7 @@ public class MyMarketManagerDbContextMigratorTests(ITestOutputHelper outputHelpe
     {
         // Arrange
         _mockEnvironment.EnvironmentName.Returns(Environments.Production);
-        var migrator = new MyMarketManagerDbContextMigrator(Context, _mockEnvironment, _logger);
+        var migrator = new DbContextMigrator(Context, _mockEnvironment, _logger);
 
         // Ensure database tables don't exist yet
         Assert.False(await TableExistsAsync("Products"));
@@ -63,7 +63,7 @@ public class MyMarketManagerDbContextMigratorTests(ITestOutputHelper outputHelpe
         mockContext.Database.Returns(mockDatabase);
         mockDatabase.CreateExecutionStrategy().Throws(new InvalidOperationException("Test exception"));
 
-        var migrator = new MyMarketManagerDbContextMigrator(mockContext, _mockEnvironment, _logger);
+        var migrator = new DbContextMigrator(mockContext, _mockEnvironment, _logger);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() => migrator.MigrateAsync(Cancel));

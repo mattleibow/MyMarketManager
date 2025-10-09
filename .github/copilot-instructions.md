@@ -146,7 +146,7 @@ Location: `src/MyMarketManager.Data/`
 
 Key classes:
 - `MyMarketManagerDbContext` - Main DbContext with entities and query filters
-- `MyMarketManagerDbContextMigrator` - Handles migration and seeding
+- `DbContextMigrator` - Handles migration and seeding
 - `DatabaseMigrationService` - Hosted service that runs migrations on startup
 
 The DbContext includes:

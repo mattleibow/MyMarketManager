@@ -4,7 +4,7 @@ using MyMarketManager.Data.Enums;
 
 namespace MyMarketManager.Data.Tests;
 
-public class SoftDeleteTests : SqliteTestBase
+public class SoftDeleteTests(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper)
 {
     [Fact]
     public async Task Entity_WhenDeleted_ShouldBeSoftDeleted()

@@ -4,7 +4,7 @@ using MyMarketManager.Data.Enums;
 
 namespace MyMarketManager.Data.Tests;
 
-public class EntityRelationshipTests : SqliteTestBase
+public class EntityRelationshipTests(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper)
 {
     [Fact]
     public async Task Supplier_CanHaveMultiplePurchaseOrders()

@@ -21,7 +21,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        # os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
       - name: Checkout code
@@ -35,17 +34,6 @@ jobs:
       - name: Trust developer certificates
         if: matrix.os == 'ubuntu-latest'
         run: dotnet dev-certs https --trust
-
-      - name: Trust developer certificates
-        if: matrix.os == 'windows-latest'
-        shell: powershell
-        run: |
-          $pfxPath = Join-Path -Path $env:RUNNER_TEMP -ChildPath 'cert.pfx'
-          $password = (New-Guid).ToString("N")
-          dotnet dev-certs https --export-path $pfxPath --password $password -v
-          $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
-          Import-PfxCertificate -FilePath $pfxPath -Password $securePassword -CertStoreLocation Cert:\LocalMachine\Root
-          Remove-Item $pfxPath
 
       - name: Restore dependencies
         run: dotnet restore
