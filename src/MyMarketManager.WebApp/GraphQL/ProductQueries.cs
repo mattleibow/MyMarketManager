@@ -27,4 +27,30 @@ public class ProductQueries
     {
         return await context.Products.FindAsync(new object[] { id }, cancellationToken);
     }
+
+    /// <summary>
+    /// Search products by name, description, or SKU (case-insensitive)
+    /// </summary>
+    public async Task<List<Product>> SearchProducts(
+        string searchTerm,
+        MyMarketManagerDbContext context,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return await context.Products
+                .OrderBy(p => p.Name)
+                .ToListAsync(cancellationToken);
+        }
+
+        // Use EF.Functions.Like for case-insensitive search
+        var searchPattern = $"%{searchTerm}%";
+        
+        return await context.Products
+            .Where(p => EF.Functions.Like(p.Name, searchPattern) ||
+                       (p.Description != null && EF.Functions.Like(p.Description, searchPattern)) ||
+                       (p.SKU != null && EF.Functions.Like(p.SKU, searchPattern)))
+            .OrderBy(p => p.Name)
+            .ToListAsync(cancellationToken);
+    }
 }

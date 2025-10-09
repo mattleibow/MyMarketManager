@@ -103,8 +103,25 @@ dotnet test
 
 #### Run Specific Test Project
 
+**Data Layer Tests:**
+```bash
+dotnet test tests/MyMarketManager.Data.Tests
+```
+
+**Component Tests:**
+```bash
+dotnet test tests/MyMarketManager.Components.Tests
+```
+
+**Integration Tests:**
 ```bash
 dotnet test tests/MyMarketManager.Integration.Tests
+```
+
+#### Run Tests Excluding Long-Running Ones
+
+```bash
+dotnet test --filter "Category!=LongRunning"
 ```
 
 #### Run Tests with Coverage
@@ -112,6 +129,125 @@ dotnet test tests/MyMarketManager.Integration.Tests
 ```bash
 dotnet test --collect:"XPlat Code Coverage"
 ```
+
+### 6. Component Testing with bUnit
+
+**Location:** `tests/MyMarketManager.Components.Tests/`
+
+The project uses **bUnit** for testing Blazor components with **NSubstitute** for mocking the GraphQL client.
+
+**Key Features:**
+- Test component rendering and interactions
+- Mock `IMyMarketManagerClient` for isolated testing
+- Verify GraphQL operations are called correctly
+- Test user interactions (clicks, form submissions)
+
+**Example Test:**
+```csharp
+[Fact]
+public void LoadProducts_SuccessfulQuery_DisplaysProducts()
+{
+    // Arrange
+    var mockClient = Substitute.For<IMyMarketManagerClient>();
+    var mockQuery = Substitute.For<IGetProductsQuery>();
+    var mockResult = Substitute.For<IOperationResult<IGetProductsResult>>();
+    var mockData = Substitute.For<IGetProductsResult>();
+
+    mockData.Products.Returns(products);
+    mockResult.Data.Returns(mockData);
+    mockQuery.ExecuteAsync(Arg.Any<CancellationToken>())
+        .Returns(Task.FromResult(mockResult));
+    mockClient.GetProducts.Returns(mockQuery);
+
+    Services.AddSingleton(mockClient);
+
+    // Act
+    var cut = RenderComponent<Products>();
+
+    // Assert
+    cut.WaitForState(() => cut.FindAll("tbody tr").Count == 2);
+    Assert.Equal(2, cut.FindAll("tbody tr").Count);
+}
+```
+
+**Best Practices:**
+- Always mock the GraphQL client, never use real database connections
+- Use `WaitForState()` for asynchronous rendering
+- Test user interactions, not implementation details
+- Verify GraphQL operations are called with correct parameters
+
+### 7. Integration Testing with Playwright
+
+**Location:** `tests/MyMarketManager.Integration.Tests/`
+
+The project includes **Playwright** tests for end-to-end UI testing of the full application stack.
+
+**Key Features:**
+- Tests the complete application including database, GraphQL API, and UI
+- Uses real browser (Chromium) for authentic user interactions
+- Validates CRUD operations work correctly end-to-end
+- Tests search functionality with actual server-side filtering
+- Verifies navigation and form validation
+
+**Setup:**
+
+Before running Playwright tests, install the browsers:
+```bash
+pwsh tests/MyMarketManager.Integration.Tests/bin/Debug/net10.0/playwright.ps1 install chromium
+```
+
+Or use the Playwright CLI:
+```bash
+playwright install chromium
+```
+
+**Running Playwright Tests:**
+
+Playwright tests are marked with `[Trait("Category", "LongRunning")]` and require the full application stack:
+
+```bash
+# Run all integration tests (includes Playwright)
+dotnet test tests/MyMarketManager.Integration.Tests
+
+# Run only GraphQL endpoint tests (fast)
+dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~GraphQLEndpointTests"
+
+# Run only Playwright UI tests
+dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~ProductsPageTests"
+```
+
+**Example Test:**
+```csharp
+[Fact]
+[Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
+public async Task CreateProduct_SuccessfullyCreatesAndDisplaysProduct()
+{
+    // Arrange
+    await NavigateToAppAsync("/products");
+    var productName = $"Test Product {Guid.NewGuid():N}";
+
+    // Act - Navigate to Add Product page
+    await Page!.GetByRole(AriaRole.Link, new() { Name = "Add Product" }).ClickAsync();
+    
+    // Fill in the form
+    await Page.GetByLabel("Product Name").FillAsync(productName);
+    await Page.GetByLabel("Quality Rating").SelectOptionAsync("GOOD");
+    await Page.GetByLabel("Stock on Hand").FillAsync("10");
+    
+    // Submit the form
+    await Page.GetByRole(AriaRole.Button, new() { Name = "Save" }).ClickAsync();
+
+    // Assert - Verify the product appears in the list
+    await Expect(Page.GetByText(productName)).ToBeVisibleAsync();
+}
+```
+
+**Best Practices:**
+- Use unique identifiers (GUIDs) in test data to avoid conflicts
+- Use Playwright's built-in assertions (`Expect()`) for better error messages
+- Wait for network idle or specific elements before assertions
+- Clean up test data when possible (though soft deletes help with isolation)
+- Use semantic locators (roles, labels) over CSS selectors for maintainability
 
 ## Project-Specific Development
 

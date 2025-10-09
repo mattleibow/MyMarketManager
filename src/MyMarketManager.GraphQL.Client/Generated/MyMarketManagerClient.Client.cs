@@ -18,6 +18,7 @@ namespace Microsoft.Extensions.DependencyInjection
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => new global::MyMarketManager.GraphQL.Client.State.MyMarketManagerClientStoreAccessor(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IOperationStore>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)), global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IEntityStore>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)), global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IEntityIdSerializer>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)), global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::System.Collections.Generic.IEnumerable<global::StrawberryShake.IOperationRequestFactory>>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)), global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::System.Collections.Generic.IEnumerable<global::StrawberryShake.IOperationResultDataFactory>>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp))));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::MyMarketManager.GraphQL.Client.GetProductsQuery>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::MyMarketManager.GraphQL.Client.DeleteProductMutation>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)));
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::MyMarketManager.GraphQL.Client.SearchProductsQuery>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::MyMarketManager.GraphQL.Client.UpdateProductMutation>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::MyMarketManager.GraphQL.Client.GetProductByIdQuery>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::MyMarketManager.GraphQL.Client.CreateProductMutation>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)));
@@ -74,6 +75,14 @@ namespace Microsoft.Extensions.DependencyInjection
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IResultPatcher<global::System.Text.Json.JsonDocument>, global::StrawberryShake.Json.JsonResultPatcher>(services);
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::MyMarketManager.GraphQL.Client.DeleteProductMutation>(services);
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::MyMarketManager.GraphQL.Client.IDeleteProductMutation>(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::MyMarketManager.GraphQL.Client.DeleteProductMutation>(sp));
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationResultDataFactory<global::MyMarketManager.GraphQL.Client.ISearchProductsResult>, global::MyMarketManager.GraphQL.Client.State.SearchProductsResultFactory>(services);
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationResultDataFactory>(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IOperationResultDataFactory<global::MyMarketManager.GraphQL.Client.ISearchProductsResult>>(sp));
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationRequestFactory>(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::MyMarketManager.GraphQL.Client.ISearchProductsQuery>(sp));
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationResultBuilder<global::System.Text.Json.JsonDocument, global::MyMarketManager.GraphQL.Client.ISearchProductsResult>, global::MyMarketManager.GraphQL.Client.State.SearchProductsBuilder>(services);
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationExecutor<global::MyMarketManager.GraphQL.Client.ISearchProductsResult>>(services, sp => new global::StrawberryShake.OperationExecutor<global::System.Text.Json.JsonDocument, global::MyMarketManager.GraphQL.Client.ISearchProductsResult>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.Transport.Http.IHttpConnection>(sp), () => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IOperationResultBuilder<global::System.Text.Json.JsonDocument, global::MyMarketManager.GraphQL.Client.ISearchProductsResult>>(sp), () => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IResultPatcher<global::System.Text.Json.JsonDocument>>(sp), global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IOperationStore>(sp), strategy));
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IResultPatcher<global::System.Text.Json.JsonDocument>, global::StrawberryShake.Json.JsonResultPatcher>(services);
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::MyMarketManager.GraphQL.Client.SearchProductsQuery>(services);
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::MyMarketManager.GraphQL.Client.ISearchProductsQuery>(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::MyMarketManager.GraphQL.Client.SearchProductsQuery>(sp));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationResultDataFactory<global::MyMarketManager.GraphQL.Client.IUpdateProductResult>, global::MyMarketManager.GraphQL.Client.State.UpdateProductResultFactory>(services);
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationResultDataFactory>(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IOperationResultDataFactory<global::MyMarketManager.GraphQL.Client.IUpdateProductResult>>(sp));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationRequestFactory>(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::MyMarketManager.GraphQL.Client.IUpdateProductMutation>(sp));
@@ -374,6 +383,185 @@ namespace MyMarketManager.GraphQL.Client
     public partial interface IDeleteProductResult
     {
         public global::System.Boolean DeleteProduct { get; }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial class SearchProductsResult : global::System.IEquatable<SearchProductsResult>, ISearchProductsResult
+    {
+        public SearchProductsResult(global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.ISearchProducts_SearchProducts> searchProducts)
+        {
+            SearchProducts = searchProducts;
+        }
+
+        public global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.ISearchProducts_SearchProducts> SearchProducts { get; }
+
+        public virtual global::System.Boolean Equals(SearchProductsResult? other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (other.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return (global::StrawberryShake.Internal.ComparisonHelper.SequenceEqual(SearchProducts, other.SearchProducts));
+        }
+
+        public override global::System.Boolean Equals(global::System.Object? obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return Equals((SearchProductsResult)obj);
+        }
+
+        public override global::System.Int32 GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 5;
+                foreach (var SearchProducts_elm in SearchProducts)
+                {
+                    hash ^= 397 * SearchProducts_elm.GetHashCode();
+                }
+
+                return hash;
+            }
+        }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial class SearchProducts_SearchProducts_Product : global::System.IEquatable<SearchProducts_SearchProducts_Product>, ISearchProducts_SearchProducts_Product
+    {
+        public SearchProducts_SearchProducts_Product(global::System.Guid id, global::System.String? sku, global::System.String name, global::System.String? description, global::MyMarketManager.GraphQL.Client.ProductQuality quality, global::System.String? notes, global::System.Int32 stockOnHand)
+        {
+            Id = id;
+            Sku = sku;
+            Name = name;
+            Description = description;
+            Quality = quality;
+            Notes = notes;
+            StockOnHand = stockOnHand;
+        }
+
+        public global::System.Guid Id { get; }
+        public global::System.String? Sku { get; }
+        public global::System.String Name { get; }
+        public global::System.String? Description { get; }
+        public global::MyMarketManager.GraphQL.Client.ProductQuality Quality { get; }
+        public global::System.String? Notes { get; }
+        public global::System.Int32 StockOnHand { get; }
+
+        public virtual global::System.Boolean Equals(SearchProducts_SearchProducts_Product? other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (other.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return (Id.Equals(other.Id)) && ((Sku is null && other.Sku is null) || Sku != null && Sku.Equals(other.Sku)) && Name.Equals(other.Name) && ((Description is null && other.Description is null) || Description != null && Description.Equals(other.Description)) && Quality.Equals(other.Quality) && ((Notes is null && other.Notes is null) || Notes != null && Notes.Equals(other.Notes)) && global::System.Object.Equals(StockOnHand, other.StockOnHand);
+        }
+
+        public override global::System.Boolean Equals(global::System.Object? obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return Equals((SearchProducts_SearchProducts_Product)obj);
+        }
+
+        public override global::System.Int32 GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 5;
+                hash ^= 397 * Id.GetHashCode();
+                if (Sku != null)
+                {
+                    hash ^= 397 * Sku.GetHashCode();
+                }
+
+                hash ^= 397 * Name.GetHashCode();
+                if (Description != null)
+                {
+                    hash ^= 397 * Description.GetHashCode();
+                }
+
+                hash ^= 397 * Quality.GetHashCode();
+                if (Notes != null)
+                {
+                    hash ^= 397 * Notes.GetHashCode();
+                }
+
+                hash ^= 397 * StockOnHand.GetHashCode();
+                return hash;
+            }
+        }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial interface ISearchProductsResult
+    {
+        public global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.ISearchProducts_SearchProducts> SearchProducts { get; }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial interface ISearchProducts_SearchProducts
+    {
+        public global::System.Guid Id { get; }
+        public global::System.String? Sku { get; }
+        public global::System.String Name { get; }
+        public global::System.String? Description { get; }
+        public global::MyMarketManager.GraphQL.Client.ProductQuality Quality { get; }
+        public global::System.String? Notes { get; }
+        public global::System.Int32 StockOnHand { get; }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial interface ISearchProducts_SearchProducts_Product : ISearchProducts_SearchProducts
+    {
     }
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
@@ -1900,6 +2088,323 @@ namespace MyMarketManager.GraphQL.Client
     }
 
     /// <summary>
+    /// Represents the operation service of the SearchProducts GraphQL operation
+    /// <code>
+    /// query SearchProducts($searchTerm: String!) {
+    ///   searchProducts(searchTerm: $searchTerm) {
+    ///     __typename
+    ///     id
+    ///     sku
+    ///     name
+    ///     description
+    ///     quality
+    ///     notes
+    ///     stockOnHand
+    ///   }
+    /// }
+    /// </code>
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial class SearchProductsQueryDocument : global::StrawberryShake.IDocument
+    {
+        private SearchProductsQueryDocument()
+        {
+        }
+
+        public static SearchProductsQueryDocument Instance { get; } = new SearchProductsQueryDocument();
+        public global::StrawberryShake.OperationKind Kind => global::StrawberryShake.OperationKind.Query;
+        public global::System.ReadOnlySpan<global::System.Byte> Body => new global::System.Byte[]
+        {
+            0x71,
+            0x75,
+            0x65,
+            0x72,
+            0x79,
+            0x20,
+            0x53,
+            0x65,
+            0x61,
+            0x72,
+            0x63,
+            0x68,
+            0x50,
+            0x72,
+            0x6f,
+            0x64,
+            0x75,
+            0x63,
+            0x74,
+            0x73,
+            0x28,
+            0x24,
+            0x73,
+            0x65,
+            0x61,
+            0x72,
+            0x63,
+            0x68,
+            0x54,
+            0x65,
+            0x72,
+            0x6d,
+            0x3a,
+            0x20,
+            0x53,
+            0x74,
+            0x72,
+            0x69,
+            0x6e,
+            0x67,
+            0x21,
+            0x29,
+            0x20,
+            0x7b,
+            0x20,
+            0x73,
+            0x65,
+            0x61,
+            0x72,
+            0x63,
+            0x68,
+            0x50,
+            0x72,
+            0x6f,
+            0x64,
+            0x75,
+            0x63,
+            0x74,
+            0x73,
+            0x28,
+            0x73,
+            0x65,
+            0x61,
+            0x72,
+            0x63,
+            0x68,
+            0x54,
+            0x65,
+            0x72,
+            0x6d,
+            0x3a,
+            0x20,
+            0x24,
+            0x73,
+            0x65,
+            0x61,
+            0x72,
+            0x63,
+            0x68,
+            0x54,
+            0x65,
+            0x72,
+            0x6d,
+            0x29,
+            0x20,
+            0x7b,
+            0x20,
+            0x5f,
+            0x5f,
+            0x74,
+            0x79,
+            0x70,
+            0x65,
+            0x6e,
+            0x61,
+            0x6d,
+            0x65,
+            0x20,
+            0x69,
+            0x64,
+            0x20,
+            0x73,
+            0x6b,
+            0x75,
+            0x20,
+            0x6e,
+            0x61,
+            0x6d,
+            0x65,
+            0x20,
+            0x64,
+            0x65,
+            0x73,
+            0x63,
+            0x72,
+            0x69,
+            0x70,
+            0x74,
+            0x69,
+            0x6f,
+            0x6e,
+            0x20,
+            0x71,
+            0x75,
+            0x61,
+            0x6c,
+            0x69,
+            0x74,
+            0x79,
+            0x20,
+            0x6e,
+            0x6f,
+            0x74,
+            0x65,
+            0x73,
+            0x20,
+            0x73,
+            0x74,
+            0x6f,
+            0x63,
+            0x6b,
+            0x4f,
+            0x6e,
+            0x48,
+            0x61,
+            0x6e,
+            0x64,
+            0x20,
+            0x7d,
+            0x20,
+            0x7d
+        };
+        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "e15f47a5a86f46ec4625edfa2909547d");
+
+        public override global::System.String ToString()
+        {
+#if NETCOREAPP3_1_OR_GREATER
+        return global::System.Text.Encoding.UTF8.GetString(Body);
+#else
+            return global::System.Text.Encoding.UTF8.GetString(Body.ToArray());
+#endif
+        }
+    }
+
+    /// <summary>
+    /// Represents the operation service of the SearchProducts GraphQL operation
+    /// <code>
+    /// query SearchProducts($searchTerm: String!) {
+    ///   searchProducts(searchTerm: $searchTerm) {
+    ///     __typename
+    ///     id
+    ///     sku
+    ///     name
+    ///     description
+    ///     quality
+    ///     notes
+    ///     stockOnHand
+    ///   }
+    /// }
+    /// </code>
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial class SearchProductsQuery : global::MyMarketManager.GraphQL.Client.ISearchProductsQuery
+    {
+        private readonly global::StrawberryShake.IOperationExecutor<ISearchProductsResult> _operationExecutor;
+        private readonly global::StrawberryShake.Serialization.IInputValueFormatter _stringFormatter;
+        private readonly global::System.Collections.Immutable.ImmutableArray<global::System.Action<global::StrawberryShake.OperationRequest>> _configure = global::System.Collections.Immutable.ImmutableArray<global::System.Action<global::StrawberryShake.OperationRequest>>.Empty;
+        public SearchProductsQuery(global::StrawberryShake.IOperationExecutor<ISearchProductsResult> operationExecutor, global::StrawberryShake.Serialization.ISerializerResolver serializerResolver)
+        {
+            _operationExecutor = operationExecutor ?? throw new global::System.ArgumentNullException(nameof(operationExecutor));
+            _stringFormatter = serializerResolver.GetInputValueFormatter("String");
+        }
+
+        private SearchProductsQuery(global::StrawberryShake.IOperationExecutor<ISearchProductsResult> operationExecutor, global::System.Collections.Immutable.ImmutableArray<global::System.Action<global::StrawberryShake.OperationRequest>> configure, global::StrawberryShake.Serialization.IInputValueFormatter @stringFormatter)
+        {
+            _operationExecutor = operationExecutor;
+            _configure = configure;
+            _stringFormatter = @stringFormatter;
+        }
+
+        global::System.Type global::StrawberryShake.IOperationRequestFactory.ResultType => typeof(ISearchProductsResult);
+
+        public global::MyMarketManager.GraphQL.Client.ISearchProductsQuery With(global::System.Action<global::StrawberryShake.OperationRequest> configure)
+        {
+            return new global::MyMarketManager.GraphQL.Client.SearchProductsQuery(_operationExecutor, _configure.Add(configure), _stringFormatter);
+        }
+
+        public global::MyMarketManager.GraphQL.Client.ISearchProductsQuery WithRequestUri(global::System.Uri requestUri)
+        {
+            return With(r => r.ContextData["StrawberryShake.Transport.Http.HttpConnection.RequestUri"] = requestUri);
+        }
+
+        public global::MyMarketManager.GraphQL.Client.ISearchProductsQuery WithHttpClient(global::System.Net.Http.HttpClient httpClient)
+        {
+            return With(r => r.ContextData["StrawberryShake.Transport.Http.HttpConnection.HttpClient"] = httpClient);
+        }
+
+        public async global::System.Threading.Tasks.Task<global::StrawberryShake.IOperationResult<ISearchProductsResult>> ExecuteAsync(global::System.String searchTerm, global::System.Threading.CancellationToken cancellationToken = default)
+        {
+            var request = CreateRequest(searchTerm);
+            foreach (var configure in _configure)
+            {
+                configure(request);
+            }
+
+            return await _operationExecutor.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
+        }
+
+        public global::System.IObservable<global::StrawberryShake.IOperationResult<ISearchProductsResult>> Watch(global::System.String searchTerm, global::StrawberryShake.ExecutionStrategy? strategy = null)
+        {
+            var request = CreateRequest(searchTerm);
+            return _operationExecutor.Watch(request, strategy);
+        }
+
+        private global::StrawberryShake.OperationRequest CreateRequest(global::System.String searchTerm)
+        {
+            var variables = new global::System.Collections.Generic.Dictionary<global::System.String, global::System.Object?>();
+            variables.Add("searchTerm", FormatSearchTerm(searchTerm));
+            return CreateRequest(variables);
+        }
+
+        private global::StrawberryShake.OperationRequest CreateRequest(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Object?>? variables)
+        {
+            return new global::StrawberryShake.OperationRequest(id: SearchProductsQueryDocument.Instance.Hash.Value, name: "SearchProducts", document: SearchProductsQueryDocument.Instance, strategy: global::StrawberryShake.RequestStrategy.Default, variables: variables);
+        }
+
+        private global::System.Object? FormatSearchTerm(global::System.String value)
+        {
+            if (value is null)
+            {
+                throw new global::System.ArgumentNullException(nameof(value));
+            }
+
+            return _stringFormatter.Format(value);
+        }
+
+        global::StrawberryShake.OperationRequest global::StrawberryShake.IOperationRequestFactory.Create(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Object?>? variables)
+        {
+            return CreateRequest(variables!);
+        }
+    }
+
+    /// <summary>
+    /// Represents the operation service of the SearchProducts GraphQL operation
+    /// <code>
+    /// query SearchProducts($searchTerm: String!) {
+    ///   searchProducts(searchTerm: $searchTerm) {
+    ///     __typename
+    ///     id
+    ///     sku
+    ///     name
+    ///     description
+    ///     quality
+    ///     notes
+    ///     stockOnHand
+    ///   }
+    /// }
+    /// </code>
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial interface ISearchProductsQuery : global::StrawberryShake.IOperationRequestFactory
+    {
+        global::MyMarketManager.GraphQL.Client.ISearchProductsQuery With(global::System.Action<global::StrawberryShake.OperationRequest> configure);
+        global::MyMarketManager.GraphQL.Client.ISearchProductsQuery WithRequestUri(global::System.Uri requestUri);
+        global::MyMarketManager.GraphQL.Client.ISearchProductsQuery WithHttpClient(global::System.Net.Http.HttpClient httpClient);
+        global::System.Threading.Tasks.Task<global::StrawberryShake.IOperationResult<ISearchProductsResult>> ExecuteAsync(global::System.String searchTerm, global::System.Threading.CancellationToken cancellationToken = default);
+        global::System.IObservable<global::StrawberryShake.IOperationResult<ISearchProductsResult>> Watch(global::System.String searchTerm, global::StrawberryShake.ExecutionStrategy? strategy = null);
+    }
+
+    /// <summary>
     /// Represents the operation service of the UpdateProduct GraphQL operation
     /// <code>
     /// mutation UpdateProduct($id: UUID!, $input: UpdateProductInput!) {
@@ -2850,13 +3355,15 @@ namespace MyMarketManager.GraphQL.Client
     {
         private readonly global::MyMarketManager.GraphQL.Client.IGetProductsQuery _getProducts;
         private readonly global::MyMarketManager.GraphQL.Client.IDeleteProductMutation _deleteProduct;
+        private readonly global::MyMarketManager.GraphQL.Client.ISearchProductsQuery _searchProducts;
         private readonly global::MyMarketManager.GraphQL.Client.IUpdateProductMutation _updateProduct;
         private readonly global::MyMarketManager.GraphQL.Client.IGetProductByIdQuery _getProductById;
         private readonly global::MyMarketManager.GraphQL.Client.ICreateProductMutation _createProduct;
-        public MyMarketManagerClient(global::MyMarketManager.GraphQL.Client.IGetProductsQuery getProducts, global::MyMarketManager.GraphQL.Client.IDeleteProductMutation deleteProduct, global::MyMarketManager.GraphQL.Client.IUpdateProductMutation updateProduct, global::MyMarketManager.GraphQL.Client.IGetProductByIdQuery getProductById, global::MyMarketManager.GraphQL.Client.ICreateProductMutation createProduct)
+        public MyMarketManagerClient(global::MyMarketManager.GraphQL.Client.IGetProductsQuery getProducts, global::MyMarketManager.GraphQL.Client.IDeleteProductMutation deleteProduct, global::MyMarketManager.GraphQL.Client.ISearchProductsQuery searchProducts, global::MyMarketManager.GraphQL.Client.IUpdateProductMutation updateProduct, global::MyMarketManager.GraphQL.Client.IGetProductByIdQuery getProductById, global::MyMarketManager.GraphQL.Client.ICreateProductMutation createProduct)
         {
             _getProducts = getProducts ?? throw new global::System.ArgumentNullException(nameof(getProducts));
             _deleteProduct = deleteProduct ?? throw new global::System.ArgumentNullException(nameof(deleteProduct));
+            _searchProducts = searchProducts ?? throw new global::System.ArgumentNullException(nameof(searchProducts));
             _updateProduct = updateProduct ?? throw new global::System.ArgumentNullException(nameof(updateProduct));
             _getProductById = getProductById ?? throw new global::System.ArgumentNullException(nameof(getProductById));
             _createProduct = createProduct ?? throw new global::System.ArgumentNullException(nameof(createProduct));
@@ -2865,6 +3372,7 @@ namespace MyMarketManager.GraphQL.Client
         public static global::System.String ClientName => "MyMarketManagerClient";
         public global::MyMarketManager.GraphQL.Client.IGetProductsQuery GetProducts => _getProducts;
         public global::MyMarketManager.GraphQL.Client.IDeleteProductMutation DeleteProduct => _deleteProduct;
+        public global::MyMarketManager.GraphQL.Client.ISearchProductsQuery SearchProducts => _searchProducts;
         public global::MyMarketManager.GraphQL.Client.IUpdateProductMutation UpdateProduct => _updateProduct;
         public global::MyMarketManager.GraphQL.Client.IGetProductByIdQuery GetProductById => _getProductById;
         public global::MyMarketManager.GraphQL.Client.ICreateProductMutation CreateProduct => _createProduct;
@@ -2879,6 +3387,8 @@ namespace MyMarketManager.GraphQL.Client
         global::MyMarketManager.GraphQL.Client.IGetProductsQuery GetProducts { get; }
 
         global::MyMarketManager.GraphQL.Client.IDeleteProductMutation DeleteProduct { get; }
+
+        global::MyMarketManager.GraphQL.Client.ISearchProductsQuery SearchProducts { get; }
 
         global::MyMarketManager.GraphQL.Client.IUpdateProductMutation UpdateProduct { get; }
 
@@ -3026,6 +3536,91 @@ namespace MyMarketManager.GraphQL.Client.State
         public global::StrawberryShake.IOperationResultDataInfo WithVersion(global::System.UInt64 version)
         {
             return new DeleteProductResultInfo(DeleteProduct, _entityIds, version);
+        }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial class SearchProductsResultFactory : global::StrawberryShake.IOperationResultDataFactory<global::MyMarketManager.GraphQL.Client.SearchProductsResult>
+    {
+        private readonly global::StrawberryShake.IEntityStore _entityStore;
+        public SearchProductsResultFactory(global::StrawberryShake.IEntityStore entityStore)
+        {
+            _entityStore = entityStore ?? throw new global::System.ArgumentNullException(nameof(entityStore));
+        }
+
+        global::System.Type global::StrawberryShake.IOperationResultDataFactory.ResultType => typeof(global::MyMarketManager.GraphQL.Client.ISearchProductsResult);
+
+        public SearchProductsResult Create(global::StrawberryShake.IOperationResultDataInfo dataInfo, global::StrawberryShake.IEntityStoreSnapshot? snapshot = null)
+        {
+            if (snapshot is null)
+            {
+                snapshot = _entityStore.CurrentSnapshot;
+            }
+
+            if (dataInfo is SearchProductsResultInfo info)
+            {
+                return new SearchProductsResult(MapNonNullableISearchProducts_SearchProductsNonNullableArray(info.SearchProducts, snapshot));
+            }
+
+            throw new global::System.ArgumentException("SearchProductsResultInfo expected.");
+        }
+
+        private global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.ISearchProducts_SearchProducts> MapNonNullableISearchProducts_SearchProductsNonNullableArray(global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.State.ProductData>? list, global::StrawberryShake.IEntityStoreSnapshot snapshot)
+        {
+            if (list is null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            var products = new global::System.Collections.Generic.List<global::MyMarketManager.GraphQL.Client.ISearchProducts_SearchProducts>();
+            foreach (global::MyMarketManager.GraphQL.Client.State.ProductData child in list)
+            {
+                products.Add(MapNonNullableISearchProducts_SearchProducts(child, snapshot));
+            }
+
+            return products;
+        }
+
+        private global::MyMarketManager.GraphQL.Client.ISearchProducts_SearchProducts MapNonNullableISearchProducts_SearchProducts(global::MyMarketManager.GraphQL.Client.State.ProductData data, global::StrawberryShake.IEntityStoreSnapshot snapshot)
+        {
+            ISearchProducts_SearchProducts returnValue = default !;
+            if (data.__typename.Equals("Product", global::System.StringComparison.Ordinal))
+            {
+                returnValue = new SearchProducts_SearchProducts_Product(data.Id ?? throw new global::System.ArgumentNullException(), data.Sku, data.Name ?? throw new global::System.ArgumentNullException(), data.Description, data.Quality ?? throw new global::System.ArgumentNullException(), data.Notes, data.StockOnHand ?? throw new global::System.ArgumentNullException());
+            }
+            else
+            {
+                throw new global::System.NotSupportedException();
+            }
+
+            return returnValue;
+        }
+
+        global::System.Object global::StrawberryShake.IOperationResultDataFactory.Create(global::StrawberryShake.IOperationResultDataInfo dataInfo, global::StrawberryShake.IEntityStoreSnapshot? snapshot)
+        {
+            return Create(dataInfo, snapshot);
+        }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial class SearchProductsResultInfo : global::StrawberryShake.IOperationResultDataInfo
+    {
+        private readonly global::System.Collections.Generic.IReadOnlyCollection<global::StrawberryShake.EntityId> _entityIds;
+        private readonly global::System.UInt64 _version;
+        public SearchProductsResultInfo(global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.State.ProductData> searchProducts, global::System.Collections.Generic.IReadOnlyCollection<global::StrawberryShake.EntityId> entityIds, global::System.UInt64 version)
+        {
+            SearchProducts = searchProducts;
+            _entityIds = entityIds ?? throw new global::System.ArgumentNullException(nameof(entityIds));
+            _version = version;
+        }
+
+        public global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.State.ProductData> SearchProducts { get; }
+        public global::System.Collections.Generic.IReadOnlyCollection<global::StrawberryShake.EntityId> EntityIds => _entityIds;
+        public global::System.UInt64 Version => _version;
+
+        public global::StrawberryShake.IOperationResultDataInfo WithVersion(global::System.UInt64 version)
+        {
+            return new SearchProductsResultInfo(SearchProducts, _entityIds, version);
         }
     }
 
@@ -3466,6 +4061,157 @@ namespace MyMarketManager.GraphQL.Client.State
             }
 
             return _booleanParser.Parse(obj.Value.GetBoolean()!);
+        }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial class SearchProductsBuilder : global::StrawberryShake.OperationResultBuilder<global::MyMarketManager.GraphQL.Client.ISearchProductsResult>
+    {
+        private readonly global::StrawberryShake.IEntityStore _entityStore;
+        private readonly global::StrawberryShake.IEntityIdSerializer _idSerializer;
+        private readonly global::StrawberryShake.Serialization.ILeafValueParser<global::System.String, global::MyMarketManager.GraphQL.Client.ProductQuality> _productQualityParser;
+        private readonly global::StrawberryShake.Serialization.ILeafValueParser<global::System.String, global::System.String> _stringParser;
+        private readonly global::StrawberryShake.Serialization.ILeafValueParser<global::System.String, global::System.Guid> _uUIDParser;
+        private readonly global::StrawberryShake.Serialization.ILeafValueParser<global::System.Int32, global::System.Int32> _intParser;
+        public SearchProductsBuilder(global::StrawberryShake.IEntityStore entityStore, global::StrawberryShake.IEntityIdSerializer idSerializer, global::StrawberryShake.IOperationResultDataFactory<global::MyMarketManager.GraphQL.Client.ISearchProductsResult> resultDataFactory, global::StrawberryShake.Serialization.ISerializerResolver serializerResolver)
+        {
+            _entityStore = entityStore ?? throw new global::System.ArgumentNullException(nameof(entityStore));
+            _idSerializer = idSerializer ?? throw new global::System.ArgumentNullException(nameof(idSerializer));
+            ResultDataFactory = resultDataFactory ?? throw new global::System.ArgumentNullException(nameof(resultDataFactory));
+            _productQualityParser = serializerResolver.GetLeafValueParser<global::System.String, global::MyMarketManager.GraphQL.Client.ProductQuality>("ProductQuality") ?? throw new global::System.ArgumentException("No serializer for type `ProductQuality` found.");
+            _stringParser = serializerResolver.GetLeafValueParser<global::System.String, global::System.String>("String") ?? throw new global::System.ArgumentException("No serializer for type `String` found.");
+            _uUIDParser = serializerResolver.GetLeafValueParser<global::System.String, global::System.Guid>("UUID") ?? throw new global::System.ArgumentException("No serializer for type `UUID` found.");
+            _intParser = serializerResolver.GetLeafValueParser<global::System.Int32, global::System.Int32>("Int") ?? throw new global::System.ArgumentException("No serializer for type `Int` found.");
+        }
+
+        protected override global::StrawberryShake.IOperationResultDataFactory<global::MyMarketManager.GraphQL.Client.ISearchProductsResult> ResultDataFactory { get; }
+
+        protected override global::StrawberryShake.IOperationResultDataInfo BuildData(global::System.Text.Json.JsonElement obj)
+        {
+            var entityIds = new global::System.Collections.Generic.HashSet<global::StrawberryShake.EntityId>();
+            global::StrawberryShake.IEntityStoreSnapshot snapshot = default !;
+            _entityStore.Update(session =>
+            {
+                snapshot = session.CurrentSnapshot;
+            });
+            return new SearchProductsResultInfo(Deserialize_NonNullableISearchProducts_SearchProductsNonNullableArray(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "searchProducts")), entityIds, snapshot.Version);
+        }
+
+        private global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.State.ProductData> Deserialize_NonNullableISearchProducts_SearchProductsNonNullableArray(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            if (obj.Value.ValueKind == global::System.Text.Json.JsonValueKind.Null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            var products = new global::System.Collections.Generic.List<global::MyMarketManager.GraphQL.Client.State.ProductData>();
+            foreach (global::System.Text.Json.JsonElement child in obj.Value.EnumerateArray())
+            {
+                products.Add(Deserialize_NonNullableISearchProducts_SearchProducts(child));
+            }
+
+            return products;
+        }
+
+        private global::MyMarketManager.GraphQL.Client.State.ProductData Deserialize_NonNullableISearchProducts_SearchProducts(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            if (obj.Value.ValueKind == global::System.Text.Json.JsonValueKind.Null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            var typename = obj.Value.GetProperty("__typename").GetString();
+            if (typename?.Equals("Product", global::System.StringComparison.Ordinal) ?? false)
+            {
+                return new global::MyMarketManager.GraphQL.Client.State.ProductData(typename, id: Deserialize_NonNullableGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), sku: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "sku")), name: Deserialize_NonNullableString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "name")), description: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "description")), quality: Deserialize_NonNullableProductQuality(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "quality")), notes: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "notes")), stockOnHand: Deserialize_NonNullableInt32(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "stockOnHand")));
+            }
+
+            throw new global::System.NotSupportedException();
+        }
+
+        private global::System.Guid Deserialize_NonNullableGuid(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            if (obj.Value.ValueKind == global::System.Text.Json.JsonValueKind.Null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            return _uUIDParser.Parse(obj.Value.GetString()!);
+        }
+
+        private global::System.String? Deserialize_String(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                return null;
+            }
+
+            if (obj.Value.ValueKind == global::System.Text.Json.JsonValueKind.Null)
+            {
+                return null;
+            }
+
+            return _stringParser.Parse(obj.Value.GetString()!);
+        }
+
+        private global::System.String Deserialize_NonNullableString(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            if (obj.Value.ValueKind == global::System.Text.Json.JsonValueKind.Null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            return _stringParser.Parse(obj.Value.GetString()!);
+        }
+
+        private global::MyMarketManager.GraphQL.Client.ProductQuality Deserialize_NonNullableProductQuality(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            if (obj.Value.ValueKind == global::System.Text.Json.JsonValueKind.Null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            return _productQualityParser.Parse(obj.Value.GetString()!);
+        }
+
+        private global::System.Int32 Deserialize_NonNullableInt32(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            if (obj.Value.ValueKind == global::System.Text.Json.JsonValueKind.Null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            return _intParser.Parse(obj.Value.GetInt32()!);
         }
     }
 

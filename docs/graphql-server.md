@@ -159,6 +159,63 @@ public async Task<Product?> GetProductById(
 - The product if found
 - `null` if not found (serialized as `null` in GraphQL response)
 
+#### Search Products
+
+**Operation:**
+```graphql
+query SearchProducts($searchTerm: String!) {
+  searchProducts(searchTerm: $searchTerm) {
+    id
+    name
+    sku
+    quality
+    stockOnHand
+    description
+    notes
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "searchTerm": "widget"
+}
+```
+
+**Implementation:**
+```csharp
+public async Task<List<Product>> SearchProducts(
+    string searchTerm,
+    MyMarketManagerDbContext context,
+    CancellationToken cancellationToken)
+{
+    if (string.IsNullOrWhiteSpace(searchTerm))
+    {
+        return await context.Products
+            .OrderBy(p => p.Name)
+            .ToListAsync(cancellationToken);
+    }
+
+    // Use EF.Functions.Like for case-insensitive search
+    var searchPattern = $"%{searchTerm}%";
+    
+    return await context.Products
+        .Where(p => EF.Functions.Like(p.Name, searchPattern) ||
+                   (p.Description != null && EF.Functions.Like(p.Description, searchPattern)) ||
+                   (p.SKU != null && EF.Functions.Like(p.SKU, searchPattern)))
+        .OrderBy(p => p.Name)
+        .ToListAsync(cancellationToken);
+}
+```
+
+**Features:**
+- Server-side search filtering by product name, description, or SKU
+- **Case-insensitive search** using `EF.Functions.Like`
+- Returns all products if search term is empty or whitespace
+- Results ordered by name
+- More efficient than client-side filtering for large datasets
+
 ### Mutations
 
 #### Create Product

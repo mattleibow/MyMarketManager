@@ -5,6 +5,7 @@
     "strawberryShake": {
       "name": "MyMarketManagerClient",
       "namespace": "MyMarketManager.GraphQL.Client",
+      "url": "https://localhost:7075/graphql",
       "records": {
         "inputs": true,
         "entities": true
