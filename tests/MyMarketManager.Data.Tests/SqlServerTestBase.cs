@@ -19,6 +19,7 @@ public abstract class SqlServerTestBase(bool createSchema) : IAsyncLifetime
     {
         // Create SQL Server container
         SqlContainer = new MsSqlBuilder()
+            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
 
         // Start container and create context
