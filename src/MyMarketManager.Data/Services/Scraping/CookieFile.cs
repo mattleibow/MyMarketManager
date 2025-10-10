@@ -32,9 +32,9 @@ public class CookieFile
     public DateTimeOffset? ExpiresAt { get; set; }
 
     /// <summary>
-    /// The list of cookies captured from the browser session.
+    /// Dictionary of cookies captured from the browser session, keyed by cookie name.
     /// </summary>
-    public List<CookieData> Cookies { get; set; } = new();
+    public Dictionary<string, CookieData> Cookies { get; set; } = new();
 
     /// <summary>
     /// Optional metadata about the capture session.

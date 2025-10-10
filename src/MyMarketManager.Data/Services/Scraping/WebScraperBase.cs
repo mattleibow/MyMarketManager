@@ -8,9 +8,10 @@ using MyMarketManager.Data.Enums;
 namespace MyMarketManager.Data.Services.Scraping;
 
 /// <summary>
-/// Abstract base class for web scrapers with common orchestration logic.
+/// Abstract base class for web scrapers that extract data from supplier websites.
+/// Provides common orchestration logic for scraping operations.
 /// </summary>
-public abstract class WebScraperBase : IWebScraper
+public abstract class WebScraperBase
 {
     protected readonly MyMarketManagerDbContext Context;
     protected readonly ILogger Logger;
@@ -28,7 +29,11 @@ public abstract class WebScraperBase : IWebScraper
         Configuration = configuration.Value;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Scrapes orders from the supplier's website and creates a staging batch.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task ScrapeAsync(CancellationToken cancellationToken = default)
     {
         if (Session == null)
@@ -66,6 +71,7 @@ public abstract class WebScraperBase : IWebScraper
             Session.Status = ProcessingStatus.Completed;
             Session.CompletedAt = DateTimeOffset.UtcNow;
             Session.StagingBatchId = batch.Id;
+            batch.ScraperSessionId = Session.Id;
 
             await Context.SaveChangesAsync(cancellationToken);
 
@@ -109,7 +115,7 @@ public abstract class WebScraperBase : IWebScraper
     }
 
     /// <summary>
-    /// Validates that the cookies are still valid.
+    /// Validates that the cookies are still valid by loading a page and checking the response.
     /// </summary>
     protected virtual async Task<bool> ValidateCookiesAsync(CancellationToken cancellationToken)
     {
@@ -117,10 +123,10 @@ public abstract class WebScraperBase : IWebScraper
         {
             Logger.LogInformation("Validating cookies for domain {Domain}", CookieFile!.Domain);
 
-            var html = await ScrapePageAsync(PageType.AccountPage, Configuration.AccountPageUrlTemplate, cancellationToken);
+            var html = await ScrapePageAsync(Configuration.AccountPageUrlTemplate, cancellationToken);
 
-            // Default validation: check if response is not empty and doesn't contain error indicators
-            var isValid = !string.IsNullOrWhiteSpace(html) && html.Length > 100;
+            // Call the derived class to validate the page content
+            var isValid = await ValidatePageAsync(html, cancellationToken);
 
             Logger.LogInformation("Cookie validation result: {IsValid}", isValid);
             return isValid;
@@ -130,6 +136,17 @@ public abstract class WebScraperBase : IWebScraper
             Logger.LogError(ex, "Error validating cookies");
             return false;
         }
+    }
+
+    /// <summary>
+    /// Validates a page's HTML content to check if cookies are still valid.
+    /// Default implementation checks if response is not empty.
+    /// Override this to provide supplier-specific validation logic.
+    /// </summary>
+    protected virtual Task<bool> ValidatePageAsync(string html, CancellationToken cancellationToken)
+    {
+        var isValid = !string.IsNullOrWhiteSpace(html) && html.Length > 100;
+        return Task.FromResult(isValid);
     }
 
     /// <summary>
@@ -143,7 +160,7 @@ public abstract class WebScraperBase : IWebScraper
             SupplierId = CookieFile!.SupplierId,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = ComputeFileHash(CookieFile),
-            Status = ProcessingStatus.Pending,
+            Status = ProcessingStatus.Queued,
             Notes = $"Scraped from {Configuration.SupplierName} at {DateTimeOffset.UtcNow}"
         };
 
@@ -156,9 +173,9 @@ public abstract class WebScraperBase : IWebScraper
     /// <summary>
     /// Scrapes a specific page and returns the raw HTML.
     /// </summary>
-    protected virtual async Task<string> ScrapePageAsync(PageType pageType, string url, CancellationToken cancellationToken)
+    protected virtual async Task<string> ScrapePageAsync(string url, CancellationToken cancellationToken)
     {
-        Logger.LogDebug("Scraping {PageType} from {Url}", pageType, url);
+        Logger.LogDebug("Scraping from {Url}", url);
 
         using var handler = new HttpClientHandler
         {
@@ -167,7 +184,7 @@ public abstract class WebScraperBase : IWebScraper
         };
 
         // Add cookies to the container
-        foreach (var cookie in CookieFile!.Cookies)
+        foreach (var cookie in CookieFile!.Cookies.Values)
         {
             try
             {
@@ -206,16 +223,101 @@ public abstract class WebScraperBase : IWebScraper
     }
 
     /// <summary>
-    /// Executes the main scraping logic. Must be implemented by derived classes.
+    /// Executes the main scraping logic. Default implementation follows the pattern:
+    /// 1. Fetch orders list page
+    /// 2. Extract order links
+    /// 3. Loop through each order link and scrape details
+    /// Override this to provide custom scraping logic.
     /// </summary>
-    /// <param name="batch">The staging batch to populate with scraped data.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    protected abstract Task ExecuteScrapingAsync(StagingBatch batch, CancellationToken cancellationToken);
+    protected virtual async Task ExecuteScrapingAsync(StagingBatch batch, CancellationToken cancellationToken)
+    {
+        // Step 1: Scrape orders list page
+        Logger.LogInformation("Fetching orders list page");
+        var ordersListHtml = await ScrapePageAsync(Configuration.OrdersListUrlTemplate, cancellationToken);
+
+        // Step 2: Extract order links
+        Logger.LogInformation("Extracting order links from orders list");
+        var orderLinks = ExtractOrderLinks(ordersListHtml).ToList();
+        Logger.LogInformation("Found {Count} order links", orderLinks.Count);
+
+        // Step 3: Scrape each order detail page
+        foreach (var orderLinkInfo in orderLinks)
+        {
+            try
+            {
+                await Task.Delay(Configuration.RequestDelay, cancellationToken);
+
+                var orderUrl = ReplaceUrlTemplateValues(Configuration.OrderDetailUrlTemplate, orderLinkInfo);
+                Logger.LogInformation("Scraping order: {OrderUrl}", orderUrl);
+                
+                var orderHtml = await ScrapePageAsync(orderUrl, cancellationToken);
+
+                // Parse order details
+                var orderData = await ParseOrderDetailsAsync(orderHtml, cancellationToken);
+
+                // Create staging purchase order
+                var stagingOrder = await CreateStagingOrderAsync(batch.Id, orderData, orderHtml, cancellationToken);
+                Context.StagingPurchaseOrders.Add(stagingOrder);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to scrape order with info: {OrderLinkInfo}", orderLinkInfo);
+                // Continue with next order
+            }
+        }
+
+        await Context.SaveChangesAsync(cancellationToken);
+        Logger.LogInformation("Saved {Count} staging purchase orders", orderLinks.Count);
+    }
 
     /// <summary>
-    /// Extracts order links from the orders list page. Must be implemented by derived classes.
+    /// Creates a staging purchase order from scraped data.
+    /// Override this to customize how orders are created.
     /// </summary>
-    protected abstract IEnumerable<string> ExtractOrderLinks(string ordersListHtml);
+    protected virtual Task<StagingPurchaseOrder> CreateStagingOrderAsync(
+        Guid batchId,
+        Dictionary<string, object> orderData,
+        string rawHtml,
+        CancellationToken cancellationToken)
+    {
+        var order = new StagingPurchaseOrder
+        {
+            Id = Guid.NewGuid(),
+            StagingBatchId = batchId,
+            SupplierReference = orderData.ContainsKey("order_id")
+                ? orderData["order_id"].ToString() ?? "UNKNOWN"
+                : "UNKNOWN",
+            OrderDate = orderData.ContainsKey("order_date")
+                ? DateTimeOffset.Parse(orderData["order_date"].ToString()!)
+                : DateTimeOffset.UtcNow,
+            RawData = orderData.ContainsKey("raw_data")
+                ? orderData["raw_data"].ToString() ?? JsonSerializer.Serialize(orderData)
+                : JsonSerializer.Serialize(orderData),
+            IsImported = false
+        };
+
+        return Task.FromResult(order);
+    }
+
+    /// <summary>
+    /// Replaces template placeholders in a URL with actual values from the dictionary.
+    /// </summary>
+    protected string ReplaceUrlTemplateValues(string template, Dictionary<string, string> values)
+    {
+        var result = template;
+        foreach (var kvp in values)
+        {
+            result = result.Replace($"{{{kvp.Key}}}", kvp.Value);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Extracts order links from the orders list page.
+    /// Returns a dictionary of template values for each order (e.g., {"orderId": "12345"}).
+    /// Must be implemented by derived classes.
+    /// </summary>
+    protected abstract IEnumerable<Dictionary<string, string>> ExtractOrderLinks(string ordersListHtml);
 
     /// <summary>
     /// Parses order details from an order detail page. Must be implemented by derived classes.

@@ -6,42 +6,32 @@ namespace MyMarketManager.Data.Enums;
 public enum ProcessingStatus
 {
     /// <summary>
-    /// Not yet started or awaiting action
-    /// </summary>
-    Pending,
-
-    /// <summary>
-    /// Partially completed or in progress
-    /// </summary>
-    Partial,
-
-    /// <summary>
-    /// Fully completed
-    /// </summary>
-    Complete,
-
-    /// <summary>
     /// Queued to start (for scraper sessions)
     /// </summary>
-    Queued,
+    Queued = 0,
 
     /// <summary>
     /// Currently running or started (for scraper sessions)
     /// </summary>
-    Started,
+    Started = 1,
+
+    /// <summary>
+    /// Fully completed
+    /// </summary>
+    Complete = 2,
 
     /// <summary>
     /// Completed successfully (for scraper sessions)
     /// </summary>
-    Completed,
+    Completed = 3,
 
     /// <summary>
     /// Failed with an error
     /// </summary>
-    Failed,
+    Failed = 4,
 
     /// <summary>
     /// Cancelled before completion
     /// </summary>
-    Cancelled
+    Cancelled = 5
 }
