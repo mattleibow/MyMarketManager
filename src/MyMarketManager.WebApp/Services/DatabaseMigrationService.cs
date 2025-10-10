@@ -12,7 +12,7 @@ public class DatabaseMigrationService(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var scope = serviceProvider.CreateScope();
-        var migrator = scope.ServiceProvider.GetRequiredService<MyMarketManagerDbContextMigrator>();
+        var migrator = scope.ServiceProvider.GetRequiredService<DbContextMigrator>();
 
         logger.LogInformation("Starting database migration service...");
 

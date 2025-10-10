@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
+using MyMarketManager.Tests.Shared;
 
 namespace MyMarketManager.Data.Tests;
 
-public class EntityRelationshipTests : SqliteTestBase
+[Trait(TestCategories.Key, TestCategories.Values.Database)]
+public class EntityRelationshipTests(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper)
 {
     [Fact]
     public async Task Supplier_CanHaveMultiplePurchaseOrders()

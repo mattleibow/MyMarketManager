@@ -1,5 +1,5 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using MyMarketManager.Tests.Shared;
 
 namespace MyMarketManager.Data.Tests;
 
@@ -8,20 +8,18 @@ namespace MyMarketManager.Data.Tests;
 /// SQLite in-memory databases only exist while the connection is open,
 /// so we need to keep the connection open for the lifetime of the test class.
 /// </summary>
-public abstract class SqliteTestBase(bool createSchema = true) : IAsyncLifetime
+public abstract class SqliteTestBase(ITestOutputHelper outputHelper, bool createSchema = true) : IAsyncLifetime
 {
-    protected SqliteConnection Connection { get; private set; } = null!;
+    private readonly SqliteHelper _sqlite = new(outputHelper);
 
     protected MyMarketManagerDbContext Context { get; private set; } = null!;
 
     public async ValueTask InitializeAsync()
     {
-        // SQLite in-memory database only exists while the connection is open
-        Connection = new SqliteConnection("DataSource=:memory:");
-        Connection.Open();
+        var connection = await _sqlite.ConnectAsync();
 
         var options = new DbContextOptionsBuilder<MyMarketManagerDbContext>()
-            .UseSqlite(Connection)
+            .UseSqlite(connection)
             .Options;
 
         Context = new MyMarketManagerDbContext(options);
@@ -37,6 +35,6 @@ public abstract class SqliteTestBase(bool createSchema = true) : IAsyncLifetime
     {
         await Context.DisposeAsync();
 
-        await Connection.DisposeAsync();
+        await _sqlite.DisconnectAsync();
     }
 }

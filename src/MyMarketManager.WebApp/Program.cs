@@ -20,7 +20,7 @@ builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 builder.AddAzureBlobServiceClient("blobs");
 
 // Add database migration as a hosted service (runs in all environments)
-builder.Services.AddScoped<MyMarketManagerDbContextMigrator>();
+builder.Services.AddScoped<DbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
 // Add blob storage services

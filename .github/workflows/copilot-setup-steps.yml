@@ -32,3 +32,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
+
+      - name: Trust developer certificates
+        run: dotnet dev-certs https --trust
+
+      - name: Install .NET MAUI
+        run: dotnet workload install maui-android

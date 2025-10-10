@@ -30,48 +30,27 @@ MyMarketManager uses a GraphQL API architecture to provide efficient, flexible d
 
 ### GraphQL Server (HotChocolate)
 
-The GraphQL server is hosted within MyMarketManager.WebApp at the `/graphql` endpoint. It provides:
+The GraphQL server is hosted within MyMarketManager.WebApp at the `/graphql` endpoint. Key features:
 
-- **Strongly-typed schema** based on C# entity classes
-- **Efficient data fetching** with precise client-side queries
-- **Single endpoint** for all API operations
-- **Schema introspection** for tooling and code generation
-- **Nitro IDE** available at `/graphql` in development mode
+- Strongly-typed schema based on C# entity classes
+- Efficient data fetching with precise client-side queries
+- Single endpoint for all API operations
+- Schema introspection for tooling and code generation
+- Nitro IDE available at `/graphql` in development mode
 
-**Current Implementation:**
-- `ProductQueries` class with query operations (getProducts, getProductById)
-- `ProductMutations` class with mutation operations (createProduct, updateProduct, deleteProduct)
-- Direct Entity Framework Core integration via injected `MyMarketManagerDbContext`
-- Input types: `CreateProductInput`, `UpdateProductInput`
-
-The server is configured in `Program.cs`:
-
-```csharp
-// Add GraphQL server with HotChocolate
-builder.Services
-    .AddGraphQLServer()
-    .AddQueryType<ProductQueries>()
-    .AddMutationType<ProductMutations>();
-
-// Map GraphQL endpoint
-app.MapGraphQL();
-```
+Current operations include product queries (getProducts, getProductById) and mutations (createProduct, updateProduct, deleteProduct). The server is configured in `Program.cs` and operations are defined in the `GraphQL/` directory.
 
 ### GraphQL Client Library (StrawberryShake)
 
 The MyMarketManager.GraphQL.Client library provides:
 
-- **Type-safe client** with generated code from GraphQL schema
-- **Cross-platform support** for .NET 10, MAUI, Blazor WASM, Blazor Server
-- **Dependency injection** ready with `AddMyMarketManagerClient()` extension
-- **Async/await** patterns throughout
-- **Generated client interface** `IMyMarketManagerClient` for easy mocking and testing
+- Type-safe client with generated code from GraphQL schema
+- Cross-platform support for .NET 10, MAUI, Blazor WASM, Blazor Server
+- Dependency injection ready with `AddMyMarketManagerClient()` extension
+- Async/await patterns throughout
+- Generated client interface `IMyMarketManagerClient` for easy mocking and testing
 
-**Current State:**
-- Client code is generated from the running GraphQL server schema
-- Located in `src/MyMarketManager.GraphQL.Client/Generated/`
-- Ready for use in MAUI mobile apps and other .NET clients
-- Currently registered in WebApp but Razor pages still use DbContext directly (migration in progress)
+Client code is generated from the running GraphQL server schema and located in `src/MyMarketManager.GraphQL.Client/Generated/`. The library is ready for use in MAUI mobile apps and other .NET clients.
 
 ## .NET Aspire Integration
 

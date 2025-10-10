@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
+using MyMarketManager.Tests.Shared;
 
 namespace MyMarketManager.Data.Tests;
 
-public class SoftDeleteTests : SqliteTestBase
+[Trait(TestCategories.Key, TestCategories.Values.Database)]
+public class SoftDeleteTests(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper)
 {
     [Fact]
     public async Task Entity_WhenDeleted_ShouldBeSoftDeleted()

@@ -7,10 +7,13 @@ This guide covers development workflows, tools, and best practices for working w
 Ensure you have the following installed before starting development:
 
 - **.NET 10 SDK** - [Download here](https://dotnet.microsoft.com)
-- **Docker Desktop** - Required for SQL Server
+- **Docker Desktop** - Required for SQL Server (Linux) or running the app
 - **.NET Aspire Workload**: `dotnet workload install aspire`
 - **Git** - For version control
 - **Visual Studio 2022** or **Visual Studio Code** (recommended IDEs)
+- **SQL Server LocalDB** (Windows only, optional) - Included with Visual Studio or SQL Server Express, used for faster integration tests
+
+**Note on LocalDB:** On Windows, integration tests automatically use LocalDB if available (instant startup). On Linux, tests use Testcontainers with SQL Server. See [Testing Guide](testing.md) for details.
 
 ## Development Workflow
 
@@ -97,16 +100,41 @@ dotnet run --project src/MyMarketManager.AppHost
 
 ### 5. Testing
 
-#### Run All Tests
+For comprehensive testing documentation, see the **[Testing Guide](testing.md)**.
 
+#### Quick Start
+
+Run all tests:
 ```bash
 dotnet test
 ```
 
-#### Run Specific Test Project
+Run only unit tests (fast):
+```bash
+dotnet test tests/MyMarketManager.Data.Tests
+```
 
+Run only integration tests (requires Aspire DCP):
 ```bash
 dotnet test tests/MyMarketManager.Integration.Tests
+```
+
+#### Platform-Specific Testing
+
+Tests use platform-appropriate database provisioning:
+- **Windows**: SQL Server LocalDB (instant, no Docker)
+- **Linux**: Testcontainers with SQL Server (containerized)
+
+See [Testing Guide - Platform-Specific SQL Server Provisioning](testing.md#platform-specific-sql-server-provisioning) for details.
+
+#### Run Tests by Category
+
+```bash
+# GraphQL tests only
+dotnet test --filter "Category=GraphQL"
+
+# Skip SSL-requiring tests (useful on Windows)
+dotnet test --filter "Requires!=SSL"
 ```
 
 #### Run Tests with Coverage
@@ -121,147 +149,37 @@ dotnet test --collect:"XPlat Code Coverage"
 
 **Location:** `src/MyMarketManager.WebApp/GraphQL/`
 
-**Key Files:**
-- `ProductQueries.cs` - Query operations
-- `ProductMutations.cs` - Mutation operations and input types
-
 **Workflow:**
-1. Add/modify methods in query or mutation classes
+1. Add/modify methods in `ProductQueries.cs` or `ProductMutations.cs`
 2. Test in Nitro IDE at `/graphql`
 3. Schema updates automatically via HotChocolate reflection
 
-**Adding a New Query:**
-
-```csharp
-// In ProductQueries.cs
-public IQueryable<Product> GetProductsByQuality(
-    ProductQuality quality,
-    MyMarketManagerDbContext context)
-{
-    return context.Products.Where(p => p.Quality == quality);
-}
-```
-
-The query is immediately available in GraphQL:
-
-```graphql
-query {
-  productsByQuality(quality: EXCELLENT) {
-    id
-    name
-  }
-}
-```
-
-**Adding a New Mutation:**
-
-```csharp
-// In ProductMutations.cs
-public record AdjustStockInput(Guid ProductId, int Adjustment);
-
-public async Task<Product> AdjustStock(
-    AdjustStockInput input,
-    MyMarketManagerDbContext context,
-    CancellationToken cancellationToken)
-{
-    var product = await context.Products.FindAsync(
-        new object[] { input.ProductId }, 
-        cancellationToken);
-    
-    if (product == null)
-        throw new GraphQLException("Product not found");
-    
-    product.StockOnHand += input.Adjustment;
-    await context.SaveChangesAsync(cancellationToken);
-    
-    return product;
-}
-```
+Query methods should return `IQueryable<T>` for efficient database queries. Mutation methods should be async and use input records for parameters. See [GraphQL Server documentation](graphql-server.md) for detailed guidance.
 
 ### GraphQL Client Development
 
 **Location:** `src/MyMarketManager.GraphQL.Client/`
 
-**Key Files:**
-- `GraphQL/*.graphql` - Operation definitions
-- `.graphqlrc.json` - StrawberryShake configuration
-- `Generated/` - Generated client code (don't edit manually)
-
 **Workflow:**
-1. Define GraphQL operation in `.graphql` file
-2. Generate typed client code with `dotnet graphql generate` (see [Code Generation](graphql-client.md#code-generation))
-3. Use the generated operation in your app
+1. Define GraphQL operation in a `.graphql` file in the `GraphQL/` directory
+2. Generate typed client code with `dotnet graphql generate`
+3. Use the generated operation through `IMyMarketManagerClient`
 
-**Note:** If you've changed the GraphQL schema (server-side), download the updated schema first with `dotnet graphql update`.
+**Note:** If the server schema has changed, download the updated schema first with `dotnet graphql update`.
 
-**Adding a New Operation:**
-
-Create `GraphQL/stock.graphql`:
-
-```graphql
-mutation AdjustStock($productId: UUID!, $adjustment: Int!) {
-  adjustStock(input: { productId: $productId, adjustment: $adjustment }) {
-    id
-    stockOnHand
-  }
-}
-```
-
-Generate the client code:
-
-```bash
-cd src/MyMarketManager.GraphQL.Client
-dotnet graphql generate
-```
-
-Use in code:
-
-```csharp
-var result = await _client.AdjustStock.ExecuteAsync(productId, adjustment);
-```
+See [GraphQL Client documentation](graphql-client.md) and the project's README for detailed instructions.
 
 ### Data Layer Development
 
 **Location:** `src/MyMarketManager.Data/`
 
-**Key Files:**
-- `Entities/*.cs` - Entity classes
-- `Enums/*.cs` - Enumeration types
-- `MyMarketManagerDbContext.cs` - DbContext configuration
-
 **Workflow:**
-1. Add/modify entity classes
-2. Create migration
-3. Test migration
-4. Apply to database
+1. Add or modify entity classes in `Entities/`
+2. Update `MyMarketManagerDbContext` if adding new `DbSet`
+3. Create migration: `dotnet ef migrations add MigrationName --project src/MyMarketManager.Data`
+4. Test by running the application (migrations apply automatically)
 
-**Adding a New Entity:**
-
-```csharp
-// In Entities/Category.cs
-public class Category
-{
-    public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    
-    // Navigation properties
-    public ICollection<Product> Products { get; set; } = new List<Product>();
-}
-```
-
-Update DbContext:
-
-```csharp
-// In MyMarketManagerDbContext.cs
-public DbSet<Category> Categories { get; set; }
-```
-
-Create migration:
-
-```bash
-dotnet ef migrations add AddCategory --project src/MyMarketManager.Data
-```
+See [Data Layer documentation](data-layer.md) for entity design best practices and migration management.
 
 ### Blob Storage Development
 
@@ -349,15 +267,7 @@ Closes #123
 
 ### Debug Database Queries
 
-Enable query logging in `Program.cs`:
-
-```csharp
-builder.Services.AddDbContext<MyMarketManagerDbContext>(options =>
-{
-    options.UseSqlServer(connectionString);
-    options.LogTo(Console.WriteLine, LogLevel.Information);
-});
-```
+Enable query logging in `Program.cs` to see generated SQL. See Entity Framework Core documentation for logging configuration options.
 
 ### View Aspire Logs
 
@@ -367,21 +277,30 @@ builder.Services.AddDbContext<MyMarketManagerDbContext>(options =>
 
 ## Troubleshooting
 
-### Docker Container Issues
+### Database Connection Issues
 
-**Problem:** SQL Server container won't start
+**Problem:** SQL Server connection errors during development
 
 **Solutions:**
-1. Ensure Docker Desktop is running
-2. Check for port conflicts (SQL Server uses 1433)
-3. Restart Docker Desktop
-4. Check Aspire Dashboard for error messages
+1. **On Windows**: Ensure LocalDB is installed and running
+   - Check: `sqllocaldb info`
+   - Start: `sqllocaldb start MSSQLLocalDB`
+2. **On Linux**: Ensure Docker Desktop is running
+3. Check Aspire Dashboard for connection string details
+4. Try restarting Aspire AppHost
+
+**Problem:** Tests fail with database connection errors
+
+**Solution:**
+- See [Testing Guide - Troubleshooting](testing.md#troubleshooting) for platform-specific solutions
+- Windows: Verify LocalDB installation
+- Linux: Verify Docker is running and user has permissions
 
 ### Build Issues
 
 **Problem:** "Schema not found" error in GraphQL.Client
 
-**Solution:** Download the schema from the running server:
+**Solution:**
 ```bash
 # Terminal 1: Start server
 dotnet run --project src/MyMarketManager.AppHost
@@ -404,7 +323,9 @@ dotnet graphql generate
 **Problem:** "Cannot connect to database"
 
 **Solution:**
-1. Check Docker container is running
+1. Check SQL Server availability:
+   - **Windows**: Verify LocalDB is running (`sqllocaldb info`)
+   - **Linux**: Check Docker container status in Aspire Dashboard
 2. Verify connection string in Aspire Dashboard
 3. Try restarting Aspire AppHost
 
@@ -443,6 +364,7 @@ dotnet run --project src/MyMarketManager.AppHost
 
 - [Getting Started Guide](getting-started.md)
 - [Architecture Overview](architecture.md)
+- [Testing Guide](testing.md)
 - [GraphQL Server Documentation](graphql-server.md)
 - [GraphQL Client Documentation](graphql-client.md)
 - [Data Layer Documentation](data-layer.md)

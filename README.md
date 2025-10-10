@@ -52,6 +52,7 @@ Navigate to `/graphql` to open the Nitro IDE and explore the API interactively.
 - **[Getting Started](docs/getting-started.md)** - Setup and first steps
 - **[Architecture](docs/architecture.md)** - System design and technology choices
 - **[Development Guide](docs/development-guide.md)** - Development workflows and best practices
+- **[Testing Guide](docs/testing.md)** - Testing infrastructure and platform-specific database provisioning
 - **[Data Model](docs/data-model.md)** - Database schema and entities
 - **[Product Requirements](docs/product-requirements.md)** - Feature requirements and user stories
 
@@ -68,7 +69,9 @@ Navigate to `/graphql` to open the Nitro IDE and explore the API interactively.
 - **MyMarketManager.GraphQL.Client** - Standalone GraphQL client library
 - **MyMarketManager.ServiceDefaults** - Shared .NET Aspire service defaults
 - **MyMarketManager.AppHost** - .NET Aspire app host for orchestration
-- **MyMarketManager.Integration.Tests** - Integration tests
+- **MyMarketManager.Tests.Shared** - Shared test infrastructure with platform-specific database helpers
+- **MyMarketManager.Data.Tests** - Data layer unit tests
+- **MyMarketManager.Integration.Tests** - End-to-end integration tests
 
 ## License
 

@@ -14,6 +14,7 @@ New to MyMarketManager? Start here:
 Resources for developers working on MyMarketManager:
 
 - **[Development Guide](development-guide.md)** - Development workflows, tools, debugging, and best practices
+- **[Testing Guide](testing.md)** - Testing infrastructure, platform-specific database provisioning, and writing tests
 - **[Data Layer](data-layer.md)** - Entity Framework Core, migrations, and database management
 - **[GraphQL Server](graphql-server.md)** - Server implementation, operations, and extending the API
 - **[GraphQL Client](graphql-client.md)** - Client library usage, service registration, and examples
@@ -32,6 +33,7 @@ Detailed technical documentation:
 1. [Getting Started](getting-started.md) - Setup and run the app
 2. [Architecture](architecture.md) - Understand the system
 3. [Development Guide](development-guide.md) - Learn the workflows
+4. [Testing Guide](testing.md) - Run and write tests
 
 ### I'm Working on the API
 1. [GraphQL Server](graphql-server.md) - Server documentation
@@ -41,7 +43,7 @@ Detailed technical documentation:
 ### I'm Working on the Database
 1. [Data Layer](data-layer.md) - EF Core and migrations
 2. [Data Model](data-model.md) - Entity reference
-3. [Development Guide](development-guide.md#working-with-the-database) - Database workflows
+3. [Development Guide](development-guide.md#4-working-with-the-database) - Database workflows
 
 ### I'm Working on Data Ingestion
 1. [Blob Storage Ingestion](blob-storage-ingestion.md) - Supplier file upload pipeline
@@ -50,7 +52,7 @@ Detailed technical documentation:
 
 ### I'm Building a Mobile App
 1. [GraphQL Client](graphql-client.md) - Using the client library
-2. [Getting Started](getting-started.md#using-the-graphql-api) - API examples
+2. [Getting Started](getting-started.md#example-graphql-operations) - API examples
 3. [GraphQL Server](graphql-server.md) - Available operations
 
 ## Documentation Standards

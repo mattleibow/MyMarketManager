@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Testcontainers.MsSql;
+using MyMarketManager.Tests.Shared;
 
 namespace MyMarketManager.Data.Tests;
 
@@ -7,9 +7,9 @@ namespace MyMarketManager.Data.Tests;
 /// Base class for integration tests using a real SQL Server instance in Docker.
 /// Requires Docker to be running on the machine.
 /// </summary>
-public abstract class SqlServerTestBase(bool createSchema) : IAsyncLifetime
+public abstract class SqlServerTestBase(ITestOutputHelper outputHelper, bool createSchema) : IAsyncLifetime
 {
-    protected MsSqlContainer SqlContainer { get; private set; } = null!;
+    private readonly SqlServerHelper _sqlServer = new(outputHelper);
 
     protected MyMarketManagerDbContext Context { get; private set; } = null!;
 
@@ -17,17 +17,10 @@ public abstract class SqlServerTestBase(bool createSchema) : IAsyncLifetime
 
     public virtual async ValueTask InitializeAsync()
     {
-        // Create SQL Server container
-        SqlContainer = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
-            .WithPassword("Test123!")
-            .Build();
-
-        // Start container and create context
-        await SqlContainer.StartAsync();
+        var connectionString = await _sqlServer.ConnectAsync();
 
         var options = new DbContextOptionsBuilder<MyMarketManagerDbContext>()
-            .UseSqlServer(SqlContainer.GetConnectionString())
+            .UseSqlServer(connectionString)
             .Options;
 
         Context = new MyMarketManagerDbContext(options);
@@ -43,7 +36,7 @@ public abstract class SqlServerTestBase(bool createSchema) : IAsyncLifetime
     {
         await Context.DisposeAsync();
 
-        await SqlContainer.DisposeAsync();
+        await _sqlServer.DisconnectAsync();
     }
 
     protected async Task<bool> TableExistsAsync(string tableName)

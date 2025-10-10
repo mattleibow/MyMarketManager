@@ -9,10 +9,10 @@ namespace MyMarketManager.Data.Services;
 /// <summary>
 /// Service responsible for database migration and seeding operations.
 /// </summary>
-public class MyMarketManagerDbContextMigrator(
+public class DbContextMigrator(
     MyMarketManagerDbContext context,
     IHostEnvironment environment,
-    ILogger<MyMarketManagerDbContextMigrator> logger)
+    ILogger<DbContextMigrator> logger)
 {
     public async Task MigrateAsync(CancellationToken cancellationToken = default)
     {

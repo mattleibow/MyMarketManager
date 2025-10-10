@@ -21,7 +21,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
-    <PackageReference Include="Testcontainers.MsSql" Version="4.7.0" />
     <PackageReference Include="MartinCostello.Logging.XUnit.v3" Version="0.6.0" />
     <PackageReference Include="xunit.v3" Version="3.1.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
@@ -40,6 +39,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MyMarketManager.Data\MyMarketManager.Data.csproj" />
+    <ProjectReference Include="..\MyMarketManager.Tests.Shared\MyMarketManager.Tests.Shared.csproj" />
   </ItemGroup>
 
 </Project>

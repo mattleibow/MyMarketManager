@@ -1,5 +1,6 @@
 using Aspire.Hosting;
 using Microsoft.Extensions.Logging;
+using MyMarketManager.Tests.Shared;
 
 namespace MyMarketManager.Integration.Tests;
 
@@ -7,13 +8,23 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
 {
     protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(60);
 
+    private readonly SqlServerHelper _sqlServer = new(outputHelper);
+
     protected DistributedApplication App { get; private set; } = null!;
 
     protected CancellationToken Cancel => TestContext.Current.CancellationToken;
 
     public virtual async ValueTask InitializeAsync()
     {
-        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(["UseVolumes=False"], Cancel);
+        var connectionString = await _sqlServer.ConnectAsync();
+
+        // Pass the connection string to AppHost
+        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(
+            [
+                "UseVolumes=False",
+                $"UseDatabaseConnectionString={connectionString}"
+            ],
+            Cancel);
 
         // Log everything for the tests
         appHost.Services.AddLogging(logging =>
@@ -41,7 +52,6 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
         await App
             .StartAsync(Cancel)
             .WaitAsync(DefaultTimeout, Cancel);
-
     }
 
     public virtual async ValueTask DisposeAsync()
@@ -49,6 +59,11 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
         if (App is not null)
         {
             await App.DisposeAsync();
+        }
+
+        if (_sqlServer is not null)
+        {
+            await _sqlServer.DisconnectAsync();
         }
     }
 }
