@@ -1,22 +1,32 @@
 namespace MyMarketManager.Data.Enums;
 
 /// <summary>
-/// Used to track the state of purchase orders, deliveries, and staging batches.
+/// Used to track the state of purchase orders, deliveries, staging batches, and scraper sessions.
 /// </summary>
 public enum ProcessingStatus
 {
     /// <summary>
-    /// Not yet started or awaiting action
+    /// Queued to start
     /// </summary>
-    Pending,
+    Queued,
 
     /// <summary>
-    /// Partially completed or in progress
+    /// Currently running
     /// </summary>
-    Partial,
+    Started,
 
     /// <summary>
-    /// Fully completed
+    /// Completed successfully
     /// </summary>
-    Complete
+    Completed,
+
+    /// <summary>
+    /// Failed with an error
+    /// </summary>
+    Failed,
+
+    /// <summary>
+    /// Cancelled before completion
+    /// </summary>
+    Cancelled,
 }

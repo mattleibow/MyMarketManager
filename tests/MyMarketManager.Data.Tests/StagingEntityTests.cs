@@ -26,7 +26,7 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
             SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "abc123",
-            Status = ProcessingStatus.Pending
+            Status = ProcessingStatus.Queued
         };
         Context.StagingBatches.Add(batch);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -80,7 +80,7 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
             SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "xyz789",
-            Status = ProcessingStatus.Pending
+            Status = ProcessingStatus.Queued
         };
         Context.StagingBatches.Add(batch);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -161,7 +161,7 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
             SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "sale123",
-            Status = ProcessingStatus.Pending
+            Status = ProcessingStatus.Queued
         };
         Context.StagingBatches.Add(batch);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);

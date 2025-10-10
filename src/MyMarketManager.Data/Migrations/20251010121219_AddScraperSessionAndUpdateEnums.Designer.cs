@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyMarketManager.Data;
 
@@ -11,9 +12,11 @@ using MyMarketManager.Data;
 namespace MyMarketManager.Data.Migrations
 {
     [DbContext(typeof(MyMarketManagerDbContext))]
-    partial class MyMarketManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251010121219_AddScraperSessionAndUpdateEnums")]
+    partial class AddScraperSessionAndUpdateEnums
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -396,6 +399,8 @@ namespace MyMarketManager.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("StagingBatchId");
+
                     b.HasIndex("SupplierId");
 
                     b.ToTable("ScraperSessions");
@@ -423,9 +428,6 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("ScraperSessionId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -439,10 +441,6 @@ namespace MyMarketManager.Data.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ScraperSessionId")
-                        .IsUnique()
-                        .HasFilter("[ScraperSessionId] IS NOT NULL");
 
                     b.HasIndex("SupplierId");
 
@@ -461,9 +459,6 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("ErrorMessage")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsImported")
                         .HasColumnType("bit");
 
@@ -479,9 +474,6 @@ namespace MyMarketManager.Data.Migrations
 
                     b.Property<Guid>("StagingBatchId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
 
                     b.Property<string>("SupplierReference")
                         .HasColumnType("nvarchar(max)");
@@ -782,28 +774,28 @@ namespace MyMarketManager.Data.Migrations
 
             modelBuilder.Entity("MyMarketManager.Data.Entities.ScraperSession", b =>
                 {
+                    b.HasOne("MyMarketManager.Data.Entities.StagingBatch", "StagingBatch")
+                        .WithMany("ScraperSessions")
+                        .HasForeignKey("StagingBatchId");
+
                     b.HasOne("MyMarketManager.Data.Entities.Supplier", "Supplier")
                         .WithMany()
                         .HasForeignKey("SupplierId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("StagingBatch");
+
                     b.Navigation("Supplier");
                 });
 
             modelBuilder.Entity("MyMarketManager.Data.Entities.StagingBatch", b =>
                 {
-                    b.HasOne("MyMarketManager.Data.Entities.ScraperSession", "ScraperSession")
-                        .WithOne("StagingBatch")
-                        .HasForeignKey("MyMarketManager.Data.Entities.StagingBatch", "ScraperSessionId");
-
                     b.HasOne("MyMarketManager.Data.Entities.Supplier", "Supplier")
                         .WithMany("StagingBatches")
                         .HasForeignKey("SupplierId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("ScraperSession");
 
                     b.Navigation("Supplier");
                 });
@@ -921,13 +913,10 @@ namespace MyMarketManager.Data.Migrations
                     b.Navigation("StagingPurchaseOrderItems");
                 });
 
-            modelBuilder.Entity("MyMarketManager.Data.Entities.ScraperSession", b =>
-                {
-                    b.Navigation("StagingBatch");
-                });
-
             modelBuilder.Entity("MyMarketManager.Data.Entities.StagingBatch", b =>
                 {
+                    b.Navigation("ScraperSessions");
+
                     b.Navigation("StagingPurchaseOrders");
 
                     b.Navigation("StagingSales");
