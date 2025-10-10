@@ -53,7 +53,7 @@ jobs:
         run: pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps
 
       - name: Run tests
-        run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" ${{ matrix.filter }}
+        run: dotnet test --no-build --configuration Release --verbosity normal --logger trx --collect:"XPlat Code Coverage" ${{ matrix.filter }}
 
       - name: Report test results
         uses: dorny/test-reporter@v2
