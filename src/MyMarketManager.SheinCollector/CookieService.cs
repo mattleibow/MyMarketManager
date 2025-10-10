@@ -27,7 +27,7 @@ public class CookieService
     private async Task<List<CookieData>> GetCookiesAndroid()
     {
         var cookies = new List<CookieData>();
-        
+
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
             var cookieManager = Android.Webkit.CookieManager.Instance;
