@@ -7,16 +7,6 @@ namespace MyMarketManager.Data.Services.Scraping;
 public class CookieFile
 {
     /// <summary>
-    /// Supplier ID associated with these cookies (e.g., Shein supplier).
-    /// </summary>
-    public Guid SupplierId { get; set; }
-
-    /// <summary>
-    /// Supplier name for human readability (not used in processing).
-    /// </summary>
-    public string SupplierName { get; set; } = string.Empty;
-
-    /// <summary>
     /// The base domain these cookies are for (e.g., "shein.com").
     /// </summary>
     public string Domain { get; set; } = string.Empty;

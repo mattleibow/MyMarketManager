@@ -12,15 +12,15 @@ public class CookieFileTests
         // Arrange & Act
         var cookieFile = new CookieFile
         {
-            SupplierId = Guid.NewGuid(),
-            SupplierName = "Test Supplier",
+            
+            
             Domain = "shein.com",
             CapturedAt = DateTimeOffset.UtcNow
         };
 
         // Assert
         Assert.Equal("shein.com", cookieFile.Domain);
-        Assert.Equal("Test Supplier", cookieFile.SupplierName);
+        
         Assert.Empty(cookieFile.Cookies);
         Assert.Empty(cookieFile.Metadata);
     }
@@ -31,8 +31,8 @@ public class CookieFileTests
         // Arrange
         var cookieFile = new CookieFile
         {
-            SupplierId = Guid.NewGuid(),
-            SupplierName = "Test Supplier",
+            
+            
             Domain = "shein.com",
             CapturedAt = DateTimeOffset.UtcNow
         };
@@ -62,8 +62,8 @@ public class CookieFileTests
         // Arrange
         var cookieFile = new CookieFile
         {
-            SupplierId = Guid.NewGuid(),
-            SupplierName = "Test Supplier",
+            
+            
             Domain = "shein.com",
             CapturedAt = DateTimeOffset.UtcNow,
             ExpiresAt = DateTimeOffset.UtcNow.AddDays(7),
@@ -107,8 +107,6 @@ public class CookieFileTests
     {
         // Arrange
         var json = @"{
-            ""supplierId"": ""87654321-4321-4321-4321-210987654321"",
-            ""supplierName"": ""Test Supplier"",
             ""domain"": ""shein.com"",
             ""capturedAt"": ""2025-10-10T00:00:00Z"",
             ""expiresAt"": ""2025-10-17T00:00:00Z"",
@@ -137,7 +135,6 @@ public class CookieFileTests
         // Assert
         Assert.NotNull(cookieFile);
         Assert.Equal("shein.com", cookieFile.Domain);
-        Assert.Equal("Test Supplier", cookieFile.SupplierName);
         Assert.Single(cookieFile.Cookies);
         Assert.True(cookieFile.Cookies.ContainsKey("session"));
         Assert.Equal("abc123", cookieFile.Cookies["session"].Value);

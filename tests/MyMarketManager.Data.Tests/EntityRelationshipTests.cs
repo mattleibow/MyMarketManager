@@ -32,7 +32,7 @@ public class EntityRelationshipTests(ITestOutputHelper outputHelper) : SqliteTes
             Id = Guid.NewGuid(),
             SupplierId = supplier.Id,
             OrderDate = DateTimeOffset.UtcNow,
-            Status = ProcessingStatus.Complete
+            Status = ProcessingStatus.Completed
         };
 
         Context.PurchaseOrders.AddRange(order1, order2);

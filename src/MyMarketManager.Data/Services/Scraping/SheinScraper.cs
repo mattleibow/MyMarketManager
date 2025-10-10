@@ -11,12 +11,30 @@ namespace MyMarketManager.Data.Services.Scraping;
 /// </summary>
 public class SheinScraper : WebScraperBase
 {
+    private const string Domain = "shein.com";
+    private const string AccountPageUrl = "https://shein.com/user/account";
+    private const string OrdersListUrl = "https://shein.com/user/orders/list";
+    private const string OrderDetailUrlTemplate = "https://shein.com/user/orders/detail?order_id={orderId}";
+    private const string ProductPageUrlTemplate = "https://shein.com/product/{productId}";
+
     public SheinScraper(
         MyMarketManagerDbContext context,
         ILogger<SheinScraper> logger,
         IOptions<ScraperConfiguration> configuration)
         : base(context, logger, configuration)
     {
+    }
+
+    /// <inheritdoc/>
+    protected override string GetAccountPageUrl() => AccountPageUrl;
+
+    /// <inheritdoc/>
+    protected override string GetOrdersListUrl() => OrdersListUrl;
+
+    /// <inheritdoc/>
+    protected override string GetOrderDetailUrl(Dictionary<string, string> orderLinkInfo)
+    {
+        return ReplaceUrlTemplateValues(OrderDetailUrlTemplate, orderLinkInfo);
     }
 
     /// <summary>
@@ -30,11 +48,11 @@ public class SheinScraper : WebScraperBase
     }
 
     /// <summary>
-    /// Extracts order links from the orders list page and returns template values for each order.
+    /// Parses the orders list page and extracts order information.
     /// </summary>
-    protected override IEnumerable<Dictionary<string, string>> ExtractOrderLinks(string ordersListHtml)
+    protected override IEnumerable<Dictionary<string, string>> ParseOrdersListAsync(string ordersListHtml)
     {
-        Logger.LogDebug("Extracting order links from HTML (length: {Length})", ordersListHtml.Length);
+        Logger.LogDebug("Parsing orders from HTML (length: {Length})", ordersListHtml.Length);
 
         var links = new List<Dictionary<string, string>>();
 
@@ -60,7 +78,7 @@ public class SheinScraper : WebScraperBase
             }
         }
 
-        Logger.LogInformation("Extracted {Count} unique order links", links.Count);
+        Logger.LogInformation("Parsed {Count} unique orders", links.Count);
         return links;
     }
 
