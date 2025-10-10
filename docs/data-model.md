@@ -36,7 +36,7 @@ Used to distinguish the type of data in a staging batch.
 
 | Value | Description |
 |-------|-------------|
-| SupplierData | Supplier purchase order data (e.g., Shein export) |
+| SupplierData | Supplier purchase order data from various supplier exports |
 | SalesData | Sales data from point-of-sale systems (e.g., Yoco API) |
 
 ## Entities
@@ -155,7 +155,7 @@ Description: A confirmed sale linked to a product and market event, derived from
 
 
 ## StagingBatch
-Description: Represents a single supplier data upload (e.g. Shein ZIP) or sales data upload (e.g. Yoco API load, grouping all parsed orders, sales and items.  
+Description: Represents a single supplier data upload (password-protected ZIP file) or sales data upload (e.g. Yoco API load), grouping all parsed orders, sales and items.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
 | Id | Integer (PK) | Unique identifier | Parent of StagingPurchaseOrder |

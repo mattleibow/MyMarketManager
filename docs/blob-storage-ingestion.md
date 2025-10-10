@@ -2,7 +2,7 @@
 
 ## Overview
 
-The blob storage ingestion pipeline enables automated processing of supplier data files uploaded to Azure Blob Storage. Users upload files through a web UI, which creates staging batches that are then processed by a background service. This feature is designed to handle password-protected ZIP files (starting with Shein "Request My Data" exports) and create staging batches for validation and promotion into production data.
+The blob storage ingestion pipeline enables automated processing of supplier data files uploaded to Azure Blob Storage. Users upload files through a web UI, which creates staging batches that are then processed by a background service. This feature is designed to handle password-protected ZIP files from various supplier export formats and create staging batches for validation and promotion into production data.
 
 ## Architecture
 
@@ -96,19 +96,7 @@ The blob storage ingestion pipeline enables automated processing of supplier dat
 
 ### Aspire Configuration
 
-The blob storage is configured in the AppHost (`src/MyMarketManager.AppHost/AppHost.cs`):
-
-```csharp
-var blobStorage = builder.AddAzureStorage("storage")
-    .RunAsEmulator(emulator =>
-    {
-        emulator.WithImageTag("latest");
-        if (builder.Configuration.GetValue("UseVolumes", true))
-            emulator.WithDataVolume();
-    });
-
-var blobs = blobStorage.AddBlobs("blobs");
-```
+The blob storage is configured in the AppHost (see `src/MyMarketManager.AppHost/AppHost.cs` for Azure Storage and Azurite emulator configuration).
 
 ### WebApp Configuration
 
@@ -148,15 +136,7 @@ builder.Services.AddHostedService<BlobIngestionService>();
 
 ### Testing
 
-The blob storage URL functionality is tested in `tests/MyMarketManager.Data.Tests/StagingEntityTests.cs`:
-
-```csharp
-[Fact]
-public async Task StagingBatch_CanStoreBlobUrl()
-{
-    // Test that verifies BlobStorageUrl can be saved and retrieved
-}
-```
+The batch processing logic is tested in `tests/MyMarketManager.Data.Tests/Services/BatchIngestionProcessorTests.cs` with comprehensive test coverage for upload, ingestion, and processing flows including error scenarios.
 
 Run tests:
 ```bash
@@ -186,7 +166,7 @@ This approach saves both storage space and processing time by detecting duplicat
 ### Planned Features
 
 1. ✅ **Upload UI Component**: Implemented - Blazor page at `/upload-supplier-data`
-2. **ZIP Extraction**: Extract and parse password-protected ZIP files (Shein format)
+2. **ZIP Extraction**: Extract and parse password-protected ZIP files from various supplier formats
 3. **Parser Registry**: Configurable parsers for different supplier formats
 4. **Progress Tracking**: Real-time status updates during processing
 5. **Batch Status Page**: View all batches and their processing status

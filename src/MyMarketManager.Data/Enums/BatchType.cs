@@ -6,7 +6,7 @@ namespace MyMarketManager.Data.Enums;
 public enum BatchType
 {
     /// <summary>
-    /// Supplier purchase order data (e.g., Shein export)
+    /// Supplier purchase order data from various supplier exports
     /// </summary>
     SupplierData,
 

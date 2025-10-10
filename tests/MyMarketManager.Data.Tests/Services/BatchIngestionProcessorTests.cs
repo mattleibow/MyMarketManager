@@ -7,7 +7,7 @@ using NSubstitute;
 
 namespace MyMarketManager.Data.Tests.Services;
 
-public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlServerTestBase(createSchema: true)
+public class BatchIngestionProcessorTests(ITestOutputHelper outputHelper) : SqlServerTestBase(outputHelper, createSchema: true)
 {
     private readonly ILogger<BatchIngestionProcessor> _logger = outputHelper.ToLogger<BatchIngestionProcessor>();
 
