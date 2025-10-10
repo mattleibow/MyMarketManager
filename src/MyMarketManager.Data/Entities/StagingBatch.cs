@@ -24,7 +24,7 @@ public class StagingBatch : EntityBase
     public string? ErrorMessage { get; set; }
 
     /// <summary>
-    /// The scraper session that created this batch, if any (1:1 optional relationship).
+    /// The scraper session that created this batch, if any.
     /// </summary>
     public Guid? ScraperSessionId { get; set; }
     public ScraperSession? ScraperSession { get; set; }
