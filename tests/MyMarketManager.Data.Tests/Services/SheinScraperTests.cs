@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
 using MyMarketManager.Data.Services.Scraping;
@@ -12,102 +12,33 @@ namespace MyMarketManager.Data.Tests.Services;
 public class SheinScraperTests(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper)
 {
     [Fact]
-    public void SheinScraper_HasCorrectConfiguration()
+    public void SheinScraper_CanBeCreated()
     {
         // Arrange
         var logger = CreateLogger<SheinScraper>();
-        var scraper = new SheinScraper(Context, logger);
+        var config = CreateConfiguration();
 
         // Act
-        var config = scraper.Configuration;
+        var scraper = new SheinScraper(Context, logger, config);
 
         // Assert
-        Assert.Equal("Shein", config.SupplierName);
-        Assert.Equal("shein.com", config.Domain);
-        Assert.Equal("https://shein.com/user/orders/list", config.OrdersListUrl);
-        Assert.Contains("/user/orders/detail", config.OrderDetailUrlPattern);
-        Assert.Contains("{orderId}", config.OrderDetailUrlPattern);
-        Assert.Equal("https://shein.com/user/account", config.AccountPageUrl);
-        Assert.NotEmpty(config.UserAgent);
-        Assert.NotEmpty(config.AdditionalHeaders);
-        Assert.Contains("accept", config.AdditionalHeaders.Keys);
+        Assert.NotNull(scraper);
     }
 
     [Fact]
-    public void SheinScraper_ExtractOrderLinks_ReturnsUniqueLinks()
+    public async Task SheinScraper_ImplementsIWebScraperInterface()
     {
         // Arrange
         var logger = CreateLogger<SheinScraper>();
-        var scraper = new SheinScraper(Context, logger);
-
-        var html = @"
-            <html>
-                <body>
-                    <a href=""/user/orders/detail?order_id=123"">Order 123</a>
-                    <a href=""/user/orders/detail?order_id=456"">Order 456</a>
-                    <a href=""/user/orders/detail?order_id=123"">Order 123 again</a>
-                </body>
-            </html>
-        ";
+        var config = CreateConfiguration();
 
         // Act
-        var links = scraper.ExtractOrderLinks(html).ToList();
+        IWebScraper scraper = new SheinScraper(Context, logger, config);
 
         // Assert
-        Assert.Equal(2, links.Count); // Should deduplicate
-        Assert.Contains("https://shein.com/user/orders/detail?order_id=123", links);
-        Assert.Contains("https://shein.com/user/orders/detail?order_id=456", links);
-    }
+        Assert.NotNull(scraper);
 
-    [Fact]
-    public void SheinScraper_ExtractOrderLinks_ReturnsEmptyForNoLinks()
-    {
-        // Arrange
-        var logger = CreateLogger<SheinScraper>();
-        var scraper = new SheinScraper(Context, logger);
-
-        var html = @"<html><body>No orders found</body></html>";
-
-        // Act
-        var links = scraper.ExtractOrderLinks(html).ToList();
-
-        // Assert
-        Assert.Empty(links);
-    }
-
-    [Fact]
-    public async Task SheinScraper_ParseOrderDetailsAsync_ReturnsData()
-    {
-        // Arrange
-        var logger = CreateLogger<SheinScraper>();
-        var scraper = new SheinScraper(Context, logger);
-
-        var html = @"
-            <html>
-                <body>
-                    <div class=""order-id"">ORDER-12345</div>
-                    <div>gbRawData: { ""order"": ""data"" }</div>
-                </body>
-            </html>
-        ";
-
-        // Act
-        var orderData = await scraper.ParseOrderDetailsAsync(html, TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.NotEmpty(orderData);
-        Assert.True(orderData.ContainsKey("html_length"));
-        Assert.True(orderData.ContainsKey("has_gbRawData"));
-        Assert.True((bool)orderData["has_gbRawData"]);
-    }
-
-    [Fact]
-    public async Task SheinScraper_ScrapeOrdersAsync_CreatesStagingBatch_WhenCalled()
-    {
-        // Arrange
-        var logger = CreateLogger<SheinScraper>();
-        var scraper = new SheinScraper(Context, logger);
-
+        // Initialize with a cookie file
         var supplier = new Supplier
         {
             Id = Guid.NewGuid(),
@@ -119,6 +50,7 @@ public class SheinScraperTests(ITestOutputHelper outputHelper) : SqliteTestBase(
         var cookieFile = new CookieFile
         {
             SupplierId = supplier.Id,
+            SupplierName = "Shein",
             Domain = "shein.com",
             CapturedAt = DateTimeOffset.UtcNow,
             Cookies = new List<CookieData>
@@ -132,37 +64,15 @@ public class SheinScraperTests(ITestOutputHelper outputHelper) : SqliteTestBase(
             }
         };
 
-        // Act & Assert
-        // This will fail because we can't actually scrape a real website in unit tests
-        // But we can verify the batch creation logic by catching the expected exception
-        await Assert.ThrowsAnyAsync<Exception>(async () =>
-        {
-            await scraper.ScrapeOrdersAsync(cookieFile, null, TestContext.Current.CancellationToken);
-        });
+        // This will create a scraper session
+        var baseScraper = (WebScraperBase)scraper;
+        await baseScraper.InitializeAsync(cookieFile, TestContext.Current.CancellationToken);
 
-        // Verify a staging batch was created (even though the scraping failed)
-        var batches = await Context.StagingBatches
-            .Where(b => b.SupplierId == supplier.Id)
-            .ToListAsync(TestContext.Current.CancellationToken);
-
-        // The batch should have been created before validation fails
-        // Note: This test validates the integration but will have a batch only if validation succeeds
-        // For now, we just verify the scraper doesn't crash
-        Assert.NotNull(batches);
-    }
-
-    [Fact]
-    public void SheinScraper_ImplementsIWebScraperInterface()
-    {
-        // Arrange
-        var logger = CreateLogger<SheinScraper>();
-
-        // Act
-        IWebScraper scraper = new SheinScraper(Context, logger);
-
-        // Assert
-        Assert.NotNull(scraper);
-        Assert.NotNull(scraper.Configuration);
+        // Verify session was created
+        var sessions = Context.ScraperSessions.ToList();
+        Assert.Single(sessions);
+        Assert.Equal(supplier.Id, sessions[0].SupplierId);
+        Assert.Equal(ProcessingStatus.Queued, sessions[0].Status);
     }
 
     private ILogger<T> CreateLogger<T>()
@@ -172,5 +82,33 @@ public class SheinScraperTests(ITestOutputHelper outputHelper) : SqliteTestBase(
             builder.SetMinimumLevel(LogLevel.Debug);
         });
         return loggerFactory.CreateLogger<T>();
+    }
+
+    private IOptions<ScraperConfiguration> CreateConfiguration()
+    {
+        var config = new ScraperConfiguration
+        {
+            SupplierName = "Shein",
+            Domain = "shein.com",
+            OrdersListUrlTemplate = "https://shein.com/user/orders/list",
+            OrderDetailUrlTemplate = "https://shein.com/user/orders/detail?order_id={orderId}",
+            ProductPageUrlTemplate = "https://shein.com/product/{productId}",
+            AccountPageUrlTemplate = "https://shein.com/user/account",
+            UserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0",
+            AdditionalHeaders = new Dictionary<string, string>
+            {
+                { "accept", "text/html" },
+                { "accept-language", "en-US" },
+                { "cache-control", "no-cache" },
+                { "upgrade-insecure-requests", "1" }
+            },
+            RequestDelay = TimeSpan.FromSeconds(2),
+            MaxConcurrentRequests = 1,
+            RequestTimeout = TimeSpan.FromSeconds(30),
+            RequiresHeadlessBrowser = false,
+            Notes = "Shein orders are listed at /user/orders/list. Check for 'gbRawData' in response to verify successful authentication."
+        };
+
+        return Options.Create(config);
     }
 }

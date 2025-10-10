@@ -31,6 +31,9 @@ public class MyMarketManagerDbContext : DbContext
     public DbSet<StagingSale> StagingSales => Set<StagingSale>();
     public DbSet<StagingSaleItem> StagingSaleItems => Set<StagingSaleItem>();
 
+    // Scraping entities
+    public DbSet<ScraperSession> ScraperSessions => Set<ScraperSession>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

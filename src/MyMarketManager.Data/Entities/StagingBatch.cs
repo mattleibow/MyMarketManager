@@ -18,7 +18,13 @@ public class StagingBatch : EntityBase
     public ProcessingStatus Status { get; set; }
     public string? Notes { get; set; }
 
+    /// <summary>
+    /// Error message if the batch processing failed.
+    /// </summary>
+    public string? ErrorMessage { get; set; }
+
     // Navigation properties
     public ICollection<StagingPurchaseOrder> StagingPurchaseOrders { get; set; } = new List<StagingPurchaseOrder>();
     public ICollection<StagingSale> StagingSales { get; set; } = new List<StagingSale>();
+    public ICollection<ScraperSession> ScraperSessions { get; set; } = new List<ScraperSession>();
 }

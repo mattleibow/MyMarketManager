@@ -1,3 +1,5 @@
+using MyMarketManager.Data.Enums;
+
 namespace MyMarketManager.Data.Entities;
 
 /// <summary>
@@ -24,7 +26,7 @@ public class ScraperSession : EntityBase
     /// <summary>
     /// The status of this scraping session.
     /// </summary>
-    public ScraperSessionStatus Status { get; set; }
+    public ProcessingStatus Status { get; set; }
 
     /// <summary>
     /// The staging batch created by this session, if any.
@@ -33,20 +35,9 @@ public class ScraperSession : EntityBase
     public StagingBatch? StagingBatch { get; set; }
 
     /// <summary>
-    /// Timestamp of the last successful scrape before this one.
-    /// Used to determine what data is new.
+    /// Serialized cookie file JSON for this session.
     /// </summary>
-    public DateTimeOffset? LastSuccessfulScrape { get; set; }
-
-    /// <summary>
-    /// Number of pages scraped in this session.
-    /// </summary>
-    public int PagesScraped { get; set; }
-
-    /// <summary>
-    /// Number of orders found/scraped in this session.
-    /// </summary>
-    public int OrdersScraped { get; set; }
+    public string? CookieFileJson { get; set; }
 
     /// <summary>
     /// Error message if the session failed.
@@ -57,35 +48,4 @@ public class ScraperSession : EntityBase
     /// Additional notes or metadata about this session.
     /// </summary>
     public string? Notes { get; set; }
-}
-
-/// <summary>
-/// Status of a scraper session.
-/// </summary>
-public enum ScraperSessionStatus
-{
-    /// <summary>
-    /// Session is queued to start.
-    /// </summary>
-    Queued = 0,
-
-    /// <summary>
-    /// Session is currently running.
-    /// </summary>
-    Running = 1,
-
-    /// <summary>
-    /// Session completed successfully.
-    /// </summary>
-    Completed = 2,
-
-    /// <summary>
-    /// Session failed with an error.
-    /// </summary>
-    Failed = 3,
-
-    /// <summary>
-    /// Session was cancelled.
-    /// </summary>
-    Cancelled = 4
 }

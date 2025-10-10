@@ -13,13 +13,14 @@ public class CookieFileTests
         var cookieFile = new CookieFile
         {
             SupplierId = Guid.NewGuid(),
+            SupplierName = "Test Supplier",
             Domain = "shein.com",
             CapturedAt = DateTimeOffset.UtcNow
         };
 
         // Assert
-        Assert.NotEqual(Guid.Empty, cookieFile.Id);
         Assert.Equal("shein.com", cookieFile.Domain);
+        Assert.Equal("Test Supplier", cookieFile.SupplierName);
         Assert.Empty(cookieFile.Cookies);
         Assert.Empty(cookieFile.Metadata);
     }
@@ -31,6 +32,7 @@ public class CookieFileTests
         var cookieFile = new CookieFile
         {
             SupplierId = Guid.NewGuid(),
+            SupplierName = "Test Supplier",
             Domain = "shein.com",
             CapturedAt = DateTimeOffset.UtcNow
         };
@@ -60,8 +62,8 @@ public class CookieFileTests
         // Arrange
         var cookieFile = new CookieFile
         {
-            Id = Guid.NewGuid(),
             SupplierId = Guid.NewGuid(),
+            SupplierName = "Test Supplier",
             Domain = "shein.com",
             CapturedAt = DateTimeOffset.UtcNow,
             ExpiresAt = DateTimeOffset.UtcNow.AddDays(7),
@@ -88,6 +90,7 @@ public class CookieFileTests
         // Act
         var json = JsonSerializer.Serialize(cookieFile, new JsonSerializerOptions
         {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true
         });
 
@@ -104,12 +107,12 @@ public class CookieFileTests
     {
         // Arrange
         var json = @"{
-            ""Id"": ""12345678-1234-1234-1234-123456789012"",
-            ""SupplierId"": ""87654321-4321-4321-4321-210987654321"",
-            ""Domain"": ""shein.com"",
-            ""CapturedAt"": ""2025-10-10T00:00:00Z"",
-            ""ExpiresAt"": ""2025-10-17T00:00:00Z"",
-            ""Cookies"": [
+            ""supplierId"": ""87654321-4321-4321-4321-210987654321"",
+            ""supplierName"": ""Test Supplier"",
+            ""domain"": ""shein.com"",
+            ""capturedAt"": ""2025-10-10T00:00:00Z"",
+            ""expiresAt"": ""2025-10-17T00:00:00Z"",
+            ""cookies"": [
                 {
                     ""name"": ""session"",
                     ""value"": ""abc123"",
@@ -120,17 +123,21 @@ public class CookieFileTests
                     ""sameSite"": ""Strict""
                 }
             ],
-            ""Metadata"": {
+            ""metadata"": {
                 ""browser"": ""Chrome""
             }
         }";
 
         // Act
-        var cookieFile = JsonSerializer.Deserialize<CookieFile>(json);
+        var cookieFile = JsonSerializer.Deserialize<CookieFile>(json, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
 
         // Assert
         Assert.NotNull(cookieFile);
         Assert.Equal("shein.com", cookieFile.Domain);
+        Assert.Equal("Test Supplier", cookieFile.SupplierName);
         Assert.Single(cookieFile.Cookies);
         Assert.Equal("session", cookieFile.Cookies[0].Name);
         Assert.Equal("abc123", cookieFile.Cookies[0].Value);
@@ -156,9 +163,12 @@ public class CookieFileTests
         };
 
         // Act
-        var json = JsonSerializer.Serialize(cookie);
+        var json = JsonSerializer.Serialize(cookie, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
 
-        // Assert - verify JSON property names match the JsonPropertyName attributes
+        // Assert - verify JSON uses camelCase
         Assert.Contains("\"name\":", json);
         Assert.Contains("\"value\":", json);
         Assert.Contains("\"domain\":", json);
