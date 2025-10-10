@@ -120,77 +120,40 @@ dotnet ef migrations script --project src/MyMarketManager.Data
 
 ## DbContext Configuration
 
-The `MyMarketManagerDbContext` is configured in the WebApp's `Program.cs`:
-
-```csharp
-// Register DbContext with SQL Server
-builder.AddSqlServerDbContext<MyMarketManagerDbContext>("mymarketmanager");
-```
-
-The connection string is managed by Aspire and points to:
+The `MyMarketManagerDbContext` is registered in the WebApp's `Program.cs` using Aspire's database integration. The connection string is managed by Aspire and points to:
 - Local SQL Server container in development
 - Azure SQL Database in production
+
+See `src/MyMarketManager.WebApp/Program.cs` for the actual configuration.
 
 ## Best Practices
 
 ### Entity Design
 
-1. **Use value objects** for complex types (e.g., Address, Money)
-2. **Keep entities focused** - single responsibility principle
-3. **Use navigation properties** for relationships
-4. **Add indexes** for frequently queried fields
-5. **Use computed columns** sparingly
+1. Use value objects for complex types (e.g., Address, Money)
+2. Keep entities focused with single responsibility
+3. Use navigation properties for relationships
+4. Add indexes for frequently queried fields
+5. Use computed columns sparingly
 
 ### Querying
 
-1. **Use IQueryable** to defer execution
-2. **Project early** with `.Select()` to reduce data transfer
-3. **Use async methods** for all database operations
-4. **Avoid N+1 queries** with `.Include()` or projection
-5. **Use `.AsNoTracking()` for read-only queries
-
-Example efficient query:
-
-```csharp
-// Good: Projects to DTO, no tracking
-var products = await context.Products
-    .AsNoTracking()
-    .Select(p => new ProductDto
-    {
-        Id = p.Id,
-        Name = p.Name,
-        StockOnHand = p.StockOnHand
-    })
-    .ToListAsync();
-```
+1. Use `IQueryable` to defer execution
+2. Project early with `.Select()` to reduce data transfer
+3. Use async methods for all database operations
+4. Avoid N+1 queries with `.Include()` or projection
+5. Use `.AsNoTracking()` for read-only queries
 
 ### Change Tracking
 
-1. **Detach entities** when not needed for updates
-2. **Use explicit loading** for related data when needed
-3. **Be aware of proxy creation** and lazy loading behavior
-4. **Use `DbContext.ChangeTracker.Clear()`** to reset context state
+1. Detach entities when not needed for updates
+2. Use explicit loading for related data when needed
+3. Be aware of proxy creation and lazy loading behavior
+4. Use `DbContext.ChangeTracker.Clear()` to reset context state
 
 ### Transactions
 
-For operations requiring multiple saves:
-
-```csharp
-using var transaction = await context.Database.BeginTransactionAsync();
-try
-{
-    // Multiple operations
-    await context.SaveChangesAsync();
-    await context.SaveChangesAsync();
-    
-    await transaction.CommitAsync();
-}
-catch
-{
-    await transaction.RollbackAsync();
-    throw;
-}
-```
+Use transactions for operations requiring multiple save operations. See Entity Framework Core documentation for transaction patterns.
 
 ## Performance Considerations
 
@@ -216,59 +179,11 @@ For bulk operations, consider:
 
 For comprehensive testing documentation including platform-specific SQL Server provisioning (LocalDB on Windows, Testcontainers on Linux), see the **[Testing Guide](testing.md)**.
 
-### Quick Examples
+The Data project includes test base classes in `tests/MyMarketManager.Data.Tests`:
+- `SqliteTestBase` - Fast in-memory database tests  
+- `SqlServerTestBase` - SQL Server-specific functionality tests
 
-#### Unit Tests with SQLite
-
-Use `SqliteTestBase` for fast in-memory database tests:
-
-```csharp
-using MyMarketManager.Tests.Shared;
-
-public class ProductTests : SqliteTestBase
-{
-    [Fact]
-    public async Task CanCreateProduct()
-    {
-        // Context is provided by SqliteTestBase
-        var product = new Product { Name = "Test", Quality = ProductQuality.Good };
-        Context.Products.Add(product);
-        await Context.SaveChangesAsync();
-        
-        Assert.NotNull(await Context.Products.FindAsync(product.Id));
-    }
-}
-```
-
-#### Integration Tests with SQL Server
-
-Use `SqlServerTestBase` for SQL Server-specific functionality:
-
-```csharp
-using MyMarketManager.Tests.Shared;
-
-public class SqlServerFeatureTests : SqlServerTestBase
-{
-    public SqlServerFeatureTests(ITestOutputHelper outputHelper) 
-        : base(outputHelper) { }
-
-    [Fact]
-    public async Task TestSqlServerFeature()
-    {
-        // Context is configured with platform-appropriate SQL Server
-        // Windows: LocalDB (instant)
-        // Linux: Testcontainers (containerized)
-        
-        var result = await Context.Database
-            .SqlQueryRaw<int>("SELECT 1")
-            .ToListAsync();
-            
-        Assert.Single(result);
-    }
-}
-```
-
-See [Testing Guide - Writing Tests](testing.md#writing-tests) for more examples and best practices.
+See [Testing Guide - Writing Tests](testing.md#writing-tests) for examples and best practices.
 
 ## Troubleshooting
 
@@ -307,7 +222,7 @@ dotnet ef migrations add FixModelChanges --project src/MyMarketManager.Data
 **Problem:** Slow queries
 
 **Solution:**
-1. Enable query logging: `builder.Services.AddDbContext<MyMarketManagerDbContext>(options => options.LogTo(Console.WriteLine))`
+1. Enable query logging in configuration
 2. Check for N+1 queries
 3. Add appropriate indexes
 4. Use `.AsNoTracking()` for read-only queries

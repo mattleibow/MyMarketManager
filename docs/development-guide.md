@@ -147,147 +147,37 @@ dotnet test --collect:"XPlat Code Coverage"
 
 **Location:** `src/MyMarketManager.WebApp/GraphQL/`
 
-**Key Files:**
-- `ProductQueries.cs` - Query operations
-- `ProductMutations.cs` - Mutation operations and input types
-
 **Workflow:**
-1. Add/modify methods in query or mutation classes
+1. Add/modify methods in `ProductQueries.cs` or `ProductMutations.cs`
 2. Test in Nitro IDE at `/graphql`
 3. Schema updates automatically via HotChocolate reflection
 
-**Adding a New Query:**
-
-```csharp
-// In ProductQueries.cs
-public IQueryable<Product> GetProductsByQuality(
-    ProductQuality quality,
-    MyMarketManagerDbContext context)
-{
-    return context.Products.Where(p => p.Quality == quality);
-}
-```
-
-The query is immediately available in GraphQL:
-
-```graphql
-query {
-  productsByQuality(quality: EXCELLENT) {
-    id
-    name
-  }
-}
-```
-
-**Adding a New Mutation:**
-
-```csharp
-// In ProductMutations.cs
-public record AdjustStockInput(Guid ProductId, int Adjustment);
-
-public async Task<Product> AdjustStock(
-    AdjustStockInput input,
-    MyMarketManagerDbContext context,
-    CancellationToken cancellationToken)
-{
-    var product = await context.Products.FindAsync(
-        new object[] { input.ProductId }, 
-        cancellationToken);
-    
-    if (product == null)
-        throw new GraphQLException("Product not found");
-    
-    product.StockOnHand += input.Adjustment;
-    await context.SaveChangesAsync(cancellationToken);
-    
-    return product;
-}
-```
+Query methods should return `IQueryable<T>` for efficient database queries. Mutation methods should be async and use input records for parameters. See [GraphQL Server documentation](graphql-server.md) for detailed guidance.
 
 ### GraphQL Client Development
 
 **Location:** `src/MyMarketManager.GraphQL.Client/`
 
-**Key Files:**
-- `GraphQL/*.graphql` - Operation definitions
-- `.graphqlrc.json` - StrawberryShake configuration
-- `Generated/` - Generated client code (don't edit manually)
-
 **Workflow:**
-1. Define GraphQL operation in `.graphql` file
-2. Generate typed client code with `dotnet graphql generate` (see [Code Generation](graphql-client.md#code-generation))
-3. Use the generated operation in your app
+1. Define GraphQL operation in a `.graphql` file in the `GraphQL/` directory
+2. Generate typed client code with `dotnet graphql generate`
+3. Use the generated operation through `IMyMarketManagerClient`
 
-**Note:** If you've changed the GraphQL schema (server-side), download the updated schema first with `dotnet graphql update`.
+**Note:** If the server schema has changed, download the updated schema first with `dotnet graphql update`.
 
-**Adding a New Operation:**
-
-Create `GraphQL/stock.graphql`:
-
-```graphql
-mutation AdjustStock($productId: UUID!, $adjustment: Int!) {
-  adjustStock(input: { productId: $productId, adjustment: $adjustment }) {
-    id
-    stockOnHand
-  }
-}
-```
-
-Generate the client code:
-
-```bash
-cd src/MyMarketManager.GraphQL.Client
-dotnet graphql generate
-```
-
-Use in code:
-
-```csharp
-var result = await _client.AdjustStock.ExecuteAsync(productId, adjustment);
-```
+See [GraphQL Client documentation](graphql-client.md) and the project's README for detailed instructions.
 
 ### Data Layer Development
 
 **Location:** `src/MyMarketManager.Data/`
 
-**Key Files:**
-- `Entities/*.cs` - Entity classes
-- `Enums/*.cs` - Enumeration types
-- `MyMarketManagerDbContext.cs` - DbContext configuration
-
 **Workflow:**
-1. Add/modify entity classes
-2. Create migration
-3. Test migration
-4. Apply to database
+1. Add or modify entity classes in `Entities/`
+2. Update `MyMarketManagerDbContext` if adding new `DbSet`
+3. Create migration: `dotnet ef migrations add MigrationName --project src/MyMarketManager.Data`
+4. Test by running the application (migrations apply automatically)
 
-**Adding a New Entity:**
-
-```csharp
-// In Entities/Category.cs
-public class Category
-{
-    public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    
-    // Navigation properties
-    public ICollection<Product> Products { get; set; } = new List<Product>();
-}
-```
-
-Update DbContext:
-
-```csharp
-// In MyMarketManagerDbContext.cs
-public DbSet<Category> Categories { get; set; }
-```
-
-Create migration:
-
-```bash
-dotnet ef migrations add AddCategory --project src/MyMarketManager.Data
-```
+See [Data Layer documentation](data-layer.md) for entity design best practices and migration management.
 
 ## Code Style and Standards
 
@@ -340,15 +230,7 @@ Closes #123
 
 ### Debug Database Queries
 
-Enable query logging in `Program.cs`:
-
-```csharp
-builder.Services.AddDbContext<MyMarketManagerDbContext>(options =>
-{
-    options.UseSqlServer(connectionString);
-    options.LogTo(Console.WriteLine, LogLevel.Information);
-});
-```
+Enable query logging in `Program.cs` to see generated SQL. See Entity Framework Core documentation for logging configuration options.
 
 ### View Aspire Logs
 
@@ -381,7 +263,7 @@ builder.Services.AddDbContext<MyMarketManagerDbContext>(options =>
 
 **Problem:** "Schema not found" error in GraphQL.Client
 
-**Solution:** Download the schema from the running server:
+**Solution:**
 ```bash
 # Terminal 1: Start server
 dotnet run --project src/MyMarketManager.AppHost
