@@ -19,100 +19,43 @@ public class SheinScraper : WebScraperBase
     {
     }
 
-    /// <inheritdoc/>
-    protected override async Task ExecuteScrapingAsync(StagingBatch batch, CancellationToken cancellationToken)
+    /// <summary>
+    /// Validates a page's HTML content by checking for gbRawData which indicates successful authentication.
+    /// </summary>
+    protected override Task<bool> ValidatePageAsync(string html, CancellationToken cancellationToken)
     {
-        // Step 1: Scrape orders list page
-        Logger.LogInformation("Fetching orders list page");
-        var ordersListHtml = await ScrapePageAsync(
-            PageType.OrdersListPage,
-            Configuration.OrdersListUrlTemplate,
-            cancellationToken);
-
-        // Extract gbRawData from orders list page if available
-        var ordersListRawData = ExtractGbRawData(ordersListHtml);
-
-        // Step 2: Extract order links
-        Logger.LogInformation("Extracting order links from orders list");
-        var orderLinks = ExtractOrderLinks(ordersListHtml).ToList();
-        Logger.LogInformation("Found {Count} order links", orderLinks.Count);
-
-        // Step 3: Scrape each order detail page
-        foreach (var orderLink in orderLinks)
-        {
-            try
-            {
-                await Task.Delay(Configuration.RequestDelay, cancellationToken);
-
-                Logger.LogInformation("Scraping order: {OrderLink}", orderLink);
-                var orderHtml = await ScrapePageAsync(PageType.OrderDetailsPage, orderLink, cancellationToken);
-
-                // Parse order details
-                var orderData = await ParseOrderDetailsAsync(orderHtml, cancellationToken);
-
-                // Extract gbRawData from order detail page
-                var orderRawData = ExtractGbRawData(orderHtml);
-
-                // Create staging purchase order with gbRawData
-                var stagingOrder = CreateStagingPurchaseOrder(batch.Id, orderData, orderRawData);
-                Context.StagingPurchaseOrders.Add(stagingOrder);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Failed to scrape order: {OrderLink}", orderLink);
-                // Continue with next order
-            }
-        }
-
-        await Context.SaveChangesAsync(cancellationToken);
-        Logger.LogInformation("Saved {Count} staging purchase orders", orderLinks.Count);
+        // Check for gbRawData which indicates successful authentication on Shein pages
+        var isValid = html.Contains("gbRawData");
+        return Task.FromResult(isValid);
     }
 
-    /// <inheritdoc/>
-    protected override async Task<bool> ValidateCookiesAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            Logger.LogInformation("Validating cookies for domain {Domain}", CookieFile!.Domain);
-
-            var html = await ScrapePageAsync(
-                PageType.AccountPage,
-                Configuration.AccountPageUrlTemplate,
-                cancellationToken);
-
-            // Check for gbRawData which indicates successful authentication
-            var isValid = html.Contains("gbRawData");
-
-            Logger.LogInformation("Cookie validation result: {IsValid}", isValid);
-            return isValid;
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error validating cookies");
-            return false;
-        }
-    }
-
-    /// <inheritdoc/>
-    protected override IEnumerable<string> ExtractOrderLinks(string ordersListHtml)
+    /// <summary>
+    /// Extracts order links from the orders list page and returns template values for each order.
+    /// </summary>
+    protected override IEnumerable<Dictionary<string, string>> ExtractOrderLinks(string ordersListHtml)
     {
         Logger.LogDebug("Extracting order links from HTML (length: {Length})", ordersListHtml.Length);
 
-        var links = new List<string>();
+        var links = new List<Dictionary<string, string>>();
 
         // Simple regex-based extraction (to be replaced with proper HTML parsing)
-        var pattern = @"href=""(/user/orders/detail\?[^""]+)""";
+        var pattern = @"href=""(/user/orders/detail\?order_id=([^""&]+))""";
         var matches = Regex.Matches(ordersListHtml, pattern);
 
         foreach (Match match in matches)
         {
-            if (match.Groups.Count > 1)
+            if (match.Groups.Count > 2)
             {
-                var relativePath = match.Groups[1].Value;
-                var absoluteUrl = $"https://{Configuration.Domain}{relativePath}";
-                if (!links.Contains(absoluteUrl))
+                var orderId = match.Groups[2].Value;
+                var linkInfo = new Dictionary<string, string>
                 {
-                    links.Add(absoluteUrl);
+                    { "orderId", orderId }
+                };
+                
+                // Check for duplicates
+                if (!links.Any(l => l.ContainsKey("orderId") && l["orderId"] == orderId))
+                {
+                    links.Add(linkInfo);
                 }
             }
         }
@@ -121,20 +64,28 @@ public class SheinScraper : WebScraperBase
         return links;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Parses order details from an order detail page.
+    /// </summary>
     protected override Task<Dictionary<string, object>> ParseOrderDetailsAsync(string orderDetailHtml, CancellationToken cancellationToken)
     {
         Logger.LogDebug("Parsing order details from HTML (length: {Length})", orderDetailHtml.Length);
 
-        // TODO: Implement proper HTML parsing using HtmlAgilityPack or AngleSharp
-        // For now, return basic metadata
+        // Extract gbRawData from the page
+        var gbRawData = ExtractGbRawData(orderDetailHtml);
 
         var orderData = new Dictionary<string, object>
         {
             { "html_length", orderDetailHtml.Length },
             { "scraped_at", DateTimeOffset.UtcNow.ToString("o") },
-            { "has_gbRawData", orderDetailHtml.Contains("gbRawData") }
+            { "has_gbRawData", gbRawData != null }
         };
+
+        // Store the actual gbRawData if found
+        if (gbRawData != null)
+        {
+            orderData["raw_data"] = gbRawData;
+        }
 
         return Task.FromResult(orderData);
     }
@@ -163,25 +114,5 @@ public class SheinScraper : WebScraperBase
             Logger.LogError(ex, "Error extracting gbRawData");
             return null;
         }
-    }
-
-    private static StagingPurchaseOrder CreateStagingPurchaseOrder(
-        Guid batchId,
-        Dictionary<string, object> orderData,
-        string? gbRawData)
-    {
-        return new StagingPurchaseOrder
-        {
-            Id = Guid.NewGuid(),
-            StagingBatchId = batchId,
-            SupplierReference = orderData.ContainsKey("order_id")
-                ? orderData["order_id"].ToString() ?? "UNKNOWN"
-                : "UNKNOWN",
-            OrderDate = orderData.ContainsKey("order_date")
-                ? DateTimeOffset.Parse(orderData["order_date"].ToString()!)
-                : DateTimeOffset.UtcNow,
-            RawData = gbRawData ?? JsonSerializer.Serialize(orderData),
-            IsImported = false
-        };
     }
 }

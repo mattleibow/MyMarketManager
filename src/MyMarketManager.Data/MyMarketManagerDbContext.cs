@@ -38,6 +38,13 @@ public class MyMarketManagerDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Configure 1:1 relationship between StagingBatch and ScraperSession
+        modelBuilder.Entity<StagingBatch>()
+            .HasOne(b => b.ScraperSession)
+            .WithOne(s => s.StagingBatch)
+            .HasForeignKey<StagingBatch>(b => b.ScraperSessionId)
+            .IsRequired(false);
+
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             var clrType = entityType.ClrType;

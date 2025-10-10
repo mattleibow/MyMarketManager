@@ -48,12 +48,12 @@ public class CookieFileTests
         };
 
         // Act
-        cookieFile.Cookies.Add(cookie);
+        cookieFile.Cookies.Add(cookie.Name, cookie);
 
         // Assert
         Assert.Single(cookieFile.Cookies);
-        Assert.Equal("session_id", cookieFile.Cookies[0].Name);
-        Assert.Equal("abc123", cookieFile.Cookies[0].Value);
+        Assert.True(cookieFile.Cookies.ContainsKey("session_id"));
+        Assert.Equal("abc123", cookieFile.Cookies["session_id"].Value);
     }
 
     [Fact]
@@ -67,9 +67,9 @@ public class CookieFileTests
             Domain = "shein.com",
             CapturedAt = DateTimeOffset.UtcNow,
             ExpiresAt = DateTimeOffset.UtcNow.AddDays(7),
-            Cookies = new List<CookieData>
+            Cookies = new Dictionary<string, CookieData>
             {
-                new CookieData
+                ["auth_token"] = new CookieData
                 {
                     Name = "auth_token",
                     Value = "xyz789",
@@ -112,8 +112,8 @@ public class CookieFileTests
             ""domain"": ""shein.com"",
             ""capturedAt"": ""2025-10-10T00:00:00Z"",
             ""expiresAt"": ""2025-10-17T00:00:00Z"",
-            ""cookies"": [
-                {
+            ""cookies"": {
+                ""session"": {
                     ""name"": ""session"",
                     ""value"": ""abc123"",
                     ""domain"": "".shein.com"",
@@ -122,7 +122,7 @@ public class CookieFileTests
                     ""httpOnly"": true,
                     ""sameSite"": ""Strict""
                 }
-            ],
+            },
             ""metadata"": {
                 ""browser"": ""Chrome""
             }
@@ -139,9 +139,9 @@ public class CookieFileTests
         Assert.Equal("shein.com", cookieFile.Domain);
         Assert.Equal("Test Supplier", cookieFile.SupplierName);
         Assert.Single(cookieFile.Cookies);
-        Assert.Equal("session", cookieFile.Cookies[0].Name);
-        Assert.Equal("abc123", cookieFile.Cookies[0].Value);
-        Assert.True(cookieFile.Cookies[0].Secure);
+        Assert.True(cookieFile.Cookies.ContainsKey("session"));
+        Assert.Equal("abc123", cookieFile.Cookies["session"].Value);
+        Assert.True(cookieFile.Cookies["session"].Secure);
         Assert.Single(cookieFile.Metadata);
         Assert.Equal("Chrome", cookieFile.Metadata["browser"]);
     }

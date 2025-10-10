@@ -26,14 +26,14 @@ public class SheinScraperTests(ITestOutputHelper outputHelper) : SqliteTestBase(
     }
 
     [Fact]
-    public async Task SheinScraper_ImplementsIWebScraperInterface()
+    public async Task SheinScraper_ImplementsWebScraperBase()
     {
         // Arrange
         var logger = CreateLogger<SheinScraper>();
         var config = CreateConfiguration();
 
         // Act
-        IWebScraper scraper = new SheinScraper(Context, logger, config);
+        WebScraperBase scraper = new SheinScraper(Context, logger, config);
 
         // Assert
         Assert.NotNull(scraper);
@@ -53,9 +53,9 @@ public class SheinScraperTests(ITestOutputHelper outputHelper) : SqliteTestBase(
             SupplierName = "Shein",
             Domain = "shein.com",
             CapturedAt = DateTimeOffset.UtcNow,
-            Cookies = new List<CookieData>
+            Cookies = new Dictionary<string, CookieData>
             {
-                new CookieData
+                ["session"] = new CookieData
                 {
                     Name = "session",
                     Value = "test123",
@@ -65,8 +65,7 @@ public class SheinScraperTests(ITestOutputHelper outputHelper) : SqliteTestBase(
         };
 
         // This will create a scraper session
-        var baseScraper = (WebScraperBase)scraper;
-        await baseScraper.InitializeAsync(cookieFile, TestContext.Current.CancellationToken);
+        await scraper.InitializeAsync(cookieFile, TestContext.Current.CancellationToken);
 
         // Verify session was created
         var sessions = Context.ScraperSessions.ToList();
