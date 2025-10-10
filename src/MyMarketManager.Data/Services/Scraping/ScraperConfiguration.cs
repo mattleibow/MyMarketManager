@@ -1,7 +1,8 @@
 namespace MyMarketManager.Data.Services.Scraping;
 
 /// <summary>
-/// Configuration for a web scraper including URLs, selectors, and scraping behavior.
+/// Configuration for a web scraper including URLs and scraping behavior.
+/// Can be loaded from application settings.
 /// </summary>
 public class ScraperConfiguration
 {
@@ -16,52 +17,27 @@ public class ScraperConfiguration
     public string Domain { get; set; } = string.Empty;
 
     /// <summary>
-    /// The URL pattern for the orders list page.
+    /// The URL template for the orders list page.
     /// May contain placeholders like {page} for pagination.
     /// </summary>
-    public string OrdersListUrl { get; set; } = string.Empty;
+    public string OrdersListUrlTemplate { get; set; } = string.Empty;
 
     /// <summary>
-    /// The URL pattern for order detail pages.
+    /// The URL template for order detail pages.
     /// May contain placeholders like {orderId}.
     /// </summary>
-    public string OrderDetailUrlPattern { get; set; } = string.Empty;
+    public string OrderDetailUrlTemplate { get; set; } = string.Empty;
 
     /// <summary>
-    /// The URL pattern for product pages.
+    /// The URL template for product pages.
     /// May contain placeholders like {productId} or {sku}.
     /// </summary>
-    public string ProductPageUrlPattern { get; set; } = string.Empty;
+    public string ProductPageUrlTemplate { get; set; } = string.Empty;
 
     /// <summary>
-    /// The URL for the account/profile page (used for cookie validation).
+    /// The URL template for the account/profile page (used for cookie validation).
     /// </summary>
-    public string AccountPageUrl { get; set; } = string.Empty;
-
-    /// <summary>
-    /// CSS selector or XPath to find order links on the orders list page.
-    /// </summary>
-    public string OrderLinkSelector { get; set; } = string.Empty;
-
-    /// <summary>
-    /// CSS selector or XPath for the order ID on the detail page.
-    /// </summary>
-    public string OrderIdSelector { get; set; } = string.Empty;
-
-    /// <summary>
-    /// CSS selector or XPath for the order date on the detail page.
-    /// </summary>
-    public string OrderDateSelector { get; set; } = string.Empty;
-
-    /// <summary>
-    /// CSS selector or XPath for order items on the detail page.
-    /// </summary>
-    public string OrderItemsSelector { get; set; } = string.Empty;
-
-    /// <summary>
-    /// CSS selector or XPath to detect if the user is logged in (for validation).
-    /// </summary>
-    public string LoggedInIndicatorSelector { get; set; } = string.Empty;
+    public string AccountPageUrlTemplate { get; set; } = string.Empty;
 
     /// <summary>
     /// User agent string to use for HTTP requests.
@@ -74,9 +50,9 @@ public class ScraperConfiguration
     public Dictionary<string, string> AdditionalHeaders { get; set; } = new();
 
     /// <summary>
-    /// Delay in milliseconds between page requests to avoid rate limiting.
+    /// Delay between page requests to avoid rate limiting.
     /// </summary>
-    public int RequestDelayMs { get; set; } = 1000;
+    public TimeSpan RequestDelay { get; set; } = TimeSpan.FromSeconds(1);
 
     /// <summary>
     /// Maximum number of concurrent requests.
@@ -84,9 +60,9 @@ public class ScraperConfiguration
     public int MaxConcurrentRequests { get; set; } = 1;
 
     /// <summary>
-    /// Timeout for HTTP requests in seconds.
+    /// Timeout for HTTP requests.
     /// </summary>
-    public int RequestTimeoutSeconds { get; set; } = 30;
+    public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
     /// Whether to use a headless browser (e.g., Playwright, Selenium) instead of HttpClient.

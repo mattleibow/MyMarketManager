@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace MyMarketManager.Data.Services.Scraping;
 
 /// <summary>
@@ -9,14 +7,14 @@ namespace MyMarketManager.Data.Services.Scraping;
 public class CookieFile
 {
     /// <summary>
-    /// Unique identifier for this cookie file.
-    /// </summary>
-    public Guid Id { get; set; } = Guid.NewGuid();
-
-    /// <summary>
     /// Supplier ID associated with these cookies (e.g., Shein supplier).
     /// </summary>
     public Guid SupplierId { get; set; }
+
+    /// <summary>
+    /// Supplier name for human readability (not used in processing).
+    /// </summary>
+    public string SupplierName { get; set; } = string.Empty;
 
     /// <summary>
     /// The base domain these cookies are for (e.g., "shein.com").
@@ -52,48 +50,40 @@ public class CookieData
     /// <summary>
     /// Cookie name.
     /// </summary>
-    [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Cookie value.
     /// </summary>
-    [JsonPropertyName("value")]
     public string Value { get; set; } = string.Empty;
 
     /// <summary>
     /// Cookie domain (e.g., ".shein.com").
     /// </summary>
-    [JsonPropertyName("domain")]
     public string? Domain { get; set; }
 
     /// <summary>
     /// Cookie path (e.g., "/").
     /// </summary>
-    [JsonPropertyName("path")]
     public string? Path { get; set; }
 
     /// <summary>
     /// Whether the cookie is secure (HTTPS only).
     /// </summary>
-    [JsonPropertyName("secure")]
     public bool Secure { get; set; }
 
     /// <summary>
     /// Whether the cookie is HTTP-only (not accessible via JavaScript).
     /// </summary>
-    [JsonPropertyName("httpOnly")]
     public bool HttpOnly { get; set; }
 
     /// <summary>
     /// Optional cookie expiration timestamp.
     /// </summary>
-    [JsonPropertyName("expires")]
     public DateTimeOffset? Expires { get; set; }
 
     /// <summary>
     /// SameSite attribute (None, Lax, Strict).
     /// </summary>
-    [JsonPropertyName("sameSite")]
     public string? SameSite { get; set; }
 }
