@@ -14,7 +14,7 @@ public class SqliteHelper(ITestOutputHelper outputHelper)
 
             return _connection;
         }
-        
+
         // SQLite in-memory database only exists while the connection is open
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
@@ -26,11 +26,11 @@ public class SqliteHelper(ITestOutputHelper outputHelper)
 
     public async ValueTask DisconnectAsync()
     {
-        if(_connection is not null)
+        if (_connection is not null)
         {
             outputHelper.WriteLine("Disposing SQLite connection.");
-        
-        await _connection.DisposeAsync();
+
+            await _connection.DisposeAsync();
         }
 
         _connection = null;
