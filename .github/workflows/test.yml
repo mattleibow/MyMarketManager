@@ -53,4 +53,12 @@ jobs:
         run: pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps
 
       - name: Run tests
-        run: dotnet test --no-build --configuration Release --verbosity normal ${{ matrix.filter }}
+        run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" ${{ matrix.filter }}
+
+      - name: Report test results
+        uses: dorny/test-reporter@v2
+        if: success() || failure()
+        with:
+          name: Test Report
+          path: '**/*.trx'
+          reporter: dotnet-trx
