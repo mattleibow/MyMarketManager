@@ -87,179 +87,30 @@ input UpdateProductInput {
 
 ## Operations
 
-### Queries
+### Available Operations
 
-#### Get All Products
+The GraphQL server provides the following operations:
 
-**Operation:**
-```graphql
-query GetProducts {
-  products {
-    id
-    name
-    sku
-    quality
-    stockOnHand
-    description
-    notes
-    createdAt
-    updatedAt
-  }
-}
-```
+**Queries:**
+- `products` - Get all products with filtering and sorting support
+- `productById(id: UUID!)` - Get a specific product by ID
 
-**Implementation:**
-```csharp
-public IQueryable<Product> GetProducts(MyMarketManagerDbContext context)
-{
-    return context.Products.OrderBy(p => p.Name);
-}
-```
+**Mutations:**
+- `createProduct(input: CreateProductInput!)` - Create a new product
+- `updateProduct(id: UUID!, input: UpdateProductInput!)` - Update an existing product
+- `deleteProduct(id: UUID!)` - Delete a product (soft delete)
 
-**Features:**
-- Returns all products ordered by name
-- HotChocolate automatically applies pagination if requested
-- Supports field selection (only requested fields are returned)
-
-#### Get Product By ID
-
-**Operation:**
-```graphql
-query GetProduct($id: UUID!) {
-  productById(id: $id) {
-    id
-    name
-    sku
-    quality
-    stockOnHand
-    description
-  }
-}
-```
-
-**Variables:**
-```json
-{
-  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-}
-```
-
-**Implementation:**
-```csharp
-public async Task<Product?> GetProductById(
-    Guid id,
-    MyMarketManagerDbContext context,
-    CancellationToken cancellationToken)
-{
-    return await context.Products.FindAsync(new object[] { id }, cancellationToken);
-}
-```
-
-**Returns:**
-- The product if found
-- `null` if not found (serialized as `null` in GraphQL response)
-
-### Mutations
-
-#### Create Product
-
-**Operation:**
-```graphql
-mutation CreateProduct {
-  createProduct(input: {
-    name: "Sample Product"
-    sku: "PROD-001"
-    quality: GOOD
-    stockOnHand: 100
-    description: "A sample product for testing"
-    notes: "Initial stock"
-  }) {
-    id
-    name
-    sku
-    quality
-    stockOnHand
-  }
-}
-```
-
-**Returns:** The newly created product with generated ID
-
-#### Update Product
-
-**Operation:**
-```graphql
-mutation UpdateProduct($id: UUID!) {
-  updateProduct(
-    id: $id
-    input: {
-      name: "Updated Product Name"
-      sku: "PROD-001-V2"
-      quality: EXCELLENT
-      stockOnHand: 150
-      description: "Updated description"
-      notes: "Stock updated"
-    }
-  ) {
-    id
-    name
-    sku
-    quality
-    stockOnHand
-    updatedAt
-  }
-}
-```
-
-**Returns:**
-- The updated product
-- Throws `GraphQLException` if product not found
-
-#### Delete Product
-
-**Operation:**
-```graphql
-mutation DeleteProduct($id: UUID!) {
-  deleteProduct(id: $id)
-}
-```
-
-**Returns:**
-- `true` if deletion successful
-- Throws `GraphQLException` if product not found
+For example GraphQL operations and syntax, see the [Getting Started guide](getting-started.md#example-graphql-operations).
 
 ## Error Handling
 
-### GraphQL Errors
+The GraphQL server provides consistent error reporting using HotChocolate's built-in error handling. All errors include:
+- Error message
+- Source location in the query
+- Path to the field that caused the error
+- Error code in extensions
 
-HotChocolate provides consistent error reporting:
-
-```json
-{
-  "errors": [
-    {
-      "message": "Product not found",
-      "locations": [{"line": 2, "column": 3}],
-      "path": ["updateProduct"],
-      "extensions": {
-        "code": "GRAPHQL_EXCEPTION"
-      }
-    }
-  ],
-  "data": null
-}
-```
-
-### Custom Error Handling
-
-Throw `GraphQLException` for domain errors:
-
-```csharp
-if (product == null)
-{
-    throw new GraphQLException("Product not found");
-}
-```
+Domain-specific errors are thrown as `GraphQLException` in resolver methods. See the implementation in `src/MyMarketManager.WebApp/GraphQL/` for examples.
 
 ## Performance Considerations
 
@@ -288,137 +139,33 @@ For production scenarios, consider:
 
 The current implementation has **NO AUTHENTICATION** and is intended for local development only.
 
-### Future Enhancements
+### Production Requirements
 
-For production deployment, implement:
+For production deployment, the following security measures should be implemented:
 
-1. **Authentication**:
-   - Add JWT bearer tokens
-   - Integrate with Identity Provider (Azure AD, Auth0, etc.)
-
-2. **Authorization**:
-   - Use `[Authorize]` attribute on mutations
-   - Implement role-based access control
-   - Add field-level authorization
-
-3. **Rate Limiting**:
-   - Limit queries per user/IP
-   - Implement cost analysis for complex queries
-
-4. **Input Validation**:
-   - Add FluentValidation for complex business rules
-   - Validate SKU formats, stock quantities, etc.
-
-Example secured mutation:
-
-```csharp
-[Authorize(Roles = "Admin")]
-public async Task<Product> DeleteProduct(...)
-{
-    // Implementation
-}
-```
+1. **Authentication** - JWT bearer tokens with Identity Provider integration (Azure AD, Auth0, etc.)
+2. **Authorization** - Role-based access control using `[Authorize]` attributes and field-level authorization
+3. **Rate Limiting** - Query complexity analysis and per-user/IP rate limits
+4. **Input Validation** - FluentValidation for complex business rules and format validation
 
 ## Extending the API
 
 ### Adding New Queries
 
-1. Add method to `ProductQueries.cs`:
-   ```csharp
-   public IQueryable<Product> GetProductsBySKU(
-       string sku,
-       MyMarketManagerDbContext context)
-   {
-       return context.Products.Where(p => p.SKU == sku);
-   }
-   ```
-
-2. The query is automatically available:
-   ```graphql
-   query {
-     productsBySKU(sku: "PROD-001") {
-       id
-       name
-     }
-   }
-   ```
+Add methods to `ProductQueries.cs` in the `src/MyMarketManager.WebApp/GraphQL/` directory. HotChocolate automatically discovers methods and adds them to the schema. Query methods should return `IQueryable<T>` for efficient database queries.
 
 ### Adding New Mutations
 
-1. Create input type in `ProductMutations.cs`:
-   ```csharp
-   public record AdjustStockInput(
-       Guid ProductId,
-       int Adjustment,
-       string Reason
-   );
-   ```
-
-2. Add mutation method:
-   ```csharp
-   public async Task<Product> AdjustStock(
-       AdjustStockInput input,
-       MyMarketManagerDbContext context,
-       CancellationToken cancellationToken)
-   {
-       var product = await context.Products.FindAsync(
-           new object[] { input.ProductId }, 
-           cancellationToken);
-       
-       if (product == null)
-           throw new GraphQLException("Product not found");
-       
-       product.StockOnHand += input.Adjustment;
-       product.Notes = $"{product.Notes}\n{input.Reason}";
-       
-       await context.SaveChangesAsync(cancellationToken);
-       return product;
-   }
-   ```
-
-3. Use the mutation:
-   ```graphql
-   mutation {
-     adjustStock(input: {
-       productId: "..."
-       adjustment: -5
-       reason: "Sold at market"
-     }) {
-       id
-       stockOnHand
-     }
-   }
-   ```
+Add methods to `ProductMutations.cs`. Define input types as C# records for strongly-typed parameters. Mutation methods should be async and return the modified entity or a boolean for success.
 
 ## Schema Introspection
 
-The schema is available via introspection:
-
-```graphql
-query IntrospectionQuery {
-  __schema {
-    queryType { name }
-    mutationType { name }
-    types {
-      name
-      kind
-      description
-      fields {
-        name
-        type {
-          name
-          kind
-        }
-      }
-    }
-  }
-}
-```
-
-This is used by:
-- GraphQL IDE tools
+The GraphQL schema supports full introspection, which is used by:
+- GraphQL IDE tools (Nitro, GraphiQL)
 - StrawberryShake client code generation
 - API documentation generators
+
+Access introspection through the `/graphql` endpoint's Schema Explorer or via standard GraphQL introspection queries.
 
 ## Resources
 
