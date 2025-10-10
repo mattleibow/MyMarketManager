@@ -7,10 +7,13 @@ This guide covers development workflows, tools, and best practices for working w
 Ensure you have the following installed before starting development:
 
 - **.NET 10 SDK** - [Download here](https://dotnet.microsoft.com)
-- **Docker Desktop** - Required for SQL Server
+- **Docker Desktop** - Required for SQL Server (Linux) or running the app
 - **.NET Aspire Workload**: `dotnet workload install aspire`
 - **Git** - For version control
 - **Visual Studio 2022** or **Visual Studio Code** (recommended IDEs)
+- **SQL Server LocalDB** (Windows only, optional) - Included with Visual Studio or SQL Server Express, used for faster integration tests
+
+**Note on LocalDB:** On Windows, integration tests automatically use LocalDB if available (instant startup). On Linux, tests use Testcontainers with SQL Server. See [Testing Guide](testing.md) for details.
 
 ## Development Workflow
 
@@ -95,16 +98,41 @@ dotnet run --project src/MyMarketManager.AppHost
 
 ### 5. Testing
 
-#### Run All Tests
+For comprehensive testing documentation, see the **[Testing Guide](testing.md)**.
 
+#### Quick Start
+
+Run all tests:
 ```bash
 dotnet test
 ```
 
-#### Run Specific Test Project
+Run only unit tests (fast):
+```bash
+dotnet test tests/MyMarketManager.Data.Tests
+```
 
+Run only integration tests (requires Aspire DCP):
 ```bash
 dotnet test tests/MyMarketManager.Integration.Tests
+```
+
+#### Platform-Specific Testing
+
+Tests use platform-appropriate database provisioning:
+- **Windows**: SQL Server LocalDB (instant, no Docker)
+- **Linux**: Testcontainers with SQL Server (containerized)
+
+See [Testing Guide - Platform-Specific SQL Server Provisioning](testing.md#platform-specific-sql-server-provisioning) for details.
+
+#### Run Tests by Category
+
+```bash
+# GraphQL tests only
+dotnet test --filter "Category=GraphQL"
+
+# Skip SSL-requiring tests (useful on Windows)
+dotnet test --filter "Requires!=SSL"
 ```
 
 #### Run Tests with Coverage
@@ -330,15 +358,24 @@ builder.Services.AddDbContext<MyMarketManagerDbContext>(options =>
 
 ## Troubleshooting
 
-### Docker Container Issues
+### Database Connection Issues
 
-**Problem:** SQL Server container won't start
+**Problem:** SQL Server connection errors during development
 
 **Solutions:**
-1. Ensure Docker Desktop is running
-2. Check for port conflicts (SQL Server uses 1433)
-3. Restart Docker Desktop
-4. Check Aspire Dashboard for error messages
+1. **On Windows**: Ensure LocalDB is installed and running
+   - Check: `sqllocaldb info`
+   - Start: `sqllocaldb start MSSQLLocalDB`
+2. **On Linux**: Ensure Docker Desktop is running
+3. Check Aspire Dashboard for connection string details
+4. Try restarting Aspire AppHost
+
+**Problem:** Tests fail with database connection errors
+
+**Solution:**
+- See [Testing Guide - Troubleshooting](testing.md#troubleshooting) for platform-specific solutions
+- Windows: Verify LocalDB installation
+- Linux: Verify Docker is running and user has permissions
 
 ### Build Issues
 
@@ -367,7 +404,9 @@ dotnet graphql generate
 **Problem:** "Cannot connect to database"
 
 **Solution:**
-1. Check Docker container is running
+1. Check SQL Server availability:
+   - **Windows**: Verify LocalDB is running (`sqllocaldb info`)
+   - **Linux**: Check Docker container status in Aspire Dashboard
 2. Verify connection string in Aspire Dashboard
 3. Try restarting Aspire AppHost
 
@@ -406,6 +445,7 @@ dotnet run --project src/MyMarketManager.AppHost
 
 - [Getting Started Guide](getting-started.md)
 - [Architecture Overview](architecture.md)
+- [Testing Guide](testing.md)
 - [GraphQL Server Documentation](graphql-server.md)
 - [GraphQL Client Documentation](graphql-client.md)
 - [Data Layer Documentation](data-layer.md)

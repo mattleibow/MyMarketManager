@@ -14,6 +14,7 @@ New to MyMarketManager? Start here:
 Resources for developers working on MyMarketManager:
 
 - **[Development Guide](development-guide.md)** - Development workflows, tools, debugging, and best practices
+- **[Testing Guide](testing.md)** - Testing infrastructure, platform-specific database provisioning, and writing tests
 - **[Data Layer](data-layer.md)** - Entity Framework Core, migrations, and database management
 - **[GraphQL Server](graphql-server.md)** - Server implementation, operations, and extending the API
 - **[GraphQL Client](graphql-client.md)** - Client library usage, service registration, and examples
@@ -31,6 +32,7 @@ Detailed technical documentation:
 1. [Getting Started](getting-started.md) - Setup and run the app
 2. [Architecture](architecture.md) - Understand the system
 3. [Development Guide](development-guide.md) - Learn the workflows
+4. [Testing Guide](testing.md) - Run and write tests
 
 ### I'm Working on the API
 1. [GraphQL Server](graphql-server.md) - Server documentation
