@@ -417,9 +417,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-# MAUI specific
-**/Resources/**/*.svg.png
-**/Resources/**/*.svg.jpg
-**/obj/
-**/bin/
-shein_cookies.json
+# Playwright browsers
+.playwright/
+**/bin/**/.playwright/
