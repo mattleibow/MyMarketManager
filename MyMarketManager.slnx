@@ -8,6 +8,7 @@
     <Project Path="src/MyMarketManager.SheinCollector/MyMarketManager.SheinCollector.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/MyMarketManager.Components.Tests/MyMarketManager.Components.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Data.Tests/MyMarketManager.Data.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Integration.Tests/MyMarketManager.Integration.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Tests.Shared/MyMarketManager.Tests.Shared.csproj" />

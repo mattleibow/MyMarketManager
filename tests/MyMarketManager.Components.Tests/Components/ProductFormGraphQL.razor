@@ -1,8 +1,6 @@
-@page "/products/add"
-@page "/products/edit/{productId:guid}"
-@rendermode InteractiveServer
+@page "/products-graphql/add"
+@page "/products-graphql/edit/{productId:guid}"
 @using MyMarketManager.GraphQL.Client
-@using ProductQuality = MyMarketManager.GraphQL.Client.ProductQuality
 @inject IMyMarketManagerClient GraphQLClient
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
@@ -13,7 +11,7 @@
     <div class="col-md-8">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/products">Products</a></li>
+                <li class="breadcrumb-item"><a href="/products-graphql">Products</a></li>
                 <li class="breadcrumb-item active">@(ProductId.HasValue ? "Edit" : "Add")</li>
             </ol>
         </nav>
@@ -174,7 +172,7 @@
             {
                 errorMessage = "Error loading product: " + string.Join(", ", result.Errors.Select(e => e.Message));
                 // Product not found, redirect to products list
-                Navigation.NavigateTo("/products");
+                Navigation.NavigateTo("/products-graphql");
             }
             else if (result.Data?.ProductById != null)
             {
@@ -192,7 +190,7 @@
             else
             {
                 // Product not found, redirect to products list
-                Navigation.NavigateTo("/products");
+                Navigation.NavigateTo("/products-graphql");
             }
         }
         catch (Exception ex)
@@ -235,7 +233,7 @@
                 }
                 else
                 {
-                    Navigation.NavigateTo("/products");
+                    Navigation.NavigateTo("/products-graphql");
                 }
             }
             else
@@ -260,7 +258,7 @@
                 }
                 else
                 {
-                    Navigation.NavigateTo("/products");
+                    Navigation.NavigateTo("/products-graphql");
                 }
             }
         }
@@ -277,7 +275,7 @@
 
     private void Cancel()
     {
-        Navigation.NavigateTo("/products");
+        Navigation.NavigateTo("/products-graphql");
     }
 
     // Model class for the form

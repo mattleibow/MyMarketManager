@@ -1,7 +1,5 @@
-@page "/products"
-@rendermode InteractiveServer
+@page "/products-graphql"
 @using MyMarketManager.GraphQL.Client
-@using ProductQuality = MyMarketManager.GraphQL.Client.ProductQuality
 @inject IMyMarketManagerClient GraphQLClient
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
@@ -221,12 +219,12 @@ else
 
     private void AddProduct()
     {
-        Navigation.NavigateTo("/products/add");
+        Navigation.NavigateTo("/products-graphql/add");
     }
 
     private void EditProduct(Guid productId)
     {
-        Navigation.NavigateTo($"/products/edit/{productId}");
+        Navigation.NavigateTo($"/products-graphql/edit/{productId}");
     }
 
     private void ConfirmDeleteProduct(IGetProducts_Products product)
