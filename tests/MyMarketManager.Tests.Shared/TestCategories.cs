@@ -8,5 +8,6 @@ public static class TestCategories
     {
         public const string GraphQL = "GraphQL";
         public const string Database = "Database";
+        public const string LongRunning = "LongRunning";
     }
 }
