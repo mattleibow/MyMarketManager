@@ -416,3 +416,10 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# MAUI specific
+**/Resources/**/*.svg.png
+**/Resources/**/*.svg.jpg
+**/obj/
+**/bin/
+shein_cookies.json
