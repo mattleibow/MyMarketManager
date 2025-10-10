@@ -49,5 +49,8 @@ jobs:
       - name: Build solution
         run: dotnet build --configuration Release
 
+      - name: Install Playwright browsers
+        run: pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps
+
       - name: Run tests
         run: dotnet test --no-build --configuration Release --verbosity normal ${{ matrix.filter }}
