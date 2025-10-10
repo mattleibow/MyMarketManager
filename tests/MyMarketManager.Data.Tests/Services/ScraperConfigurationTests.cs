@@ -11,16 +11,14 @@ public class ScraperConfigurationTests
         // Arrange & Act
         var config = new ScraperConfiguration
         {
-            SupplierName = "Test Supplier",
-            Domain = "example.com",
-            OrdersListUrlTemplate = "https://example.com/orders",
-            OrderDetailUrlTemplate = "https://example.com/orders/{orderId}"
+            UserAgent = "Mozilla/5.0",
+            RequestDelay = TimeSpan.FromSeconds(2),
+            MaxConcurrentRequests = 1
         };
 
         // Assert
-        Assert.Equal("Test Supplier", config.SupplierName);
-        Assert.Equal("example.com", config.Domain);
-        Assert.Equal("https://example.com/orders", config.OrdersListUrlTemplate);
+        Assert.Equal("Mozilla/5.0", config.UserAgent);
+        Assert.Equal(TimeSpan.FromSeconds(2), config.RequestDelay);
         Assert.Empty(config.AdditionalHeaders);
     }
 
@@ -31,11 +29,9 @@ public class ScraperConfigurationTests
         var config = new ScraperConfiguration();
 
         // Assert
-        Assert.Equal(string.Empty, config.SupplierName);
         Assert.Equal(TimeSpan.FromSeconds(1), config.RequestDelay);
         Assert.Equal(1, config.MaxConcurrentRequests);
         Assert.Equal(TimeSpan.FromSeconds(30), config.RequestTimeout);
-        Assert.False(config.RequiresHeadlessBrowser);
         Assert.NotEmpty(config.UserAgent);
     }
 
@@ -52,24 +48,5 @@ public class ScraperConfigurationTests
         // Assert
         Assert.Equal(2, config.AdditionalHeaders.Count);
         Assert.Equal("text/html", config.AdditionalHeaders["accept"]);
-    }
-
-    [Fact]
-    public void ScraperConfiguration_UrlTemplatesCanContainPlaceholders()
-    {
-        // Arrange
-        var config = new ScraperConfiguration
-        {
-            OrderDetailUrlTemplate = "https://example.com/order/{orderId}",
-            ProductPageUrlTemplate = "https://example.com/product/{productId}"
-        };
-
-        // Act
-        var orderUrl = config.OrderDetailUrlTemplate.Replace("{orderId}", "12345");
-        var productUrl = config.ProductPageUrlTemplate.Replace("{productId}", "ABC123");
-
-        // Assert
-        Assert.Equal("https://example.com/order/12345", orderUrl);
-        Assert.Equal("https://example.com/product/ABC123", productUrl);
     }
 }

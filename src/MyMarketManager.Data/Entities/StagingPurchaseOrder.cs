@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using MyMarketManager.Data.Enums;
 
 namespace MyMarketManager.Data.Entities;
 
@@ -19,6 +20,16 @@ public class StagingPurchaseOrder : EntityBase
     [Required]
     public string RawData { get; set; } = string.Empty;
     public bool IsImported { get; set; }
+
+    /// <summary>
+    /// Status of the order scraping/processing.
+    /// </summary>
+    public ProcessingStatus Status { get; set; }
+
+    /// <summary>
+    /// Error message if the order scraping/processing failed.
+    /// </summary>
+    public string? ErrorMessage { get; set; }
 
     // Navigation properties
     public ICollection<StagingPurchaseOrderItem> Items { get; set; } = new List<StagingPurchaseOrderItem>();

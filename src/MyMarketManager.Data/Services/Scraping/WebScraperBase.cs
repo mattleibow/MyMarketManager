@@ -16,8 +16,6 @@ public abstract class WebScraperBase
     protected readonly MyMarketManagerDbContext Context;
     protected readonly ILogger Logger;
     protected readonly ScraperConfiguration Configuration;
-    protected CookieFile? CookieFile;
-    protected ScraperSession? Session;
 
     protected WebScraperBase(
         MyMarketManagerDbContext context,
@@ -32,46 +30,58 @@ public abstract class WebScraperBase
     /// <summary>
     /// Scrapes orders from the supplier's website and creates a staging batch.
     /// </summary>
+    /// <param name="supplierId">The supplier ID for this scraping session.</param>
+    /// <param name="cookies">The cookie file containing authentication cookies.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task ScrapeAsync(CancellationToken cancellationToken = default)
+    public async Task ScrapeAsync(Guid supplierId, CookieFile cookies, CancellationToken cancellationToken = default)
     {
-        if (Session == null)
-        {
-            throw new InvalidOperationException("Scraper session not initialized. Call InitializeAsync first.");
-        }
+        Logger.LogInformation("Starting scraping for supplier {SupplierId}", supplierId);
 
-        if (CookieFile == null)
+        // Create scraper session
+        var session = new ScraperSession
         {
-            throw new InvalidOperationException("Cookie file not set. Call InitializeAsync first.");
-        }
+            Id = Guid.NewGuid(),
+            SupplierId = supplierId,
+            StartedAt = DateTimeOffset.UtcNow,
+            Status = ProcessingStatus.Queued,
+            CookieFileJson = JsonSerializer.Serialize(cookies, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            })
+        };
 
-        Logger.LogInformation("Starting scraping for supplier {SupplierId}", CookieFile.SupplierId);
+        Context.ScraperSessions.Add(session);
+        await Context.SaveChangesAsync(cancellationToken);
+        Logger.LogInformation("Created scraper session {SessionId}", session.Id);
+
+        StagingBatch? batch = null;
 
         try
         {
-            Session.Status = ProcessingStatus.Started;
+            session.Status = ProcessingStatus.Started;
             await Context.SaveChangesAsync(cancellationToken);
 
             // Validate cookies first
-            var cookiesValid = await ValidateCookiesAsync(cancellationToken);
+            var cookiesValid = await ValidateCookiesAsync(cookies, cancellationToken);
             if (!cookiesValid)
             {
                 throw new InvalidOperationException("Cookies are not valid or have expired");
             }
 
             // Create staging batch
-            var batch = await CreateStagingBatchAsync(cancellationToken);
+            batch = await CreateStagingBatchAsync(supplierId, cookies, cancellationToken);
 
             // Execute the scraping logic
-            await ExecuteScrapingAsync(batch, cancellationToken);
+            await ExecuteScrapingAsync(batch, cookies, cancellationToken);
 
             // Mark as complete
-            batch.Status = ProcessingStatus.Complete;
-            Session.Status = ProcessingStatus.Completed;
-            Session.CompletedAt = DateTimeOffset.UtcNow;
-            Session.StagingBatchId = batch.Id;
-            batch.ScraperSessionId = Session.Id;
+            batch.Status = ProcessingStatus.Completed;
+            session.Status = ProcessingStatus.Completed;
+            session.CompletedAt = DateTimeOffset.UtcNow;
+            session.StagingBatchId = batch.Id;
+            batch.ScraperSessionId = session.Id;
 
             await Context.SaveChangesAsync(cancellationToken);
 
@@ -80,50 +90,30 @@ public abstract class WebScraperBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to scrape orders");
-            Session.Status = ProcessingStatus.Failed;
-            Session.ErrorMessage = ex.Message;
+            session.Status = ProcessingStatus.Failed;
+            session.ErrorMessage = ex.Message;
+            
+            if (batch != null)
+            {
+                batch.Status = ProcessingStatus.Failed;
+                batch.ErrorMessage = ex.Message;
+            }
+
             await Context.SaveChangesAsync(cancellationToken);
             throw;
         }
     }
 
     /// <summary>
-    /// Initializes the scraper with a cookie file and creates a session.
-    /// </summary>
-    public async Task InitializeAsync(CookieFile cookieFile, CancellationToken cancellationToken = default)
-    {
-        CookieFile = cookieFile;
-
-        // Create scraper session
-        Session = new ScraperSession
-        {
-            Id = Guid.NewGuid(),
-            SupplierId = cookieFile.SupplierId,
-            StartedAt = DateTimeOffset.UtcNow,
-            Status = ProcessingStatus.Queued,
-            CookieFileJson = JsonSerializer.Serialize(cookieFile, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = false
-            })
-        };
-
-        Context.ScraperSessions.Add(Session);
-        await Context.SaveChangesAsync(cancellationToken);
-
-        Logger.LogInformation("Created scraper session {SessionId}", Session.Id);
-    }
-
-    /// <summary>
     /// Validates that the cookies are still valid by loading a page and checking the response.
     /// </summary>
-    protected virtual async Task<bool> ValidateCookiesAsync(CancellationToken cancellationToken)
+    protected virtual async Task<bool> ValidateCookiesAsync(CookieFile cookies, CancellationToken cancellationToken)
     {
         try
         {
-            Logger.LogInformation("Validating cookies for domain {Domain}", CookieFile!.Domain);
+            Logger.LogInformation("Validating cookies for domain {Domain}", cookies.Domain);
 
-            var html = await ScrapePageAsync(Configuration.AccountPageUrlTemplate, cancellationToken);
+            var html = await ScrapePageAsync(GetAccountPageUrl(), cookies, cancellationToken);
 
             // Call the derived class to validate the page content
             var isValid = await ValidatePageAsync(html, cancellationToken);
@@ -152,16 +142,16 @@ public abstract class WebScraperBase
     /// <summary>
     /// Creates a staging batch for this scraping session.
     /// </summary>
-    protected virtual async Task<StagingBatch> CreateStagingBatchAsync(CancellationToken cancellationToken)
+    protected virtual async Task<StagingBatch> CreateStagingBatchAsync(Guid supplierId, CookieFile cookies, CancellationToken cancellationToken)
     {
         var batch = new StagingBatch
         {
             Id = Guid.NewGuid(),
-            SupplierId = CookieFile!.SupplierId,
+            SupplierId = supplierId,
             UploadDate = DateTimeOffset.UtcNow,
-            FileHash = ComputeFileHash(CookieFile),
+            FileHash = ComputeFileHash(cookies),
             Status = ProcessingStatus.Queued,
-            Notes = $"Scraped from {Configuration.SupplierName} at {DateTimeOffset.UtcNow}"
+            Notes = $"Scraped at {DateTimeOffset.UtcNow}"
         };
 
         Context.StagingBatches.Add(batch);
@@ -173,7 +163,7 @@ public abstract class WebScraperBase
     /// <summary>
     /// Scrapes a specific page and returns the raw HTML.
     /// </summary>
-    protected virtual async Task<string> ScrapePageAsync(string url, CancellationToken cancellationToken)
+    protected virtual async Task<string> ScrapePageAsync(string url, CookieFile cookies, CancellationToken cancellationToken)
     {
         Logger.LogDebug("Scraping from {Url}", url);
 
@@ -184,15 +174,15 @@ public abstract class WebScraperBase
         };
 
         // Add cookies to the container
-        foreach (var cookie in CookieFile!.Cookies.Values)
+        foreach (var cookie in cookies.Cookies.Values)
         {
             try
             {
-                handler.CookieContainer.Add(new Uri($"https://{Configuration.Domain}"), new Cookie
+                handler.CookieContainer.Add(new Uri($"https://{cookies.Domain}"), new Cookie
                 {
                     Name = cookie.Name,
                     Value = cookie.Value,
-                    Domain = cookie.Domain ?? $".{Configuration.Domain}",
+                    Domain = cookie.Domain ?? $".{cookies.Domain}",
                     Path = cookie.Path ?? "/",
                     Secure = cookie.Secure,
                     HttpOnly = cookie.HttpOnly
@@ -225,78 +215,108 @@ public abstract class WebScraperBase
     /// <summary>
     /// Executes the main scraping logic. Default implementation follows the pattern:
     /// 1. Fetch orders list page
-    /// 2. Extract order links
+    /// 2. Parse order links
     /// 3. Loop through each order link and scrape details
     /// Override this to provide custom scraping logic.
     /// </summary>
-    protected virtual async Task ExecuteScrapingAsync(StagingBatch batch, CancellationToken cancellationToken)
+    protected virtual async Task ExecuteScrapingAsync(StagingBatch batch, CookieFile cookies, CancellationToken cancellationToken)
     {
         // Step 1: Scrape orders list page
         Logger.LogInformation("Fetching orders list page");
-        var ordersListHtml = await ScrapePageAsync(Configuration.OrdersListUrlTemplate, cancellationToken);
+        var ordersListHtml = await ScrapePageAsync(GetOrdersListUrl(), cookies, cancellationToken);
 
-        // Step 2: Extract order links
-        Logger.LogInformation("Extracting order links from orders list");
-        var orderLinks = ExtractOrderLinks(ordersListHtml).ToList();
-        Logger.LogInformation("Found {Count} order links", orderLinks.Count);
+        // Step 2: Parse order links
+        Logger.LogInformation("Parsing orders from list page");
+        var orderLinks = ParseOrdersListAsync(ordersListHtml).ToList();
+        Logger.LogInformation("Found {Count} orders", orderLinks.Count);
 
         // Step 3: Scrape each order detail page
         foreach (var orderLinkInfo in orderLinks)
         {
+            StagingPurchaseOrder? stagingOrder = null;
+            string? orderUrl = null;
+
             try
             {
                 await Task.Delay(Configuration.RequestDelay, cancellationToken);
 
-                var orderUrl = ReplaceUrlTemplateValues(Configuration.OrderDetailUrlTemplate, orderLinkInfo);
+                // Try to build the order URL
+                orderUrl = GetOrderDetailUrl(orderLinkInfo);
                 Logger.LogInformation("Scraping order: {OrderUrl}", orderUrl);
-                
-                var orderHtml = await ScrapePageAsync(orderUrl, cancellationToken);
+
+                // Create the staging order immediately with the URL as reference
+                stagingOrder = new StagingPurchaseOrder
+                {
+                    Id = Guid.NewGuid(),
+                    StagingBatchId = batch.Id,
+                    SupplierReference = orderUrl,
+                    OrderDate = DateTimeOffset.UtcNow,
+                    RawData = JsonSerializer.Serialize(orderLinkInfo),
+                    IsImported = false,
+                    Status = ProcessingStatus.Started
+                };
+                Context.StagingPurchaseOrders.Add(stagingOrder);
+                await Context.SaveChangesAsync(cancellationToken);
+
+                // Scrape the order page
+                var orderHtml = await ScrapePageAsync(orderUrl, cookies, cancellationToken);
 
                 // Parse order details
                 var orderData = await ParseOrderDetailsAsync(orderHtml, cancellationToken);
 
-                // Create staging purchase order
-                var stagingOrder = await CreateStagingOrderAsync(batch.Id, orderData, orderHtml, cancellationToken);
-                Context.StagingPurchaseOrders.Add(stagingOrder);
+                // Update staging order with parsed data
+                stagingOrder.SupplierReference = orderData.ContainsKey("order_id")
+                    ? orderData["order_id"].ToString() ?? orderUrl
+                    : orderUrl;
+                stagingOrder.OrderDate = orderData.ContainsKey("order_date")
+                    ? DateTimeOffset.Parse(orderData["order_date"].ToString()!)
+                    : DateTimeOffset.UtcNow;
+                stagingOrder.RawData = orderData.ContainsKey("raw_data")
+                    ? orderData["raw_data"].ToString() ?? JsonSerializer.Serialize(orderData)
+                    : JsonSerializer.Serialize(orderData);
+                stagingOrder.Status = ProcessingStatus.Completed;
+
+                await Context.SaveChangesAsync(cancellationToken);
+                Logger.LogInformation("Successfully scraped order: {OrderUrl}", orderUrl);
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to scrape order with info: {OrderLinkInfo}", orderLinkInfo);
-                // Continue with next order
+                Logger.LogError(ex, "Failed to scrape order: {OrderUrl}", orderUrl ?? "unknown");
+
+                if (stagingOrder != null)
+                {
+                    // Record the failure in the order
+                    stagingOrder.Status = ProcessingStatus.Failed;
+                    stagingOrder.ErrorMessage = ex.Message;
+                    await Context.SaveChangesAsync(cancellationToken);
+                }
+                else if (orderUrl != null)
+                {
+                    // We have the URL but failed before creating the order - create failed order record
+                    stagingOrder = new StagingPurchaseOrder
+                    {
+                        Id = Guid.NewGuid(),
+                        StagingBatchId = batch.Id,
+                        SupplierReference = orderUrl,
+                        OrderDate = DateTimeOffset.UtcNow,
+                        RawData = JsonSerializer.Serialize(orderLinkInfo),
+                        IsImported = false,
+                        Status = ProcessingStatus.Failed,
+                        ErrorMessage = ex.Message
+                    };
+                    Context.StagingPurchaseOrders.Add(stagingOrder);
+                    await Context.SaveChangesAsync(cancellationToken);
+                }
+                else
+                {
+                    // Failed to get URL - this is a fatal error for the whole batch
+                    Logger.LogCritical(ex, "Failed to build order URL from link info: {OrderLinkInfo}", orderLinkInfo);
+                    throw;
+                }
             }
         }
 
-        await Context.SaveChangesAsync(cancellationToken);
-        Logger.LogInformation("Saved {Count} staging purchase orders", orderLinks.Count);
-    }
-
-    /// <summary>
-    /// Creates a staging purchase order from scraped data.
-    /// Override this to customize how orders are created.
-    /// </summary>
-    protected virtual Task<StagingPurchaseOrder> CreateStagingOrderAsync(
-        Guid batchId,
-        Dictionary<string, object> orderData,
-        string rawHtml,
-        CancellationToken cancellationToken)
-    {
-        var order = new StagingPurchaseOrder
-        {
-            Id = Guid.NewGuid(),
-            StagingBatchId = batchId,
-            SupplierReference = orderData.ContainsKey("order_id")
-                ? orderData["order_id"].ToString() ?? "UNKNOWN"
-                : "UNKNOWN",
-            OrderDate = orderData.ContainsKey("order_date")
-                ? DateTimeOffset.Parse(orderData["order_date"].ToString()!)
-                : DateTimeOffset.UtcNow,
-            RawData = orderData.ContainsKey("raw_data")
-                ? orderData["raw_data"].ToString() ?? JsonSerializer.Serialize(orderData)
-                : JsonSerializer.Serialize(orderData),
-            IsImported = false
-        };
-
-        return Task.FromResult(order);
+        Logger.LogInformation("Completed scraping {Count} orders", orderLinks.Count);
     }
 
     /// <summary>
@@ -313,11 +333,29 @@ public abstract class WebScraperBase
     }
 
     /// <summary>
-    /// Extracts order links from the orders list page.
-    /// Returns a dictionary of template values for each order (e.g., {"orderId": "12345"}).
+    /// Gets the account page URL used for cookie validation.
     /// Must be implemented by derived classes.
     /// </summary>
-    protected abstract IEnumerable<Dictionary<string, string>> ExtractOrderLinks(string ordersListHtml);
+    protected abstract string GetAccountPageUrl();
+
+    /// <summary>
+    /// Gets the orders list page URL.
+    /// Must be implemented by derived classes.
+    /// </summary>
+    protected abstract string GetOrdersListUrl();
+
+    /// <summary>
+    /// Gets the order detail URL from the parsed link information.
+    /// Must be implemented by derived classes.
+    /// </summary>
+    protected abstract string GetOrderDetailUrl(Dictionary<string, string> orderLinkInfo);
+
+    /// <summary>
+    /// Parses the orders list page and extracts information for each order.
+    /// Returns a dictionary of values for each order (e.g., {"orderId": "12345"}).
+    /// Must be implemented by derived classes.
+    /// </summary>
+    protected abstract IEnumerable<Dictionary<string, string>> ParseOrdersListAsync(string ordersListHtml);
 
     /// <summary>
     /// Parses order details from an order detail page. Must be implemented by derived classes.
