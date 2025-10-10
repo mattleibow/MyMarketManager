@@ -25,9 +25,22 @@ else
     database = sqlServer.AddDatabase("database");
 }
 
+var blobStorage = builder.AddAzureStorage("storage")
+    .RunAsEmulator(emulator =>
+    {
+        emulator.WithImageTag("latest");
+
+        if (builder.Configuration.GetValue("UseVolumes", true))
+            emulator.WithDataVolume();
+    });
+
+var blobs = blobStorage.AddBlobs("blobs");
+
 builder.AddProject<Projects.MyMarketManager_WebApp>("webapp")
     .WithReference(database)
-    .WaitFor(database);
+    .WithReference(blobs)
+    .WaitFor(database)
+    .WaitFor(blobs);
 
 builder.Build().Run();
 

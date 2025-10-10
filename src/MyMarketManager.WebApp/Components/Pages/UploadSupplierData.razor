@@ -1,0 +1,288 @@
+@page "/upload-supplier-data"
+@rendermode InteractiveServer
+@using MyMarketManager.Data
+@using MyMarketManager.Data.Entities
+@using MyMarketManager.Data.Enums
+@using MyMarketManager.Data.Services
+@using MyMarketManager.WebApp.Services
+@using Microsoft.EntityFrameworkCore
+@inject MyMarketManagerDbContext DbContext
+@inject BlobStorageService BlobStorageService
+@inject NavigationManager Navigation
+@inject ILogger<UploadSupplierData> Logger
+
+<PageTitle>Upload Supplier Data</PageTitle>
+
+<h1>Upload Supplier Data</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Upload Supplier File</h5>
+                <p class="text-muted">Upload a ZIP file containing supplier data from password-protected export files</p>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @errorMessage
+                        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @successMessage
+                        <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label for="supplierSelect" class="form-label">Supplier</label>
+                    <select id="supplierSelect" class="form-select" @bind="selectedSupplierId" disabled="@uploading">
+                        <option value="">-- Select a supplier --</option>
+                        @foreach (var supplier in suppliers)
+                        {
+                            <option value="@supplier.Id">@supplier.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="fileUpload" class="form-label">File</label>
+                    <InputFile id="fileUpload" OnChange="HandleFileSelected" class="form-control" disabled="@uploading" accept=".zip" />
+                    <div class="form-text">Accepted file types: .zip (Max size: 100 MB)</div>
+                </div>
+
+                @if (selectedFile != null)
+                {
+                    <div class="mb-3">
+                        <strong>Selected file:</strong> @selectedFile.Name (@FormatFileSize(selectedFile.Size))
+                    </div>
+
+                    @if (isCheckingDuplicate)
+                    {
+                        <div class="mb-3">
+                            <div class="spinner-border spinner-border-sm me-2" role="status">
+                                <span class="visually-hidden">Checking...</span>
+                            </div>
+                            <span>Checking for duplicates...</span>
+                        </div>
+                    }
+                    else if (isDuplicate)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            This file has already been uploaded. A batch with this file hash already exists.
+                        </div>
+                    }
+                }
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" @onclick="UploadFile" disabled="@(!CanUpload())">
+                        @if (uploading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <span>Uploading...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-cloud-upload me-2"></i>
+                            <span>Upload</span>
+                        }
+                    </button>
+                    <button class="btn btn-secondary" @onclick="Cancel" disabled="@uploading">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Instructions</h5>
+                <ol>
+                    <li>Select the supplier for this data</li>
+                    <li>Choose the ZIP file to upload</li>
+                    <li>The system will check for duplicates</li>
+                    <li>Click Upload to process</li>
+                </ol>
+                <hr />
+                <h6>What happens next?</h6>
+                <p class="small">
+                    After upload, a staging batch will be created with "Pending" status.
+                    A background service processes pending batches every 5 minutes.
+                    You can view the batch status in the staging batches list.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Supplier> suppliers = new();
+    private Guid? selectedSupplierId;
+    private IBrowserFile? selectedFile;
+    private bool uploading;
+    private bool isCheckingDuplicate;
+    private bool isDuplicate;
+    private string? fileHash;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSuppliers();
+    }
+
+    private async Task LoadSuppliers()
+    {
+        suppliers = await DbContext.Suppliers
+            .OrderBy(s => s.Name)
+            .ToListAsync();
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        isDuplicate = false;
+        fileHash = null;
+        errorMessage = null;
+        successMessage = null;
+
+        if (selectedFile != null)
+        {
+            // Check file size (100 MB limit)
+            const long maxFileSize = 100 * 1024 * 1024;
+            if (selectedFile.Size > maxFileSize)
+            {
+                errorMessage = "File size exceeds 100 MB limit.";
+                selectedFile = null;
+                return;
+            }
+
+            // Compute hash and check for duplicates
+            await CheckForDuplicates();
+        }
+    }
+
+    private async Task CheckForDuplicates()
+    {
+        if (selectedFile == null) return;
+
+        try
+        {
+            isCheckingDuplicate = true;
+            StateHasChanged();
+
+            // Read file and compute hash
+            using var stream = selectedFile.OpenReadStream(maxAllowedSize: 100 * 1024 * 1024);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            fileHash = await BlobStorageService.ComputeFileHashAsync(memoryStream);
+
+            // Check if hash exists in database
+            isDuplicate = await DbContext.StagingBatches
+                .AnyAsync(b => b.FileHash == fileHash);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking for duplicates");
+            errorMessage = "Error checking for duplicates. Please try again.";
+        }
+        finally
+        {
+            isCheckingDuplicate = false;
+            StateHasChanged();
+        }
+    }
+
+    private bool CanUpload()
+    {
+        return selectedFile != null 
+            && selectedSupplierId.HasValue 
+            && !uploading 
+            && !isCheckingDuplicate 
+            && !isDuplicate;
+    }
+
+    private async Task UploadFile()
+    {
+        if (!CanUpload()) return;
+
+        try
+        {
+            uploading = true;
+            errorMessage = null;
+            successMessage = null;
+            StateHasChanged();
+
+            // Upload file to blob storage
+            using var stream = selectedFile!.OpenReadStream(maxAllowedSize: 100 * 1024 * 1024);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            var (blobUrl, computedFileHash) = await BlobStorageService.UploadFileWithHashAsync(
+                selectedFile.Name, 
+                memoryStream);
+
+            // Create staging batch
+            var batch = new StagingBatch
+            {
+                Id = Guid.NewGuid(),
+                SupplierId = selectedSupplierId!.Value,
+                UploadDate = DateTimeOffset.UtcNow,
+                FileHash = computedFileHash,
+                BlobStorageUrl = blobUrl,
+                BatchType = BatchType.SupplierData,
+                Status = ProcessingStatus.Pending,
+                Notes = $"Uploaded: {selectedFile.Name}"
+            };
+
+            DbContext.StagingBatches.Add(batch);
+            await DbContext.SaveChangesAsync();
+
+            Logger.LogInformation("Created staging batch {BatchId} for file {FileName}", batch.Id, selectedFile.Name);
+
+            successMessage = $"File uploaded successfully! Batch ID: {batch.Id}. It will be processed within 5 minutes.";
+            
+            // Reset form
+            selectedFile = null;
+            selectedSupplierId = null;
+            fileHash = null;
+            isDuplicate = false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error uploading file");
+            errorMessage = $"Error uploading file: {ex.Message}";
+        }
+        finally
+        {
+            uploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+}
