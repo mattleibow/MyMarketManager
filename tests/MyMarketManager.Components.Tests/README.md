@@ -1,10 +1,11 @@
 # MyMarketManager.Components.Tests
 
-Unit tests for Blazor components using GraphQL client instead of direct database access.
+Unit tests for Blazor components that use GraphQL client instead of direct database access.
 
 ## Overview
 
-This test project contains unit tests for Blazor components that use the GraphQL client (`IMyMarketManagerClient`) for data operations. These components are designed to be reusable in:
+This test project contains unit tests for Blazor components that use the GraphQL client (`IMyMarketManagerClient`) for data operations. The components being tested are located in `src/MyMarketManager.WebApp/Components/Pages/` and are designed to be reusable in:
+- Blazor Server applications (current deployment)
 - Blazor WASM applications
 - MAUI mobile applications  
 - Any .NET application that can host Blazor components
@@ -18,7 +19,7 @@ This test project contains unit tests for Blazor components that use the GraphQL
 
 ## Components Under Test
 
-### ProductsGraphQL.razor
+### Products.razor (in WebApp)
 Product listing component with:
 - Product search/filtering
 - Delete confirmation modal
@@ -26,13 +27,15 @@ Product listing component with:
 - Error handling
 - Navigation to add/edit forms
 
-### ProductFormGraphQL.razor
+### ProductForm.razor (in WebApp)
 Product add/edit form with:
 - Create and update modes
 - Form validation
 - Quality rating selection
 - Stock management
 - Quality guide sidebar
+
+**Note:** The test project contains copies of these components (`ProductsGraphQL.razor` and `ProductFormGraphQL.razor`) for isolated testing purposes. The actual components in production are in the WebApp project.
 
 ## Test Strategy
 
