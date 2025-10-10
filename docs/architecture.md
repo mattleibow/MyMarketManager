@@ -88,7 +88,7 @@ See [Data Model](data-model.md) for complete entity documentation.
 ### Web UI Request Flow
 
 1. User interacts with Blazor page
-2. Page calls GraphQL API (currently some pages use DbContext directly)
+2. Page calls GraphQL API via `IMyMarketManagerClient`
 3. GraphQL resolver accesses DbContext
 4. EF Core executes SQL query
 5. Results returned to client
