@@ -42,6 +42,7 @@
     <ProjectReference Include="..\..\src\MyMarketManager.WebApp\MyMarketManager.WebApp.csproj" />
     <ProjectReference Include="..\..\src\MyMarketManager.GraphQL.Client\MyMarketManager.GraphQL.Client.csproj" />
     <ProjectReference Include="..\..\src\MyMarketManager.AppHost\MyMarketManager.AppHost.csproj" />
+    <ProjectReference Include="..\MyMarketManager.Tests.Shared\MyMarketManager.Tests.Shared.csproj" />
   </ItemGroup>
 
 </Project>

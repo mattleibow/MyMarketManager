@@ -214,41 +214,61 @@ For bulk operations, consider:
 
 ## Testing
 
-### Unit Tests
+For comprehensive testing documentation including platform-specific SQL Server provisioning (LocalDB on Windows, Testcontainers on Linux), see the **[Testing Guide](testing.md)**.
 
-Mock the DbContext or use an in-memory provider:
+### Quick Examples
 
-```csharp
-var options = new DbContextOptionsBuilder<MyMarketManagerDbContext>()
-    .UseInMemoryDatabase(databaseName: "TestDb")
-    .Options;
+#### Unit Tests with SQLite
 
-using var context = new MyMarketManagerDbContext(options);
-// Add test data and test
-```
-
-### Integration Tests
-
-Use the real SQL Server with test database:
+Use `SqliteTestBase` for fast in-memory database tests:
 
 ```csharp
-public class DataIntegrationTests : IAsyncLifetime
+using MyMarketManager.Tests.Shared;
+
+public class ProductTests : SqliteTestBase
 {
-    private MyMarketManagerDbContext _context;
-    
-    public async Task InitializeAsync()
+    [Fact]
+    public async Task CanCreateProduct()
     {
-        // Create test database
-        await _context.Database.EnsureCreatedAsync();
-    }
-    
-    public async Task DisposeAsync()
-    {
-        // Clean up test database
-        await _context.Database.EnsureDeletedAsync();
+        // Context is provided by SqliteTestBase
+        var product = new Product { Name = "Test", Quality = ProductQuality.Good };
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+        
+        Assert.NotNull(await Context.Products.FindAsync(product.Id));
     }
 }
 ```
+
+#### Integration Tests with SQL Server
+
+Use `SqlServerTestBase` for SQL Server-specific functionality:
+
+```csharp
+using MyMarketManager.Tests.Shared;
+
+public class SqlServerFeatureTests : SqlServerTestBase
+{
+    public SqlServerFeatureTests(ITestOutputHelper outputHelper) 
+        : base(outputHelper) { }
+
+    [Fact]
+    public async Task TestSqlServerFeature()
+    {
+        // Context is configured with platform-appropriate SQL Server
+        // Windows: LocalDB (instant)
+        // Linux: Testcontainers (containerized)
+        
+        var result = await Context.Database
+            .SqlQueryRaw<int>("SELECT 1")
+            .ToListAsync();
+            
+        Assert.Single(result);
+    }
+}
+```
+
+See [Testing Guide - Writing Tests](testing.md#writing-tests) for more examples and best practices.
 
 ## Troubleshooting
 
@@ -273,9 +293,14 @@ dotnet ef migrations add FixModelChanges --project src/MyMarketManager.Data
 **Problem:** "Cannot connect to SQL Server"
 
 **Solution:** 
-1. Ensure Docker Desktop is running
-2. Check SQL Server container status in Aspire Dashboard
-3. Verify connection string in configuration
+1. **Development environment**:
+   - **Windows**: Check Docker container status in Aspire Dashboard
+   - **Linux**: Ensure Docker Desktop is running
+2. **Test environment**:
+   - **Windows**: Verify LocalDB is installed: `sqllocaldb info`
+   - **Linux**: Verify Docker is running and user has Docker permissions
+3. Check connection string in configuration
+4. See [Testing Guide - Troubleshooting](testing.md#troubleshooting) for detailed platform-specific solutions
 
 ### Performance Issues
 
