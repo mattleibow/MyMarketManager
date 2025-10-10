@@ -38,6 +38,14 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: dotnet dev-certs https --trust
 
+      - name: Install .NET MAUI
+        if: matrix.os == 'ubuntu-latest'
+        run: dotnet workload install maui-android
+
+      - name: Install .NET MAUI
+        if: matrix.os != 'ubuntu-latest'
+        run: dotnet workload install maui
+
       - name: Restore dependencies
         run: dotnet restore
 
