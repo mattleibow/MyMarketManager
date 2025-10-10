@@ -42,11 +42,11 @@ Detailed technical documentation:
 ### I'm Working on the Database
 1. [Data Layer](data-layer.md) - EF Core and migrations
 2. [Data Model](data-model.md) - Entity reference
-3. [Development Guide](development-guide.md#working-with-the-database) - Database workflows
+3. [Development Guide](development-guide.md#4-working-with-the-database) - Database workflows
 
 ### I'm Building a Mobile App
 1. [GraphQL Client](graphql-client.md) - Using the client library
-2. [Getting Started](getting-started.md#using-the-graphql-api) - API examples
+2. [Getting Started](getting-started.md#example-graphql-operations) - API examples
 3. [GraphQL Server](graphql-server.md) - Available operations
 
 ## Documentation Standards
