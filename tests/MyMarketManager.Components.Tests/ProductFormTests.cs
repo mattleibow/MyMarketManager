@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using StrawberryShake;
-using MyMarketManager.Components.Tests.Components;
+using MyMarketManager.WebApp.Components.Pages;
 using MyMarketManager.GraphQL.Client;
 using FluentAssertions;
 
 namespace MyMarketManager.Components.Tests;
 
-public class ProductFormGraphQLTests : Bunit.TestContext
+public class ProductFormTests : Bunit.TestContext
 {
     [Fact]
     public void ProductForm_RendersAddForm_WhenNoProductId()
@@ -19,7 +19,7 @@ public class ProductFormGraphQLTests : Bunit.TestContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         
         // Act
-        var cut = RenderComponent<ProductFormGraphQL>();
+        var cut = RenderComponent<ProductForm>();
         
         // Assert
         cut.Markup.Should().Contain("Add Product");
@@ -44,7 +44,7 @@ public class ProductFormGraphQLTests : Bunit.TestContext
         
         // Act
         var parameters = new[] { ComponentParameter.CreateParameter("ProductId", (Guid?)productId) };
-        var cut = RenderComponent<ProductFormGraphQL>(parameters);
+        var cut = RenderComponent<ProductForm>(parameters);
         
         // Assert  
         cut.Markup.Should().Contain("Edit Product");
@@ -60,7 +60,7 @@ public class ProductFormGraphQLTests : Bunit.TestContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         
         // Act
-        var cut = RenderComponent<ProductFormGraphQL>();
+        var cut = RenderComponent<ProductForm>();
         
         // Assert - check all expected form fields exist
         cut.Find("#name").Should().NotBeNull();

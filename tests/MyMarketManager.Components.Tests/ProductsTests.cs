@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using StrawberryShake;
-using MyMarketManager.Components.Tests.Components;
+using MyMarketManager.WebApp.Components.Pages;
 using MyMarketManager.GraphQL.Client;
 using FluentAssertions;
 
 namespace MyMarketManager.Components.Tests;
 
-public class ProductsGraphQLTests : Bunit.TestContext
+public class ProductsTests : Bunit.TestContext
 {
     [Fact]
     public void Products_RendersLoadingState_Initially()
@@ -25,7 +25,7 @@ public class ProductsGraphQLTests : Bunit.TestContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         
         // Act
-        var cut = RenderComponent<ProductsGraphQL>();
+        var cut = RenderComponent<Products>();
         
         // Assert
         cut.Find(".spinner-border").Should().NotBeNull();
@@ -48,7 +48,7 @@ public class ProductsGraphQLTests : Bunit.TestContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         
         // Act
-        var cut = RenderComponent<ProductsGraphQL>();
+        var cut = RenderComponent<Products>();
         
         // Assert
         cut.Find("h1").TextContent.Should().Contain("Products");

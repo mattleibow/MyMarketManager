@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MyMarketManager.GraphQL.Client\MyMarketManager.GraphQL.Client.csproj" />
+    <ProjectReference Include="..\..\src\MyMarketManager.WebApp\MyMarketManager.WebApp.csproj" />
   </ItemGroup>
 
 </Project>
