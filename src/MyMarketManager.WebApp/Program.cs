@@ -23,6 +23,8 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Add the GraphQL client to be used by the web app to call the GraphQL API
+// For server-side Blazor, this uses HTTP localhost calls which are very fast
+// and reuses all Strawberry Shake generated types and serialization
 builder.Services.AddMyMarketManagerClient();
 
 // Add GraphQL server with HotChocolate
