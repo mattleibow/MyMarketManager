@@ -1,8 +1,10 @@
 @page "/products"
 @rendermode InteractiveServer
-@using MyMarketManager.GraphQL.Client
-@using ProductQuality = MyMarketManager.GraphQL.Client.ProductQuality
-@inject IMyMarketManagerClient GraphQLClient
+@using MyMarketManager.Data
+@using MyMarketManager.Data.Entities
+@using MyMarketManager.Data.Enums
+@using Microsoft.EntityFrameworkCore
+@inject MyMarketManagerDbContext DbContext
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -30,13 +32,7 @@
         </div>
     </div>
 }
-else if (errorMessage != null)
-{
-    <div class="alert alert-danger">
-        <i class="bi bi-exclamation-triangle"></i> @errorMessage
-    </div>
-}
-else if (!filteredProducts.Any())
+else if (!products.Any())
 {
     <div class="alert alert-info">
         No products found. <a href="#" @onclick="AddProduct" @onclick:preventDefault="true">Add your first product</a>
@@ -56,13 +52,13 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var product in filteredProducts)
+                @foreach (var product in products)
                 {
                     <tr>
                         <td>
-                            @if (!string.IsNullOrEmpty(product.Sku))
+                            @if (!string.IsNullOrEmpty(product.SKU))
                             {
-                                <code>@product.Sku</code>
+                                <code>@product.SKU</code>
                             }
                             else
                             {
@@ -126,16 +122,8 @@ else
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
-                    <button type="button" class="btn btn-danger" @onclick="DeleteProduct" disabled="@deleting">
-                        @if (deleting)
-                        {
-                            <span class="spinner-border spinner-border-sm" role="status"></span>
-                        }
-                        else
-                        {
-                            <i class="bi bi-trash"></i>
-                        }
-                        Delete
+                    <button type="button" class="btn btn-danger" @onclick="DeleteProduct">
+                        <i class="bi bi-trash"></i> Delete
                     </button>
                 </div>
             </div>
@@ -144,13 +132,10 @@ else
 }
 
 @code {
-    private List<IGetProducts_Products> products = new();
-    private List<IGetProducts_Products> filteredProducts = new();
+    private List<Product> products = new();
     private bool loading = true;
-    private bool deleting = false;
     private string searchTerm = string.Empty;
-    private IGetProducts_Products? productToDelete;
-    private string? errorMessage;
+    private Product? productToDelete;
 
     protected override async Task OnInitializedAsync()
     {
@@ -160,25 +145,24 @@ else
     private async Task LoadProducts()
     {
         loading = true;
-        errorMessage = null;
         StateHasChanged();
         try
         {
-            var result = await GraphQLClient.GetProducts.ExecuteAsync();
-            
-            if (result.Errors != null && result.Errors.Count > 0)
+            var query = DbContext.Products.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                errorMessage = "Error loading products: " + string.Join(", ", result.Errors.Select(e => e.Message));
+                query = query.Where(p => p.Name.Contains(searchTerm) || 
+                                        p.Description!.Contains(searchTerm) || 
+                                        p.SKU!.Contains(searchTerm));
             }
-            else if (result.Data?.Products != null)
-            {
-                products = result.Data.Products.ToList();
-                ApplyFilter();
-            }
+
+            products = await query
+                .OrderBy(p => p.Name)
+                .ToListAsync();
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error loading products: {ex.Message}";
             await JSRuntime.InvokeVoidAsync("console.error", "Error loading products:", ex.Message);
         }
         finally
@@ -188,27 +172,9 @@ else
         }
     }
 
-    private void ApplyFilter()
-    {
-        if (string.IsNullOrWhiteSpace(searchTerm))
-        {
-            filteredProducts = products;
-        }
-        else
-        {
-            var search = searchTerm.ToLower();
-            filteredProducts = products.Where(p =>
-                p.Name.ToLower().Contains(search) ||
-                (p.Description?.ToLower().Contains(search) ?? false) ||
-                (p.Sku?.ToLower().Contains(search) ?? false)
-            ).ToList();
-        }
-    }
-
     private async Task SearchProducts()
     {
-        ApplyFilter();
-        StateHasChanged();
+        await LoadProducts();
     }
 
     private async Task OnSearchKeyUp(KeyboardEventArgs e)
@@ -229,7 +195,7 @@ else
         Navigation.NavigateTo($"/products/edit/{productId}");
     }
 
-    private void ConfirmDeleteProduct(IGetProducts_Products product)
+    private void ConfirmDeleteProduct(Product product)
     {
         productToDelete = product;
         StateHasChanged();
@@ -245,35 +211,18 @@ else
     {
         if (productToDelete != null)
         {
-            deleting = true;
-            errorMessage = null;
-            StateHasChanged();
-            
             try
             {
-                var result = await GraphQLClient.DeleteProduct.ExecuteAsync(productToDelete.Id);
-                
-                if (result.Errors != null && result.Errors.Count > 0)
-                {
-                    errorMessage = "Error deleting product: " + string.Join(", ", result.Errors.Select(e => e.Message));
-                    await JSRuntime.InvokeVoidAsync("alert", errorMessage);
-                }
-                else
-                {
-                    productToDelete = null;
-                    await LoadProducts();
-                }
+                DbContext.Products.Remove(productToDelete);
+                await DbContext.SaveChangesAsync();
+                productToDelete = null;
+                await LoadProducts();
+                StateHasChanged();
             }
             catch (Exception ex)
             {
-                errorMessage = $"Error deleting product: {ex.Message}";
                 await JSRuntime.InvokeVoidAsync("console.error", "Error deleting product:", ex.Message);
-                await JSRuntime.InvokeVoidAsync("alert", errorMessage);
-            }
-            finally
-            {
-                deleting = false;
-                StateHasChanged();
+                await JSRuntime.InvokeVoidAsync("alert", $"Error deleting product: {ex.Message}");
             }
         }
     }

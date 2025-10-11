@@ -1,9 +1,11 @@
 @page "/products/add"
 @page "/products/edit/{productId:guid}"
 @rendermode InteractiveServer
-@using MyMarketManager.GraphQL.Client
-@using ProductQuality = MyMarketManager.GraphQL.Client.ProductQuality
-@inject IMyMarketManagerClient GraphQLClient
+@using MyMarketManager.Data
+@using MyMarketManager.Data.Entities
+@using MyMarketManager.Data.Enums
+@using Microsoft.EntityFrameworkCore
+@inject MyMarketManagerDbContext DbContext
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -20,14 +22,7 @@
 
         <h1>@(ProductId.HasValue ? "Edit Product" : "Add Product")</h1>
 
-        @if (errorMessage != null)
-        {
-            <div class="alert alert-danger">
-                <i class="bi bi-exclamation-triangle"></i> @errorMessage
-            </div>
-        }
-
-        <EditForm Model="@productModel" OnValidSubmit="@SaveProduct" FormName="ProductFormGraphQL">
+        <EditForm Model="@product" OnValidSubmit="@SaveProduct" FormName="ProductForm">
             <DataAnnotationsValidator />
             <ValidationSummary class="alert alert-danger" />
 
@@ -35,42 +30,42 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="sku" class="form-label">SKU</label>
-                        <InputText id="sku" class="form-control" @bind-Value="productModel.SKU" placeholder="Optional product SKU" />
-                        <ValidationMessage For="@(() => productModel.SKU)" />
+                        <InputText id="sku" class="form-control" @bind-Value="product.SKU" placeholder="Optional product SKU" />
+                        <ValidationMessage For="@(() => product.SKU)" />
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="quality" class="form-label">Quality Rating</label>
-                        <InputSelect id="quality" class="form-select" @bind-Value="productModel.Quality">
+                        <InputSelect id="quality" class="form-select" @bind-Value="product.Quality">
                             @foreach (var quality in Enum.GetValues<ProductQuality>())
                             {
                                 <option value="@quality">@quality</option>
                             }
                         </InputSelect>
-                        <ValidationMessage For="@(() => productModel.Quality)" />
+                        <ValidationMessage For="@(() => product.Quality)" />
                     </div>
                 </div>
             </div>
 
             <div class="mb-3">
                 <label for="name" class="form-label">Product Name <span class="text-danger">*</span></label>
-                <InputText id="name" class="form-control" @bind-Value="productModel.Name" placeholder="Enter product name" />
-                <ValidationMessage For="@(() => productModel.Name)" />
+                <InputText id="name" class="form-control" @bind-Value="product.Name" placeholder="Enter product name" />
+                <ValidationMessage For="@(() => product.Name)" />
             </div>
 
             <div class="mb-3">
                 <label for="description" class="form-label">Description</label>
-                <InputTextArea id="description" class="form-control" rows="3" @bind-Value="productModel.Description" placeholder="Product description (optional)" />
-                <ValidationMessage For="@(() => productModel.Description)" />
+                <InputTextArea id="description" class="form-control" rows="3" @bind-Value="product.Description" placeholder="Product description (optional)" />
+                <ValidationMessage For="@(() => product.Description)" />
             </div>
 
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="stock" class="form-label">Stock on Hand</label>
-                        <InputNumber id="stock" class="form-control" @bind-Value="productModel.StockOnHand" min="0" />
-                        <ValidationMessage For="@(() => productModel.StockOnHand)" />
+                        <InputNumber id="stock" class="form-control" @bind-Value="product.StockOnHand" min="0" />
+                        <ValidationMessage For="@(() => product.StockOnHand)" />
                         <div class="form-text">Current inventory level</div>
                     </div>
                 </div>
@@ -78,8 +73,8 @@
 
             <div class="mb-3">
                 <label for="notes" class="form-label">Notes</label>
-                <InputTextArea id="notes" class="form-control" rows="2" @bind-Value="productModel.Notes" placeholder="Additional notes (optional)" />
-                <ValidationMessage For="@(() => productModel.Notes)" />
+                <InputTextArea id="notes" class="form-control" rows="2" @bind-Value="product.Notes" placeholder="Additional notes (optional)" />
+                <ValidationMessage For="@(() => product.Notes)" />
             </div>
 
             <div class="d-flex gap-2">
@@ -138,56 +133,19 @@
 @code {
     [Parameter] public Guid? ProductId { get; set; }
 
-    private ProductFormModel productModel = new();
+    private Product product = new();
     private bool saving = false;
-    private bool loading = true;
-    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
         if (ProductId.HasValue)
         {
-            await LoadProduct();
-        }
-        else
-        {
-            // Initialize default values for new product
-            productModel = new ProductFormModel
-            {
-                Quality = ProductQuality.Good,
-                StockOnHand = 0
-            };
-            loading = false;
-        }
-    }
-
-    private async Task LoadProduct()
-    {
-        loading = true;
-        errorMessage = null;
-        
-        try
-        {
-            var result = await GraphQLClient.GetProductById.ExecuteAsync(ProductId!.Value);
+            var existingProduct = await DbContext.Products
+                .FirstOrDefaultAsync(p => p.Id == ProductId.Value);
             
-            if (result.Errors != null && result.Errors.Count > 0)
+            if (existingProduct != null)
             {
-                errorMessage = "Error loading product: " + string.Join(", ", result.Errors.Select(e => e.Message));
-                // Product not found, redirect to products list
-                Navigation.NavigateTo("/products");
-            }
-            else if (result.Data?.ProductById != null)
-            {
-                var product = result.Data.ProductById;
-                productModel = new ProductFormModel
-                {
-                    SKU = product.Sku,
-                    Name = product.Name,
-                    Description = product.Description,
-                    Quality = product.Quality,
-                    Notes = product.Notes,
-                    StockOnHand = product.StockOnHand
-                };
+                product = existingProduct;
             }
             else
             {
@@ -195,79 +153,40 @@
                 Navigation.NavigateTo("/products");
             }
         }
-        catch (Exception ex)
+        else
         {
-            errorMessage = $"Error loading product: {ex.Message}";
-            await JSRuntime.InvokeVoidAsync("console.error", "Error loading product:", ex.Message);
-        }
-        finally
-        {
-            loading = false;
+            // Initialize default values for new product
+            product = new Product
+            {
+                Quality = ProductQuality.Good,
+                StockOnHand = 0
+            };
         }
     }
 
     private async Task SaveProduct()
     {
         saving = true;
-        errorMessage = null;
-        
         try
         {
             if (ProductId.HasValue)
             {
                 // Update existing product
-                var input = new UpdateProductInput
-                {
-                    Sku = productModel.SKU,
-                    Name = productModel.Name ?? string.Empty,
-                    Description = productModel.Description,
-                    Quality = productModel.Quality,
-                    Notes = productModel.Notes,
-                    StockOnHand = productModel.StockOnHand
-                };
-                
-                var result = await GraphQLClient.UpdateProduct.ExecuteAsync(ProductId.Value, input);
-                
-                if (result.Errors != null && result.Errors.Count > 0)
-                {
-                    errorMessage = "Error updating product: " + string.Join(", ", result.Errors.Select(e => e.Message));
-                    await JSRuntime.InvokeVoidAsync("alert", errorMessage);
-                }
-                else
-                {
-                    Navigation.NavigateTo("/products");
-                }
+                DbContext.Products.Update(product);
             }
             else
             {
                 // Add new product
-                var input = new CreateProductInput
-                {
-                    Sku = productModel.SKU,
-                    Name = productModel.Name ?? string.Empty,
-                    Description = productModel.Description,
-                    Quality = productModel.Quality,
-                    Notes = productModel.Notes,
-                    StockOnHand = productModel.StockOnHand
-                };
-                
-                var result = await GraphQLClient.CreateProduct.ExecuteAsync(input);
-                
-                if (result.Errors != null && result.Errors.Count > 0)
-                {
-                    errorMessage = "Error creating product: " + string.Join(", ", result.Errors.Select(e => e.Message));
-                    await JSRuntime.InvokeVoidAsync("alert", errorMessage);
-                }
-                else
-                {
-                    Navigation.NavigateTo("/products");
-                }
+                DbContext.Products.Add(product);
             }
+
+            await DbContext.SaveChangesAsync();
+            Navigation.NavigateTo("/products");
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error saving product: {ex.Message}";
-            await JSRuntime.InvokeVoidAsync("alert", errorMessage);
+            // Handle error - in production, use proper logging
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving product: {ex.Message}");
         }
         finally
         {
@@ -278,22 +197,5 @@
     private void Cancel()
     {
         Navigation.NavigateTo("/products");
-    }
-
-    // Model class for the form
-    public class ProductFormModel
-    {
-        public string? SKU { get; set; }
-        
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Product name is required")]
-        public string? Name { get; set; }
-        
-        public string? Description { get; set; }
-        
-        public ProductQuality Quality { get; set; }
-        
-        public string? Notes { get; set; }
-        
-        public int StockOnHand { get; set; }
     }
 }
