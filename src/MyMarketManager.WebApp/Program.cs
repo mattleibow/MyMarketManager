@@ -3,6 +3,7 @@ using MyMarketManager.Data.Services;
 using MyMarketManager.WebApp.Components;
 using MyMarketManager.WebApp.GraphQL;
 using MyMarketManager.WebApp.Services;
+using MyMarketManager.GraphQL.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,10 +23,9 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// Add the GraphQL client to be used by the web app to call the GraphQL API
-// For server-side Blazor, this uses HTTP localhost calls which are very fast
-// and reuses all Strawberry Shake generated types and serialization
-builder.Services.AddMyMarketManagerClient();
+// Add server-side GraphQL client that uses HotChocolate's IRequestExecutor directly
+// This avoids HTTP overhead and incorrect URL configuration issues
+builder.Services.AddSingleton<IMyMarketManagerClient, ServerSideGraphQLClient>();
 
 // Add GraphQL server with HotChocolate
 builder.Services
