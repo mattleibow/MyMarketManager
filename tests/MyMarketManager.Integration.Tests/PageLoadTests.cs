@@ -1,4 +1,4 @@
-/*using Microsoft.Playwright;
+using Microsoft.Playwright;
 using MyMarketManager.Tests.Shared;
 using static Microsoft.Playwright.Assertions;
 
@@ -7,7 +7,6 @@ namespace MyMarketManager.Integration.Tests;
 /// <summary>
 /// Playwright-based UI tests to verify pages load without errors
 /// </summary>
-[Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
 public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase(outputHelper)
 {
     [Fact]
@@ -119,4 +118,3 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
         Assert.Empty(consoleErrors);
     }
 }
-*/

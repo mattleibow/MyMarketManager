@@ -1,6 +1,6 @@
 # Playwright Tests
 
-This directory contains Playwright-based end-to-end tests that validate the application UI loads correctly without errors.
+This guide covers Playwright-based end-to-end tests that validate the application UI loads correctly without errors.
 
 ## Prerequisites
 
@@ -10,28 +10,38 @@ This directory contains Playwright-based end-to-end tests that validate the appl
 
 ## Installing Playwright Browsers
 
-Before running the Playwright tests for the first time, you need to install the Chromium browser:
-
-### Option 1: Using PowerShell (Recommended)
+**Important Note:** Building the `MyMarketManager.Integration.Tests` project automatically downloads and installs the Chromium browser via an MSBuild target. This happens automatically when you build the project or run tests.
 
 ```bash
-# Build the project first
+# Building the integration tests automatically installs Playwright browsers
 dotnet build tests/MyMarketManager.Integration.Tests --configuration Release
-
-# Install Chromium browser
-pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install chromium
 ```
 
-### Option 2: Using Playwright CLI
+The MSBuild target runs after the build completes and executes:
+```bash
+pwsh ./bin/$(Configuration)/$(TargetFramework)/playwright.ps1 install chromium
+```
+
+This means that:
+- **First build will download browsers** (may take a minute or two)
+- **Subsequent builds are faster** (browsers already installed)
+- **CI/CD pipelines** automatically get browsers when building the test project
+
+### Manual Installation (Optional)
+
+If you need to manually install or reinstall browsers:
 
 ```bash
-# If you have Playwright CLI installed globally
+# Option 1: Using the generated PowerShell script
+pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install chromium
+
+# Option 2: Using Playwright CLI (if installed globally)
 playwright install chromium
 ```
 
 ## Running Playwright Tests
 
-Playwright tests are marked with the `[Trait("Category", "LongRunning")]` attribute because they:
+Playwright tests are UI tests that:
 - Start the full Aspire application stack
 - Launch a real browser (Chromium)
 - Navigate through actual web pages
@@ -49,16 +59,10 @@ dotnet test tests/MyMarketManager.Integration.Tests
 dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~PageLoadTests"
 ```
 
-### Run Non-Playwright Tests Only (Faster)
+### Run Non-Playwright Tests Only
 
 ```bash
 dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~GraphQLEndpointTests"
-```
-
-### Exclude Long-Running Tests in CI
-
-```bash
-dotnet test --filter "Category!=LongRunning"
 ```
 
 ## Test Structure
@@ -70,7 +74,10 @@ Base class that provides:
 - Browser context with SSL error handling for development certificates
 - Page error and console logging
 - Automatic cleanup of browser resources
-- Navigation helper methods
+- Navigation helper methods with retry logic for transient network errors
+  - Retries up to 3 times for network errors (e.g., `ERR_NETWORK_CHANGED`)
+  - Uses exponential backoff between retries
+  - 30-second timeout per navigation attempt
 
 ### PageLoadTests
 
@@ -125,17 +132,26 @@ catch
 
 ### GitHub Actions
 
-In GitHub Actions, Playwright tests may require additional setup:
+When building the integration tests in GitHub Actions, Playwright browsers are automatically installed by the MSBuild target. However, you may need to install system dependencies:
 
 ```yaml
-- name: Install Playwright Browsers
-  run: |
-    dotnet build tests/MyMarketManager.Integration.Tests
-    pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install chromium --with-deps
+- name: Setup .NET
+  uses: actions/setup-dotnet@v4
+  with:
+    dotnet-version: '10.0.x'
+    dotnet-quality: 'rc'
 
-- name: Run Tests
-  run: dotnet test tests/MyMarketManager.Integration.Tests --filter "Category=LongRunning"
+- name: Build Integration Tests (installs Playwright browsers automatically)
+  run: dotnet build tests/MyMarketManager.Integration.Tests --configuration Release
+
+- name: Install Playwright Browser Dependencies (Linux only)
+  run: pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install-deps chromium
+
+- name: Run Playwright Tests
+  run: dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~PageLoadTests" --no-build
 ```
+
+**Note:** The `install-deps` command is only needed in CI environments to install system-level dependencies (like fonts, libraries) required by Chromium on Linux.
 
 ### Docker Requirement
 
@@ -145,7 +161,12 @@ The Aspire integration tests require Docker to be running for SQL Server. Ensure
 
 ### Error: "Playwright browser is not installed"
 
-**Solution**: Run the browser installation command:
+**Solution**: This should not happen if you built the project, as browsers are installed automatically. If it does occur, rebuild the integration tests project:
+```bash
+dotnet build tests/MyMarketManager.Integration.Tests --configuration Release
+```
+
+Or manually install:
 ```bash
 pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install chromium
 ```
@@ -158,6 +179,13 @@ pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 
 
 **Solution**: The tests are configured to ignore HTTPS errors for development certificates. This is handled in `PlaywrightTestsBase.cs` with `IgnoreHTTPSErrors = true`.
 
+### Error: "net::ERR_NETWORK_CHANGED" or transient network errors
+
+**Solution**: The tests include automatic retry logic with exponential backoff for transient network errors. These errors can occur in CI environments or when the application is still starting up. The navigation will retry up to 3 times before failing. If tests still fail with this error:
+- Ensure the Aspire application has fully started before tests run
+- Check Docker container health and network connectivity
+- Review test output logs for timing issues
+
 ### Slow Test Execution
 
 Playwright tests are slower than unit tests because they:
@@ -166,7 +194,7 @@ Playwright tests are slower than unit tests because they:
 - Navigate actual web pages
 - Wait for network idle states
 
-This is expected behavior. Use the `Category!=LongRunning` filter to exclude them from fast CI runs.
+This is expected behavior for end-to-end UI tests.
 
 ## Resources
 

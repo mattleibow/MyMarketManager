@@ -37,7 +37,9 @@ End-to-end integration tests using Aspire for orchestration.
 - Windows: LocalDB (instant, no Docker)
 - Linux: Testcontainers (containerized SQL Server)
 
-**UI Testing:** Uses Playwright for browser-based end-to-end tests. See [README-Playwright.md](../tests/MyMarketManager.Integration.Tests/README-Playwright.md) for setup instructions.
+**UI Testing:** Uses Playwright for browser-based end-to-end tests. See [Playwright Tests](playwright.md) for detailed setup instructions.
+
+**Important:** Building the integration tests project automatically downloads Playwright browsers (Chromium). The first build may take a minute or two to download browsers.
 
 ### MyMarketManager.Tests.Shared
 
@@ -46,7 +48,7 @@ Shared test infrastructure used by both test projects.
 **Key Components:**
 - `SqlServerHelper`: Platform-aware SQL Server provisioning
 - `SqliteHelper`: SQLite in-memory database management
-- `TestCategories`: Test categorization (GraphQL, Database, LongRunning)
+- `TestCategories`: Test categorization (GraphQL, Database)
 - `TestRequirements`: Test requirements (SSL)
 
 ## Running Tests
@@ -75,9 +77,6 @@ dotnet test --filter "Category=GraphQL"
 
 # Run only database tests
 dotnet test --filter "Category=Database"
-
-# Exclude long-running tests (Playwright UI tests)
-dotnet test --filter "Category!=LongRunning"
 ```
 
 ### Run Tests Excluding Requirements
@@ -270,7 +269,6 @@ using Microsoft.Playwright;
 using MyMarketManager.Tests.Shared;
 using static Microsoft.Playwright.Assertions;
 
-[Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
 public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase(outputHelper)
 {
     [Fact]
@@ -288,22 +286,19 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
 }
 ```
 
-**Test Traits:**
-- `[Trait(TestCategories.Key, TestCategories.Values.LongRunning)]` - Marks as long-running test
-
 **PlaywrightTestsBase provides:**
 - `Playwright`: Playwright instance
 - `Browser`: Chromium browser (headless)
 - `Context`: Browser context with HTTPS error handling
 - `Page`: Current page for test interactions
-- `NavigateToAppAsync(path)`: Navigate to application routes
+- `NavigateToAppAsync(path)`: Navigate to application routes with retry logic for transient network errors
 - Automatic console error logging
 - Auto-cleanup of browser resources
 
 **Prerequisites:**
-Playwright tests require browser installation. See [README-Playwright.md](../tests/MyMarketManager.Integration.Tests/README-Playwright.md) for setup:
+Playwright tests require browser installation. Building the integration tests project automatically downloads Chromium. See [Playwright Tests](playwright.md) for details:
 ```bash
-pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install chromium
+dotnet build tests/MyMarketManager.Integration.Tests --configuration Release
 ```
 
 **Running Playwright Tests:**
@@ -311,8 +306,8 @@ pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 
 # Run all Playwright tests
 dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~PageLoadTests"
 
-# Exclude from fast test runs
-dotnet test --filter "Category!=LongRunning"
+# Run all integration tests
+dotnet test tests/MyMarketManager.Integration.Tests
 ```
 
 ## Test Infrastructure Details

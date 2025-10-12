@@ -53,14 +53,14 @@ Build time: ~45-50 seconds on first build, faster on subsequent builds.
 
 ### Run Tests
 
-Run all tests except long-running ones (this is the default CI filter):
+Run all tests:
 ```bash
-dotnet test --configuration Release --verbosity normal --filter "Category!=LongRunning"
+dotnet test --configuration Release --verbosity normal
 ```
 
-Test execution time: ~35-40 seconds.
+Test execution time: ~35-40 seconds for unit tests. Integration tests (including Playwright UI tests) may take longer as they require Docker and launch real browsers.
 
-Note: Integration tests are marked with `[Trait("Category", "LongRunning")]` and are excluded by default.
+**IMPORTANT**: All tests must always run. Tests are never disabled or excluded by default unless explicitly instructed for a specific reason. Running tests is the only way to ensure the project works correctly.
 
 ### Run the Application
 
