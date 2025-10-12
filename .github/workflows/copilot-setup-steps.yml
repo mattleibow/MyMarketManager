@@ -38,3 +38,7 @@ jobs:
 
       - name: Install .NET MAUI
         run: dotnet workload install maui-android
+
+      - name: Build solution
+        run: dotnet build --configuration Release
+        continue-on-error: true

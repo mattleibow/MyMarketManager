@@ -29,12 +29,15 @@ End-to-end integration tests using Aspire for orchestration.
 
 **Test Types:**
 - GraphQL endpoint tests
+- Playwright UI tests (page load validation)
 - Full application stack tests
 - API contract tests
 
 **Database:** Uses platform-specific SQL Server provisioning via `SqlServerHelper`:
 - Windows: LocalDB (instant, no Docker)
 - Linux: Testcontainers (containerized SQL Server)
+
+**UI Testing:** Uses Playwright for browser-based end-to-end tests. See [README-Playwright.md](../tests/MyMarketManager.Integration.Tests/README-Playwright.md) for setup instructions.
 
 ### MyMarketManager.Tests.Shared
 
@@ -43,7 +46,7 @@ Shared test infrastructure used by both test projects.
 **Key Components:**
 - `SqlServerHelper`: Platform-aware SQL Server provisioning
 - `SqliteHelper`: SQLite in-memory database management
-- `TestCategories`: Test categorization (GraphQL, Database)
+- `TestCategories`: Test categorization (GraphQL, Database, LongRunning)
 - `TestRequirements`: Test requirements (SSL)
 
 ## Running Tests
@@ -72,6 +75,9 @@ dotnet test --filter "Category=GraphQL"
 
 # Run only database tests
 dotnet test --filter "Category=Database"
+
+# Exclude long-running tests (Playwright UI tests)
+dotnet test --filter "Category!=LongRunning"
 ```
 
 ### Run Tests Excluding Requirements
@@ -254,6 +260,60 @@ public class MyApiTests(ITestOutputHelper outputHelper) : WebAppTestsBase(output
 **WebAppTestsBase provides (extends AppHostTestsBase):**
 - `WebAppHttpClient`: Configured `HttpClient` for the WebApp
 - Helper methods for making requests
+
+### Playwright UI Tests
+
+Playwright tests validate that pages load correctly in a real browser without errors. These tests extend `PlaywrightTestsBase`:
+
+```csharp
+using Microsoft.Playwright;
+using MyMarketManager.Tests.Shared;
+using static Microsoft.Playwright.Assertions;
+
+[Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
+public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase(outputHelper)
+{
+    [Fact]
+    public async Task ProductsPage_LoadsWithoutErrors()
+    {
+        // Navigate to the page
+        await NavigateToAppAsync("/products");
+
+        // Assert page loaded with expected elements
+        await Expect(Page!.GetByRole(AriaRole.Heading, new() { Name = "Products" }))
+            .ToBeVisibleAsync();
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Add Product" }))
+            .ToBeVisibleAsync();
+    }
+}
+```
+
+**Test Traits:**
+- `[Trait(TestCategories.Key, TestCategories.Values.LongRunning)]` - Marks as long-running test
+
+**PlaywrightTestsBase provides:**
+- `Playwright`: Playwright instance
+- `Browser`: Chromium browser (headless)
+- `Context`: Browser context with HTTPS error handling
+- `Page`: Current page for test interactions
+- `NavigateToAppAsync(path)`: Navigate to application routes
+- Automatic console error logging
+- Auto-cleanup of browser resources
+
+**Prerequisites:**
+Playwright tests require browser installation. See [README-Playwright.md](../tests/MyMarketManager.Integration.Tests/README-Playwright.md) for setup:
+```bash
+pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install chromium
+```
+
+**Running Playwright Tests:**
+```bash
+# Run all Playwright tests
+dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~PageLoadTests"
+
+# Exclude from fast test runs
+dotnet test --filter "Category!=LongRunning"
+```
 
 ## Test Infrastructure Details
 
@@ -578,6 +638,8 @@ public class MyTests : IAsyncLifetime
 
 - [xUnit Documentation](https://xunit.net/)
 - [Testcontainers for .NET](https://dotnet.testcontainers.org/)
+- [Playwright for .NET](https://playwright.dev/dotnet/)
+- [Aspire Testing Documentation](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/testing)
 - [SQL Server LocalDB](https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/sql-server-express-localdb)
 - [Aspire Testing](https://learn.microsoft.com/en-us/dotnet/aspire/testing/)
 - [.NET Testing Best Practices](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices)
