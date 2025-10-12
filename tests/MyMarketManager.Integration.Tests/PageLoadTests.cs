@@ -37,8 +37,8 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
         // Assert - Verify page loaded with heading
         await Expect(Page!.GetByRole(AriaRole.Heading, new() { Name = "Products" })).ToBeVisibleAsync();
         
-        // Verify Add Product link is present
-        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Add Product" })).ToBeVisibleAsync();
+        // Verify Add Product button is present
+        await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Add Product" })).ToBeVisibleAsync();
         
         // Verify search box is present
         await Expect(Page.GetByPlaceholder("Search products...")).ToBeVisibleAsync();
@@ -58,8 +58,8 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
         await Expect(Page.GetByLabel("Quality Rating")).ToBeVisibleAsync();
         await Expect(Page.GetByLabel("Stock on Hand")).ToBeVisibleAsync();
         
-        // Verify Save and Cancel buttons are present
-        await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Save" })).ToBeVisibleAsync();
+        // Verify Create Product and Cancel buttons are present
+        await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Create Product" })).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Cancel" })).ToBeVisibleAsync();
     }
 

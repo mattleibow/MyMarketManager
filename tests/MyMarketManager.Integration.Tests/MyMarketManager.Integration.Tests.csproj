@@ -46,8 +46,8 @@
     <ProjectReference Include="..\MyMarketManager.Tests.Shared\MyMarketManager.Tests.Shared.csproj" />
   </ItemGroup>
 
-  <Target Name="InstallPlaywrightBrowsers" AfterTargets="Build">
-    <Exec Command="pwsh ./bin/$(Configuration)/$(TargetFramework)/playwright.ps1 install chromium --with-deps" />
+  <Target Name="InstallPlaywrightBrowsers" AfterTargets="Build" Condition="'$(CI)' != 'true'">
+    <Exec Command="pwsh ./bin/$(Configuration)/$(TargetFramework)/playwright.ps1 install chromium" ContinueOnError="true" IgnoreExitCode="true" />
   </Target>
 
 </Project>
