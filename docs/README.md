@@ -15,6 +15,7 @@ Resources for developers working on MyMarketManager:
 
 - **[Development Guide](development-guide.md)** - Development workflows, tools, debugging, and best practices
 - **[Testing Guide](testing.md)** - Testing infrastructure, platform-specific database provisioning, and writing tests
+- **[Playwright Tests](playwright.md)** - Playwright UI testing setup, running tests, and debugging
 - **[Data Layer](data-layer.md)** - Entity Framework Core, migrations, and database management
 - **[GraphQL Server](graphql-server.md)** - Server implementation, operations, and extending the API
 - **[GraphQL Client](graphql-client.md)** - Client library usage, service registration, and examples

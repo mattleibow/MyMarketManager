@@ -1,4 +1,4 @@
-/*using Microsoft.Playwright;
+using Microsoft.Playwright;
 using MyMarketManager.Tests.Shared;
 using static Microsoft.Playwright.Assertions;
 
@@ -119,4 +119,3 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
         Assert.Empty(consoleErrors);
     }
 }
-*/

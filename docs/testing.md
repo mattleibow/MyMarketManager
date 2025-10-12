@@ -37,7 +37,7 @@ End-to-end integration tests using Aspire for orchestration.
 - Windows: LocalDB (instant, no Docker)
 - Linux: Testcontainers (containerized SQL Server)
 
-**UI Testing:** Uses Playwright for browser-based end-to-end tests. See [README-Playwright.md](../tests/MyMarketManager.Integration.Tests/README-Playwright.md) for setup instructions.
+**UI Testing:** Uses Playwright for browser-based end-to-end tests. See [Playwright Tests](playwright.md) for detailed setup instructions.
 
 ### MyMarketManager.Tests.Shared
 
@@ -301,9 +301,9 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
 - Auto-cleanup of browser resources
 
 **Prerequisites:**
-Playwright tests require browser installation. See [README-Playwright.md](../tests/MyMarketManager.Integration.Tests/README-Playwright.md) for setup:
+Playwright tests require browser installation. Building the integration tests project automatically downloads Chromium. See [Playwright Tests](playwright.md) for details:
 ```bash
-pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install chromium
+dotnet build tests/MyMarketManager.Integration.Tests --configuration Release
 ```
 
 **Running Playwright Tests:**
