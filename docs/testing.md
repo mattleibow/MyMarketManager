@@ -39,6 +39,8 @@ End-to-end integration tests using Aspire for orchestration.
 
 **UI Testing:** Uses Playwright for browser-based end-to-end tests. See [Playwright Tests](playwright.md) for detailed setup instructions.
 
+**Important:** Building the integration tests project automatically downloads Playwright browsers (Chromium). The first build may take a minute or two to download browsers.
+
 ### MyMarketManager.Tests.Shared
 
 Shared test infrastructure used by both test projects.

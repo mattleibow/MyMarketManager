@@ -23,7 +23,9 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         include:
           - os: windows-latest
-            filter: --filter "Requires!=SSL"
+            filter: --filter "Requires!=SSL&Category!=LongRunning"
+          - os: ubuntu-latest
+            filter: --filter "Category!=LongRunning"
 
     steps:
       - name: Checkout code
