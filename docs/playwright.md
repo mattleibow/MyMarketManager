@@ -41,7 +41,7 @@ playwright install chromium
 
 ## Running Playwright Tests
 
-Playwright tests are marked with the `[Trait("Category", "LongRunning")]` attribute because they:
+Playwright tests are UI tests that:
 - Start the full Aspire application stack
 - Launch a real browser (Chromium)
 - Navigate through actual web pages
@@ -59,16 +59,10 @@ dotnet test tests/MyMarketManager.Integration.Tests
 dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~PageLoadTests"
 ```
 
-### Run Non-Playwright Tests Only (Faster)
+### Run Non-Playwright Tests Only
 
 ```bash
 dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~GraphQLEndpointTests"
-```
-
-### Exclude Long-Running Tests in CI
-
-```bash
-dotnet test --filter "Category!=LongRunning"
 ```
 
 ## Test Structure
@@ -151,7 +145,7 @@ When building the integration tests in GitHub Actions, Playwright browsers are a
   run: pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 install-deps chromium
 
 - name: Run Playwright Tests
-  run: dotnet test tests/MyMarketManager.Integration.Tests --filter "Category=LongRunning" --no-build
+  run: dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~PageLoadTests" --no-build
 ```
 
 **Note:** The `install-deps` command is only needed in CI environments to install system-level dependencies (like fonts, libraries) required by Chromium on Linux.
@@ -190,7 +184,7 @@ Playwright tests are slower than unit tests because they:
 - Navigate actual web pages
 - Wait for network idle states
 
-This is expected behavior. Use the `Category!=LongRunning` filter to exclude them from fast CI runs.
+This is expected behavior for end-to-end UI tests.
 
 ## Resources
 

@@ -48,7 +48,7 @@ Shared test infrastructure used by both test projects.
 **Key Components:**
 - `SqlServerHelper`: Platform-aware SQL Server provisioning
 - `SqliteHelper`: SQLite in-memory database management
-- `TestCategories`: Test categorization (GraphQL, Database, LongRunning)
+- `TestCategories`: Test categorization (GraphQL, Database)
 - `TestRequirements`: Test requirements (SSL)
 
 ## Running Tests
@@ -77,9 +77,6 @@ dotnet test --filter "Category=GraphQL"
 
 # Run only database tests
 dotnet test --filter "Category=Database"
-
-# Exclude long-running tests (Playwright UI tests)
-dotnet test --filter "Category!=LongRunning"
 ```
 
 ### Run Tests Excluding Requirements
@@ -272,7 +269,6 @@ using Microsoft.Playwright;
 using MyMarketManager.Tests.Shared;
 using static Microsoft.Playwright.Assertions;
 
-[Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
 public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase(outputHelper)
 {
     [Fact]
@@ -289,9 +285,6 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
     }
 }
 ```
-
-**Test Traits:**
-- `[Trait(TestCategories.Key, TestCategories.Values.LongRunning)]` - Marks as long-running test
 
 **PlaywrightTestsBase provides:**
 - `Playwright`: Playwright instance
@@ -313,8 +306,8 @@ dotnet build tests/MyMarketManager.Integration.Tests --configuration Release
 # Run all Playwright tests
 dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~PageLoadTests"
 
-# Exclude from fast test runs
-dotnet test --filter "Category!=LongRunning"
+# Run all integration tests
+dotnet test tests/MyMarketManager.Integration.Tests
 ```
 
 ## Test Infrastructure Details
