@@ -291,7 +291,7 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
 - `Browser`: Chromium browser (headless)
 - `Context`: Browser context with HTTPS error handling
 - `Page`: Current page for test interactions
-- `NavigateToAppAsync(path)`: Navigate to application routes
+- `NavigateToAppAsync(path)`: Navigate to application routes with retry logic for transient network errors
 - Automatic console error logging
 - Auto-cleanup of browser resources
 

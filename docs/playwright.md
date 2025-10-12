@@ -74,7 +74,10 @@ Base class that provides:
 - Browser context with SSL error handling for development certificates
 - Page error and console logging
 - Automatic cleanup of browser resources
-- Navigation helper methods
+- Navigation helper methods with retry logic for transient network errors
+  - Retries up to 3 times for network errors (e.g., `ERR_NETWORK_CHANGED`)
+  - Uses exponential backoff between retries
+  - 30-second timeout per navigation attempt
 
 ### PageLoadTests
 
@@ -175,6 +178,13 @@ pwsh tests/MyMarketManager.Integration.Tests/bin/Release/net10.0/playwright.ps1 
 ### Error: "SSL certificate errors"
 
 **Solution**: The tests are configured to ignore HTTPS errors for development certificates. This is handled in `PlaywrightTestsBase.cs` with `IgnoreHTTPSErrors = true`.
+
+### Error: "net::ERR_NETWORK_CHANGED" or transient network errors
+
+**Solution**: The tests include automatic retry logic with exponential backoff for transient network errors. These errors can occur in CI environments or when the application is still starting up. The navigation will retry up to 3 times before failing. If tests still fail with this error:
+- Ensure the Aspire application has fully started before tests run
+- Check Docker container health and network connectivity
+- Review test output logs for timing issues
 
 ### Slow Test Execution
 

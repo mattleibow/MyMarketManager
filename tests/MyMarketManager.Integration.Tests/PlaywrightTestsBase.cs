@@ -71,11 +71,37 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
     }
 
     /// <summary>
-    /// Navigate to the web application
+    /// Navigate to the web application with retry logic for transient network errors
     /// </summary>
     protected async Task NavigateToAppAsync(string path = "/")
     {
         var baseUrl = WebAppHttpClient.BaseAddress?.ToString().TrimEnd('/') ?? throw new InvalidOperationException("WebApp base URL not available");
-        await Page!.GotoAsync($"{baseUrl}{path}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        var url = $"{baseUrl}{path}";
+        
+        // Retry logic for transient network errors (e.g., ERR_NETWORK_CHANGED)
+        const int maxRetries = 3;
+        var retryDelay = TimeSpan.FromSeconds(1);
+        
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                await Page!.GotoAsync(url, new() 
+                { 
+                    WaitUntil = WaitUntilState.NetworkIdle,
+                    Timeout = 30000 // 30 second timeout
+                });
+                return; // Success
+            }
+            catch (PlaywrightException ex) when (attempt < maxRetries && 
+                (ex.Message.Contains("ERR_NETWORK_CHANGED") || 
+                 ex.Message.Contains("net::ERR_CONNECTION_REFUSED") ||
+                 ex.Message.Contains("Timeout")))
+            {
+                outputHelper.WriteLine($"Navigation attempt {attempt} failed: {ex.Message}. Retrying...");
+                await Task.Delay(retryDelay);
+                retryDelay = TimeSpan.FromSeconds(retryDelay.TotalSeconds * 2); // Exponential backoff
+            }
+        }
     }
 }
