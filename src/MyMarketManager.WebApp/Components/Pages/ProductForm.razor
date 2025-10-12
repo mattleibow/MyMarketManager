@@ -1,12 +1,9 @@
 @page "/products/add"
 @page "/products/edit/{productId:guid}"
 @rendermode InteractiveServer
-@using MyMarketManager.GraphQL.Client
-@using System.ComponentModel.DataAnnotations
-@using ProductQuality = MyMarketManager.GraphQL.Client.ProductQuality
 @inject IMyMarketManagerClient GraphQLClient
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject ILogger<ProductForm> Logger
 
 <PageTitle>@(ProductId.HasValue ? "Edit Product" : "Add Product")</PageTitle>
 
@@ -21,9 +18,19 @@
 
         <h1>@(ProductId.HasValue ? "Edit Product" : "Add Product")</h1>
 
-        <EditForm Model="@product" OnValidSubmit="@SaveProduct" FormName="ProductForm">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="alert alert-danger" />
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i> @errorMessage
+                <button type="button" class="btn-close" @onclick="@(() => errorMessage = null)"></button>
+            </div>
+        }
+
+        @if (showForm)
+        {
+            <EditForm Model="@product" OnValidSubmit="@SaveProduct" FormName="ProductForm">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="alert alert-danger" />
 
             <div class="row">
                 <div class="col-md-6">
@@ -94,6 +101,7 @@
                 </button>
             </div>
         </EditForm>
+        }
     </div>
 
     <div class="col-md-4">
@@ -134,6 +142,8 @@
 
     private ProductFormModel product = new();
     private bool saving = false;
+    private bool showForm = true;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -141,38 +151,14 @@
         {
             try
             {
-                var result = await GraphQLClient.GetProductById.ExecuteAsync(ProductId.Value);
-                
-                if (result.Errors != null && result.Errors.Count > 0)
-                {
-                    await JSRuntime.InvokeVoidAsync("alert", $"Error loading product: {string.Join(", ", result.Errors.Select(e => e.Message))}");
-                    Navigation.NavigateTo("/products");
-                    return;
-                }
-
-                if (result.Data?.ProductById != null)
-                {
-                    var p = result.Data.ProductById;
-                    product = new ProductFormModel
-                    {
-                        Sku = p.Sku,
-                        Name = p.Name ?? string.Empty,
-                        Description = p.Description,
-                        Quality = p.Quality,
-                        Notes = p.Notes,
-                        StockOnHand = p.StockOnHand
-                    };
-                }
-                else
-                {
-                    // Product not found, redirect to products list
-                    Navigation.NavigateTo("/products");
-                }
+                await LoadProductAsync(ProductId.Value);
             }
             catch (Exception ex)
             {
-                await JSRuntime.InvokeVoidAsync("alert", $"Error loading product: {ex.Message}");
-                Navigation.NavigateTo("/products");
+                Logger.LogError(ex, "Error loading product {ProductId}", ProductId.Value);
+                errorMessage = $"Error loading product: {ex.Message}";
+                showForm = false;
+                StateHasChanged();
             }
         }
         else
@@ -187,63 +173,102 @@
         }
     }
 
+    private async Task LoadProductAsync(Guid productId)
+    {
+        var result = await GraphQLClient.GetProductById.ExecuteAsync(productId);
+        
+        if (result.Errors != null && result.Errors.Count > 0)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Message));
+            throw new InvalidOperationException($"GraphQL errors: {errors}");
+        }
+
+        if (result.Data?.ProductById == null)
+        {
+            throw new InvalidOperationException("Product not found");
+        }
+
+        var p = result.Data.ProductById;
+        product = new ProductFormModel
+        {
+            Sku = p.Sku,
+            Name = p.Name ?? string.Empty,
+            Description = p.Description,
+            Quality = p.Quality,
+            Notes = p.Notes,
+            StockOnHand = p.StockOnHand
+        };
+    }
+
     private async Task SaveProduct()
     {
         saving = true;
+        errorMessage = null;
+        
         try
         {
             if (ProductId.HasValue)
             {
-                // Update existing product
-                var input = new UpdateProductInput
-                {
-                    Sku = product.Sku,
-                    Name = product.Name,
-                    Description = product.Description,
-                    Quality = product.Quality,
-                    Notes = product.Notes,
-                    StockOnHand = product.StockOnHand
-                };
-
-                var result = await GraphQLClient.UpdateProduct.ExecuteAsync(ProductId.Value, input);
-                
-                if (result.Errors != null && result.Errors.Count > 0)
-                {
-                    await JSRuntime.InvokeVoidAsync("alert", $"Error updating product: {string.Join(", ", result.Errors.Select(e => e.Message))}");
-                    return;
-                }
+                await UpdateProductAsync(ProductId.Value);
             }
             else
             {
-                // Add new product
-                var input = new CreateProductInput
-                {
-                    Sku = product.Sku,
-                    Name = product.Name,
-                    Description = product.Description,
-                    Quality = product.Quality,
-                    Notes = product.Notes,
-                    StockOnHand = product.StockOnHand
-                };
-
-                var result = await GraphQLClient.CreateProduct.ExecuteAsync(input);
-                
-                if (result.Errors != null && result.Errors.Count > 0)
-                {
-                    await JSRuntime.InvokeVoidAsync("alert", $"Error creating product: {string.Join(", ", result.Errors.Select(e => e.Message))}");
-                    return;
-                }
+                await CreateProductAsync();
             }
-
+            
             Navigation.NavigateTo("/products");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error saving product: {ex.Message}");
+            Logger.LogError(ex, "Error saving product");
+            errorMessage = $"Error saving product: {ex.Message}";
+            StateHasChanged();
         }
         finally
         {
             saving = false;
+        }
+    }
+
+    private async Task CreateProductAsync()
+    {
+        var input = new CreateProductInput
+        {
+            Sku = product.Sku,
+            Name = product.Name,
+            Description = product.Description,
+            Quality = product.Quality,
+            Notes = product.Notes,
+            StockOnHand = product.StockOnHand
+        };
+
+        var result = await GraphQLClient.CreateProduct.ExecuteAsync(input);
+        
+        if (result.Errors != null && result.Errors.Count > 0)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Message));
+            throw new InvalidOperationException($"GraphQL errors: {errors}");
+        }
+    }
+
+    private async Task UpdateProductAsync(Guid productId)
+    {
+        var input = new UpdateProductInput
+        {
+            Sku = product.Sku,
+            Name = product.Name,
+            Description = product.Description,
+            Quality = product.Quality,
+            Notes = product.Notes,
+            StockOnHand = product.StockOnHand
+        };
+
+        var result = await GraphQLClient.UpdateProduct.ExecuteAsync(productId, input);
+        
+        if (result.Errors != null && result.Errors.Count > 0)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Message));
+            throw new InvalidOperationException($"GraphQL errors: {errors}");
         }
     }
 
