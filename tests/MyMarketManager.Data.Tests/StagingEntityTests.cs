@@ -26,6 +26,7 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
             SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "abc123",
+            BatchType = BatchType.SupplierData,
             Status = ProcessingStatus.Pending
         };
         Context.StagingBatches.Add(batch);
@@ -80,6 +81,7 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
             SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "xyz789",
+            BatchType = BatchType.SupplierData,
             Status = ProcessingStatus.Pending
         };
         Context.StagingBatches.Add(batch);
@@ -161,6 +163,7 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
             SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "sale123",
+            BatchType = BatchType.SalesData,
             Status = ProcessingStatus.Pending
         };
         Context.StagingBatches.Add(batch);
@@ -202,5 +205,39 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
         Assert.NotNull(linkedItem.Product);
         Assert.Equal("Test Product", linkedItem.Product.Name);
         Assert.Equal(CandidateStatus.Linked, linkedItem.Status);
+    }
+
+    [Fact]
+    public async Task StagingBatch_CanStoreBlobUrl()
+    {
+        // Arrange
+        var supplier = new Supplier
+        {
+            Id = Guid.NewGuid(),
+            Name = "Test Supplier"
+        };
+        Context.Suppliers.Add(supplier);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var blobUrl = "https://storage.blob.core.windows.net/uploads/test-file.zip";
+        var batch = new StagingBatch
+        {
+            Id = Guid.NewGuid(),
+            SupplierId = supplier.Id,
+            UploadDate = DateTimeOffset.UtcNow,
+            FileHash = "blob123",
+            BlobStorageUrl = blobUrl,
+            BatchType = BatchType.SupplierData,
+            Status = ProcessingStatus.Pending
+        };
+        Context.StagingBatches.Add(batch);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Act
+        var savedBatch = await Context.StagingBatches
+            .FirstAsync(b => b.Id == batch.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(blobUrl, savedBatch.BlobStorageUrl);
     }
 }

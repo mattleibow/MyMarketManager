@@ -31,6 +31,14 @@ Used to rate the quality of products and delivered items.
 | Poor | Significant defects, limited usability |
 | Terrible | Severe damage, may not be sellable |
 
+### BatchType
+Used to distinguish the type of data in a staging batch.
+
+| Value | Description |
+|-------|-------------|
+| SupplierData | Supplier purchase order data from various supplier exports |
+| SalesData | Sales data from point-of-sale systems (e.g., Yoco API) |
+
 ## Entities
 
 ## Supplier
@@ -147,14 +155,16 @@ Description: A confirmed sale linked to a product and market event, derived from
 
 
 ## StagingBatch
-Description: Represents a single supplier data upload (e.g. Shein ZIP) or sales data upload (e.g. Yoco API load, grouping all parsed orders, sales and items.  
+Description: Represents a single supplier data upload (password-protected ZIP file) or sales data upload (e.g. Yoco API load), grouping all parsed orders, sales and items.  
 | Field | Type | Description | Relationships |
 |-------|------|-------------|----------------|
 | Id | Integer (PK) | Unique identifier | Parent of StagingPurchaseOrder |
 | SupplierId | Integer (FK) | Supplier reference | → Supplier |
 | UploadDate | DateTime | When file was uploaded | — |
 | FileHash | Text | Hash for deduplication | — |
-| Status | ProcessingStatus | Batch state | — |
+| BlobStorageUrl | Text (nullable) | Azure Blob Storage URL for the uploaded file | — |
+| BatchType | BatchType enum | Type of data: SupplierData or SalesData | — |
+| Status | ProcessingStatus | Batch state (Pending, Partial, Complete) | — |
 | Notes | Text (nullable) | Free‑form notes | — |
 
 

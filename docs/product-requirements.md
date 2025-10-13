@@ -5,7 +5,7 @@
 ## 1. Introduction
 My Market Manager is a mobile and web application to manage weekend market purchasing, deliveries, inventory reconciliation, and profitability analysis. Purchases may be recorded before delivery or at delivery time. Deliveries can arrive in full or in multiple partial shipments. Sales are tracked offline and reconciled via stocktakes against imported reports.  
 
-The system also supports ingestion of supplier data files (e.g. Shein “Request My Data” ZIPs) into a staging layer, with a two‑phase process: automated ingestion overnight, followed by validation and confirmation by a user.
+The system also supports ingestion of supplier data files (password-protected ZIPs from various suppliers) into a staging layer, with a two‑phase process: automated ingestion overnight, followed by validation and confirmation by a user.
 
 
 ## 2. Objectives
@@ -35,7 +35,7 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 4. As a Buyer, I want to split a large delivery into multiple receipts so I can inspect and price items as they arrive.  
 5. As a Reconciliation Specialist, I want to import a minimal sales report (description + price) and link entries via stocktake.  
 6. As a Manager, I want post‑event reports grouped by month and market event showing reconciled profit and units sold for reordering.  
-7. As a Manager, I want to upload a supplier ZIP (e.g. Shein) so the system can parse and stage new orders automatically.  
+7. As a Manager, I want to upload a supplier ZIP file so the system can parse and stage new orders automatically.  
 8. As a Manager, I want the system to auto‑link staged items to existing products by supplier reference number so I don’t have to re‑enter data.  
 9. As a Manager, I want to review unresolved product candidates and confirm or link them so that staging data can be promoted into production.  
 
@@ -86,10 +86,16 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 - Compute reconciled units sold, total revenue, and profit per product for the event.  
 
 ### 5.7 Supplier Data Ingestion
-- Support upload of supplier ZIP files (starting with Shein “Request My Data”).  
+- Support upload of supplier ZIP files from various supplier export formats.  
+- Upload workflow:
+  - Users manually upload password-protected ZIP files via the web interface.
+  - Files are stored in Azure Blob Storage in a dedicated container.
+  - Background service monitors blob storage for new uploads every 5 minutes.
+  - Service downloads, extracts, and processes files to create staging batches.
 - Parse ZIP contents into normalized staging entities: StagingBatch, StagingPurchaseOrder, StagingPurchaseOrderItem.  
-- Deduplicate by SupplierOrderId and SupplierReferenceNumber.  
+- Deduplicate by file hash and SupplierOrderId/SupplierReferenceNumber.  
 - Preserve raw supplier rows as JSON in staging for audit.  
+- Store blob storage URL in StagingBatch for reference and audit trail.
 - Attempt smart linking of items to existing products by supplier reference number or product URL.  
 - Create StagingProductCandidate entries for unresolved items.  
 

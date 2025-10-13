@@ -23,9 +23,11 @@ dotnet run --project src/MyMarketManager.AppHost
 
 This command will:
 1. Start SQL Server in a Docker container
-2. Apply EF Core migrations automatically
-3. Launch the WebApp with proper configuration
-4. Open the Aspire Dashboard showing all resources and telemetry
+2. Start Azurite (Azure Storage Emulator) in a Docker container
+3. Apply EF Core migrations automatically
+4. Start background services (database migration, blob ingestion)
+5. Launch the WebApp with proper configuration
+6. Open the Aspire Dashboard showing all resources and telemetry
 
 The application will be available at the URL shown in the Aspire Dashboard (typically `https://localhost:7xxx`).
 
