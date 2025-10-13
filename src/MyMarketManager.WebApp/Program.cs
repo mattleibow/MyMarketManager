@@ -33,7 +33,7 @@ builder.Services
 // Add GraphQL client using InMemory transport for server-side execution
 // This avoids HTTP overhead and URL configuration issues
 builder.Services
-    .AddMyMarketManagerClient()
+    .AddMyMarketManagerClient(profile: MyMarketManagerClientProfileKind.InMemory)
     .ConfigureInMemoryClient();
 
 var app = builder.Build();

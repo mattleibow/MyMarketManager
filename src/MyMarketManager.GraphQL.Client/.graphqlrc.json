@@ -11,8 +11,14 @@
       },
       "transportProfiles": [
         {
+          "name": "Default",
           "default": "Http",
           "subscription": "WebSocket"
+        },
+        {
+          "name": "InMemory",
+          "default": "InMemory",
+          "subscription": "InMemory"
         }
       ]
     }
