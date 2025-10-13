@@ -19,7 +19,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div class="input-group" style="max-width: 400px;">
         <input type="text" class="form-control" placeholder="Search products..." @bind="searchTerm" @onkeyup="OnSearchKeyUp">
-        <button class="btn btn-outline-secondary" type="button" @onclick="SearchProducts" title="Search">
+        <button class="btn btn-outline-secondary" type="button" @onclick="LoadProducts" title="Search">
             <i class="bi bi-search"></i>
         </button>
     </div>
@@ -203,16 +203,11 @@ else
         return result.Data.Products.ToList();
     }
 
-    private async Task SearchProducts()
-    {
-        await LoadProducts();
-    }
-
     private async Task OnSearchKeyUp(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            await SearchProducts();
+            await LoadProducts();
         }
     }
 
