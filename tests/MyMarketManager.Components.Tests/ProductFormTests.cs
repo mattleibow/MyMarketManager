@@ -70,4 +70,21 @@ public class ProductFormTests : Bunit.TestContext
         cut.Find("#stock").Should().NotBeNull();
         cut.Find("#notes").Should().NotBeNull();
     }
+
+    [Fact]
+    public void ProductForm_ShowsNoErrorAlertOnSuccessfulRender()
+    {
+        // Arrange
+        var mockClient = Substitute.For<IMyMarketManagerClient>();
+        
+        Services.AddSingleton(mockClient);
+        JSInterop.Mode = JSRuntimeMode.Loose;
+        
+        // Act
+        var cut = RenderComponent<ProductForm>();
+        
+        // Assert - No error alert should be present
+        var errorAlerts = cut.FindAll(".error-alert");
+        errorAlerts.Should().BeEmpty("no errors should be displayed on successful render");
+    }
 }

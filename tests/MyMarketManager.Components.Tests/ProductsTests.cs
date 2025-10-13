@@ -53,6 +53,35 @@ public class ProductsTests : Bunit.TestContext
         // Assert
         cut.Find("h1").TextContent.Should().Contain("Products");
     }
+
+    [Fact]
+    public void Products_ShowsNoErrorAlertOnSuccessfulLoad()
+    {
+        // Arrange  
+        var mockClient = Substitute.For<IMyMarketManagerClient>();
+        var mockQuery = Substitute.For<IGetProductsQuery>();
+        
+        // Create a successful result with empty products list
+        var mockResult = Substitute.For<IOperationResult<IGetProductsResult>>();
+        var mockData = Substitute.For<IGetProductsResult>();
+        mockData.Products.Returns(new List<IGetProducts_Products>());
+        
+        mockResult.Errors.Returns((IReadOnlyList<IClientError>?)null);
+        mockResult.Data.Returns(mockData);
+        
+        mockQuery.ExecuteAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(mockResult));
+        mockClient.GetProducts.Returns(mockQuery);
+        
+        Services.AddSingleton(mockClient);
+        JSInterop.Mode = JSRuntimeMode.Loose;
+        
+        // Act
+        var cut = RenderComponent<Products>();
+        
+        // Assert - No error alert should be present
+        var errorAlerts = cut.FindAll(".error-alert");
+        errorAlerts.Should().BeEmpty("no errors should be displayed on successful load");
+    }
 }
 
 // Helper to create operation results without complex mocking
