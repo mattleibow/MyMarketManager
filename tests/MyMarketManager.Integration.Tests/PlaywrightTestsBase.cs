@@ -7,10 +7,10 @@ namespace MyMarketManager.Integration.Tests;
 /// </summary>
 public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebAppTestsBase(outputHelper)
 {
-    protected IPlaywright? Playwright { get; private set; }
-    protected IBrowser? Browser { get; private set; }
-    protected IBrowserContext? Context { get; private set; }
-    protected IPage? Page { get; private set; }
+    protected IPlaywright Playwright { get; private set; } = null!;
+    protected IBrowser Browser { get; private set; } = null!;
+    protected IBrowserContext Context { get; private set; } = null!;
+    protected IPage Page { get; private set; } = null!;
 
     public override async ValueTask InitializeAsync()
     {
@@ -68,6 +68,13 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
         Playwright?.Dispose();
 
         await base.DisposeAsync();
+    }
+
+    protected async Task ExpectNoErrorsAsync()
+    {
+        // Check for error alerts on the page
+        var errorAlerts = await Page!.Locator("[data-testid='error-alert']").AllAsync();
+        Assert.Empty(errorAlerts);
     }
 
     /// <summary>

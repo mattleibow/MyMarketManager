@@ -20,7 +20,7 @@
 
         @if (!string.IsNullOrEmpty(errorMessage))
         {
-            <div class="alert alert-danger alert-dismissible fade show error-alert" role="alert" data-testid="error-alert">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" data-testid="error-alert">
                 <i class="bi bi-exclamation-triangle-fill"></i> @errorMessage
                 <button type="button" class="btn-close" @onclick="@(() => errorMessage = null)"></button>
             </div>
