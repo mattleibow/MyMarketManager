@@ -62,7 +62,7 @@ public class ProductWorkflowTests(ITestOutputHelper outputHelper) : PlaywrightTe
         await Page!.WaitForLoadStateAsync(LoadState.NetworkIdle);
         
         // Act - Click the first edit button
-        await Page.Locator("button[title='Edit Product']").ClickAsync();
+        await Page.Locator("button[title='Edit Product']").First.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         
         // Verify we're on the edit product page
