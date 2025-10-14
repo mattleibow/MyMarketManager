@@ -85,14 +85,21 @@ See [Data Model](data-model.md) for complete entity documentation.
 
 ## Request Flow
 
-### Web UI Request Flow
+### Web UI Request Flow (Blazor Server)
 
 1. User interacts with Blazor page
-2. Page calls GraphQL API (currently some pages use DbContext directly)
-3. GraphQL resolver accesses DbContext
-4. EF Core executes SQL query
-5. Results returned to client
-6. Blazor updates UI
+2. Page uses `IMyMarketManagerClient` (InMemory transport)
+3. StrawberryShake InMemory transport executes query via HotChocolate's `IRequestExecutor`
+4. GraphQL resolver accesses DbContext
+5. EF Core executes SQL query
+6. Results returned through InMemory transport (no HTTP)
+7. Blazor updates UI
+
+**Benefits of InMemory Transport:**
+- Zero HTTP overhead for server-side Blazor
+- No URL/port configuration required
+- Direct connection to GraphQL server
+- Same `IMyMarketManagerClient` interface as HTTP transport
 
 ### External Client Request Flow
 
