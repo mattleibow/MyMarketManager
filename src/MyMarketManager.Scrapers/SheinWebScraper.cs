@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,7 +18,7 @@ public class SheinWebScraper(
     : WebScraper(context, logger, configuration)
 {
     private const string OrdersListUrl = "https://shein.com/user/orders/list";
-    private const string OrderDetailUrlTemplate = "https://shein.com/user/orders/detail?order_id={orderId}";
+    private const string OrderDetailUrlTemplate = "https://shein.com/user/orders/detail/{orderId}";
 
     /// <inheritdoc/>
     public override string GetOrdersListUrl() => OrdersListUrl;
@@ -29,6 +30,12 @@ public class SheinWebScraper(
     public override async IAsyncEnumerable<WebScraperOrderSummary> ParseOrdersListAsync(string ordersListHtml, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         Logger.LogDebug("Parsing orders from HTML (length: {Length})", ordersListHtml.Length);
+
+        var gbRawData = ExtractGbRawData(ordersListHtml);
+        var json = JsonDocument.Parse(gbRawData ?? "{}");
+
+        var orders = json.RootElement.GetProperty("order_list").EnumerateArray().ToList();
+        var orderNumbers = orders.Select(o => o.GetProperty("billno").GetString()).ToList();
 
         // Simple regex-based extraction (to be replaced with proper HTML parsing)
         var pattern = @"href=""(/user/orders/detail\?order_id=([^""&]+))""";
@@ -68,7 +75,7 @@ public class SheinWebScraper(
 
         var orderData = new WebScraperOrder(orderSummary)
         {
-            RawData = gbRawData ?? string.Empty,
+            RawData = gbRawData,
         };
 
         return Task.FromResult(orderData);
@@ -88,7 +95,7 @@ public class SheinWebScraper(
         try
         {
             // Look for gbRawData in the HTML
-            var pattern = @"gbRawData\s*=\s*(\{.*?\});";
+            var pattern = @"gbRawData\s*=\s*(\{.*\})";
             var match = Regex.Match(html, pattern, RegexOptions.Singleline);
 
             if (match.Success && match.Groups.Count > 1)

@@ -21,20 +21,18 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
     {
         // Arrange
         var scraper = new SheinWebScraper(Context, ScraperLogger, ScraperConfig);
-        var ordersListHtml = LoadHtmlFixture("shein_orders_list.html");
+        var ordersListHtml = LoadHtmlFixture("shein_order_list.html");
 
         // Act
         var orders = await scraper.ParseOrdersListAsync(ordersListHtml, Cancel).ToListAsync(Cancel);
 
         // Assert
         Assert.Equal(2, orders.Count);
-        Assert.Contains(orders, o => o.ContainsKey("orderId") && o["orderId"] == "ORDER123");
-        Assert.Contains(orders, o => o.ContainsKey("orderId") && o["orderId"] == "ORDER456");
+        Assert.Contains(orders, o => o.ContainsKey("orderId") && o["orderId"] == "TEST001ORDER001");
     }
 
     [Theory]
-    [InlineData("ORDER123")]
-    [InlineData("ORDER456")]
+    [InlineData("TEST001ORDER001")]
     public async Task ParsesOrderDetailsCorrectly(string orderId)
     {
         // Arrange
@@ -62,10 +60,8 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
 
         var scraper = MockScraper(new()
         {
-            // Mock responses for orders list and two order details
-            ["https://shein.com/user/orders/list"] = LoadHtmlFixture("shein_orders_list.html"),
-            ["https://shein.com/user/orders/detail?order_id=ORDER123"] = LoadHtmlFixture("shein_order_detail_123.html"),
-            ["https://shein.com/user/orders/detail?order_id=ORDER456"] = LoadHtmlFixture("shein_order_detail_456.html")
+            ["https://shein.com/user/orders/list"] = LoadHtmlFixture("shein_order_list.html"),
+            ["https://shein.com/user/orders/detail/GSH14130W00M3CM"] = LoadHtmlFixture("shein_order_detail_GSH14130W00M3CM.html")
         });
 
         // Act - Using mock scraper with cached HTML fixtures

@@ -1,12 +1,9 @@
-using MyMarketManager.Scrapers;
-using Xunit;
-
 namespace MyMarketManager.Scrapers.Tests;
 
 public class ScraperConfigurationTests
 {
     [Fact]
-    public void ScraperConfiguration_CanBeCreated()
+    public void CanBeCreated()
     {
         // Arrange & Act
         var config = new ScraperConfiguration
@@ -23,7 +20,7 @@ public class ScraperConfigurationTests
     }
 
     [Fact]
-    public void ScraperConfiguration_HasDefaultValues()
+    public void HasDefaultValues()
     {
         // Arrange & Act
         var config = new ScraperConfiguration();
@@ -36,7 +33,7 @@ public class ScraperConfigurationTests
     }
 
     [Fact]
-    public void ScraperConfiguration_CanAddHeaders()
+    public void CanAddHeaders()
     {
         // Arrange
         var config = new ScraperConfiguration();
