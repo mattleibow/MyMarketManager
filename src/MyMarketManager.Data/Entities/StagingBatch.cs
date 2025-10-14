@@ -4,13 +4,11 @@ using MyMarketManager.Data.Enums;
 namespace MyMarketManager.Data.Entities;
 
 /// <summary>
-/// Represents a single supplier data upload (e.g. Shein ZIP) or sales data upload (e.g. Yoco API load), grouping all parsed orders, sales and items.
+/// Represents a single data upload (e.g. Shein ZIP, sales data upload), grouping all parsed orders, sales and items.
+/// The source (supplier, store, etc.) is tracked through related entities like ScraperSession.
 /// </summary>
 public class StagingBatch : EntityBase
 {
-    public Guid SupplierId { get; set; }
-    public Supplier Supplier { get; set; } = null!;
-
     public DateTimeOffset UploadDate { get; set; }
 
     [Required]

@@ -12,18 +12,9 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
     public async Task StagingBatch_CanContainMultiplePurchaseOrders()
     {
         // Arrange
-        var supplier = new Supplier
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Supplier"
-        };
-        Context.Suppliers.Add(supplier);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
         var batch = new StagingBatch
         {
             Id = Guid.NewGuid(),
-            SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "abc123",
             Status = ProcessingStatus.Queued
@@ -66,18 +57,9 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
     public async Task StagingPurchaseOrder_CanHaveMultipleItems()
     {
         // Arrange
-        var supplier = new Supplier
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Supplier"
-        };
-        Context.Suppliers.Add(supplier);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
         var batch = new StagingBatch
         {
             Id = Guid.NewGuid(),
-            SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "xyz789",
             Status = ProcessingStatus.Queued
@@ -146,19 +128,11 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
             Quality = ProductQuality.Good
         };
         Context.Products.Add(product);
-
-        var supplier = new Supplier
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Supplier"
-        };
-        Context.Suppliers.Add(supplier);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var batch = new StagingBatch
         {
             Id = Guid.NewGuid(),
-            SupplierId = supplier.Id,
             UploadDate = DateTimeOffset.UtcNow,
             FileHash = "sale123",
             Status = ProcessingStatus.Queued
