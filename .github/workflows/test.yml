@@ -52,10 +52,28 @@ jobs:
       - name: Run tests
         run: dotnet test --no-build --configuration Release --verbosity normal --logger trx --collect:"XPlat Code Coverage" ${{ matrix.filter }}
 
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: test-results-${{ matrix.os }}
+          path: |
+            **/TestResults/**
+          retention-days: 30
+
+      - name: Upload code coverage
+        uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: code-coverage-${{ matrix.os }}
+          path: |
+            **/TestResults/**/coverage.*
+          retention-days: 30
+
       - name: Report test results
         uses: dorny/test-reporter@v2
         if: success() || failure()
         with:
-          name: Test Report
+          name: Test Report (${{ matrix.os }})
           path: '**/*.trx'
           reporter: dotnet-trx
