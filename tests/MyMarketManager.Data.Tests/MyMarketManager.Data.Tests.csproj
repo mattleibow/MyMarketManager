@@ -31,6 +31,8 @@
 
   <ItemGroup>
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="Fixtures\Html\*.html" />
+    <EmbeddedResource Include="Fixtures\Html\*.md" />
   </ItemGroup>
 
   <ItemGroup>

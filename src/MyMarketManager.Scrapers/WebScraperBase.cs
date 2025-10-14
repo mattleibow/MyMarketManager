@@ -168,7 +168,21 @@ public abstract class WebScraperBase
     {
         Logger.LogDebug("Scraping from {Url}", url);
 
-        using var handler = new HttpClientHandler
+        using var client = CreateHttpClient(cookies);
+
+        var response = await client.GetAsync(url, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadAsStringAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Creates an HttpClient configured with cookies and headers for scraping.
+    /// Virtual to allow mocking in tests.
+    /// </summary>
+    protected virtual HttpClient CreateHttpClient(CookieFile cookies)
+    {
+        var handler = new HttpClientHandler
         {
             UseCookies = true,
             CookieContainer = new CookieContainer()
@@ -195,7 +209,7 @@ public abstract class WebScraperBase
             }
         }
 
-        using var client = new HttpClient(handler)
+        var client = new HttpClient(handler)
         {
             Timeout = Configuration.RequestTimeout
         };
@@ -207,10 +221,7 @@ public abstract class WebScraperBase
             client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
         }
 
-        var response = await client.GetAsync(url, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        return await response.Content.ReadAsStringAsync(cancellationToken);
+        return client;
     }
 
     /// <summary>

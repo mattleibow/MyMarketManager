@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Details - ORDER123</title>
+</head>
+<body>
+    <script>
+        // This is a mock Shein order detail page for testing
+        var gbRawData = {
+            "order": {
+                "orderId": "ORDER123",
+                "orderDate": "2025-10-01T10:30:00Z",
+                "totalAmount": 45.99,
+                "currency": "USD",
+                "status": "Delivered",
+                "items": [
+                    {
+                        "productId": "PROD001",
+                        "name": "T-Shirt",
+                        "quantity": 2,
+                        "price": 15.99
+                    },
+                    {
+                        "productId": "PROD002",
+                        "name": "Jeans",
+                        "quantity": 1,
+                        "price": 29.99
+                    }
+                ],
+                "shippingAddress": {
+                    "street": "123 Main St",
+                    "city": "Springfield",
+                    "state": "IL",
+                    "zip": "62701"
+                }
+            }
+        };
+    </script>
+    <div class="order-detail">
+        <h1>Order Details</h1>
+        <div class="order-info">
+            <p>Order ID: ORDER123</p>
+            <p>Date: October 1, 2025</p>
+            <p>Total: $45.99</p>
+        </div>
+        <div class="order-items">
+            <h2>Items</h2>
+            <div class="item">
+                <span>T-Shirt (x2) - $15.99</span>
+            </div>
+            <div class="item">
+                <span>Jeans (x1) - $29.99</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
