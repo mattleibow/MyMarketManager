@@ -7,10 +7,10 @@ namespace MyMarketManager.Integration.Tests;
 /// </summary>
 public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebAppTestsBase(outputHelper)
 {
-    protected IPlaywright? Playwright { get; private set; }
-    protected IBrowser? Browser { get; private set; }
-    protected IBrowserContext? Context { get; private set; }
-    protected IPage? Page { get; private set; }
+    protected IPlaywright Playwright { get; private set; } = null!;
+    protected IBrowser Browser { get; private set; } = null!;
+    protected IBrowserContext Context { get; private set; } = null!;
+    protected IPage Page { get; private set; } = null!;
 
     public override async ValueTask InitializeAsync()
     {
@@ -50,6 +50,11 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
 
     public override async ValueTask DisposeAsync()
     {
+        if (TestContext.Current.TestState?.Result == TestResult.Failed)
+        {
+            await CaptureScreenshotAsync();
+        }
+
         if (Page is not null)
         {
             await Page.CloseAsync();
@@ -68,6 +73,13 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
         Playwright?.Dispose();
 
         await base.DisposeAsync();
+    }
+
+    protected async Task ExpectNoErrorsAsync()
+    {
+        // Check for error alerts on the page
+        var errorAlerts = await Page!.Locator("[data-testid='error-alert']").AllAsync();
+        Assert.Empty(errorAlerts);
     }
 
     /// <summary>
@@ -102,6 +114,42 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
                 await Task.Delay(retryDelay);
                 retryDelay = TimeSpan.FromSeconds(retryDelay.TotalSeconds * 2); // Exponential backoff
             }
+        }
+    }
+    
+    protected async Task CaptureScreenshotAsync(string? name = null)
+    {
+        if (Page is null)
+            return;
+
+        name ??= TestContext.Current.Test!.TestDisplayName;
+            
+        try
+        {
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss");
+            var fileName = $"{name}_{timestamp}.png";
+            
+            // Create test-results directory if it doesn't exist
+            var testResultsDir = Path.Combine(Directory.GetCurrentDirectory(), "test-results", "screenshots");
+            Directory.CreateDirectory(testResultsDir);
+            
+            var screenshotPath = Path.Combine(testResultsDir, fileName);
+            await Page.ScreenshotAsync(new()
+            {
+                Path = screenshotPath,
+                FullPage = true,
+                Type = ScreenshotType.Png
+            });
+
+            var bytes = await File.ReadAllBytesAsync(screenshotPath);
+
+            TestContext.Current.AddAttachment(name, bytes, "image/png");
+
+            outputHelper.WriteLine($"Screenshot captured: {screenshotPath}");
+        }
+        catch (Exception ex)
+        {
+            outputHelper.WriteLine($"Failed to capture screenshot: {ex.Message}");
         }
     }
 }

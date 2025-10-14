@@ -261,9 +261,26 @@ builder.Services.AddMyMarketManagerClient(sp =>
 - Can access server-side resources
 - Consider SignalR connection limits
 
-## Migration from DbContext
+## InMemory Transport for Blazor Server
 
-The MyMarketManager WebApp is in the process of migrating from direct DbContext usage to the GraphQL client. To migrate a Blazor page:
+The MyMarketManager WebApp uses StrawberryShake's InMemory transport for server-side Blazor, providing direct connection to HotChocolate's GraphQL server without HTTP overhead:
+
+```csharp
+// Program.cs - Server-side configuration
+builder.Services
+    .AddMyMarketManagerClient(profile: MyMarketManagerClientProfileKind.InMemory)
+    .ConfigureInMemoryClient();
+```
+
+This configuration:
+- **Zero HTTP overhead** - Direct `IRequestExecutor` connection
+- **No URL configuration** - No localhost/port dependencies  
+- **Production-ready** - Works in dev, staging, and production
+- **Same interface** - `IMyMarketManagerClient` works everywhere
+
+## Migration from DbContext to GraphQL Client
+
+The MyMarketManager WebApp has been successfully migrated from direct DbContext usage to the GraphQL client:
 
 **Before (DbContext):**
 ```csharp
@@ -275,19 +292,42 @@ private async Task LoadProducts()
 }
 ```
 
-**After (GraphQL Client):**
+**After (GraphQL Client with InMemory Transport):**
 ```csharp
 @inject IMyMarketManagerClient GraphQLClient
+@inject ILogger<Products> Logger
 
 private async Task LoadProducts()
 {
-    var result = await GraphQLClient.GetProducts.ExecuteAsync();
-    if (result.IsSuccess && result.Data?.Products != null)
+    try
     {
-        products = result.Data.Products.ToList();
+        var allProducts = await LoadProductsAsync();
+        products = allProducts.OrderBy(p => p.Name).ToList();
+    }
+    catch (Exception ex)
+    {
+        Logger.LogError(ex, "Error loading products");
+        errorMessage = $"Error loading products: {ex.Message}";
     }
 }
+
+private async Task<List<IGetProducts_Products>> LoadProductsAsync()
+{
+    var result = await GraphQLClient.GetProducts.ExecuteAsync();
+    if (result.Errors != null && result.Errors.Count > 0)
+    {
+        var errors = string.Join(", ", result.Errors.Select(e => e.Message));
+        throw new InvalidOperationException($"GraphQL errors: {errors}");
+    }
+    return result.Data?.Products?.ToList() ?? new();
+}
 ```
+
+**Key improvements:**
+- Inner methods throw exceptions for clean error handling
+- Outer methods catch and log errors
+- Bootstrap alerts display errors to users (no JavaScript alerts)
+- Structured logging with ILogger
 
 ## Troubleshooting
 

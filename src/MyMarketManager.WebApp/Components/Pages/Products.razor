@@ -1,21 +1,25 @@
 @page "/products"
 @rendermode InteractiveServer
-@using MyMarketManager.Data
-@using MyMarketManager.Data.Entities
-@using MyMarketManager.Data.Enums
-@using Microsoft.EntityFrameworkCore
-@inject MyMarketManagerDbContext DbContext
+@inject IMyMarketManagerClient GraphQLClient
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject ILogger<Products> Logger
 
 <PageTitle>Products</PageTitle>
 
 <h1>Products</h1>
 
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" data-testid="error-alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> @errorMessage
+        <button type="button" class="btn-close" @onclick="@(() => errorMessage = null)"></button>
+    </div>
+}
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div class="input-group" style="max-width: 400px;">
         <input type="text" class="form-control" placeholder="Search products..." @bind="searchTerm" @onkeyup="OnSearchKeyUp">
-        <button class="btn btn-outline-secondary" type="button" @onclick="SearchProducts" title="Search">
+        <button class="btn btn-outline-secondary" type="button" @onclick="LoadProducts" title="Search">
             <i class="bi bi-search"></i>
         </button>
     </div>
@@ -56,9 +60,9 @@ else
                 {
                     <tr>
                         <td>
-                            @if (!string.IsNullOrEmpty(product.SKU))
+                            @if (!string.IsNullOrEmpty(product.Sku))
                             {
-                                <code>@product.SKU</code>
+                                <code>@product.Sku</code>
                             }
                             else
                             {
@@ -132,10 +136,11 @@ else
 }
 
 @code {
-    private List<Product> products = new();
+    private List<IGetProducts_Products> products = new();
     private bool loading = true;
     private string searchTerm = string.Empty;
-    private Product? productToDelete;
+    private IGetProducts_Products? productToDelete;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -145,25 +150,33 @@ else
     private async Task LoadProducts()
     {
         loading = true;
+        errorMessage = null;
         StateHasChanged();
+        
         try
         {
-            var query = DbContext.Products.AsQueryable();
-
+            var allProducts = await LoadProductsAsync();
+            
+            // Apply client-side filtering for search
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                query = query.Where(p => p.Name.Contains(searchTerm) || 
-                                        p.Description!.Contains(searchTerm) || 
-                                        p.SKU!.Contains(searchTerm));
+                products = allProducts
+                    .Where(p => (p.Name?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                               (p.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                               (p.Sku?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
+                    .OrderBy(p => p.Name)
+                    .ToList();
             }
-
-            products = await query
-                .OrderBy(p => p.Name)
-                .ToListAsync();
+            else
+            {
+                products = allProducts.OrderBy(p => p.Name).ToList();
+            }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("console.error", "Error loading products:", ex.Message);
+            Logger.LogError(ex, "Error loading products");
+            errorMessage = $"Error loading products: {ex.Message}";
+            products = new();
         }
         finally
         {
@@ -172,16 +185,29 @@ else
         }
     }
 
-    private async Task SearchProducts()
+    private async Task<List<IGetProducts_Products>> LoadProductsAsync()
     {
-        await LoadProducts();
+        var result = await GraphQLClient.GetProducts.ExecuteAsync();
+        
+        if (result.Errors != null && result.Errors.Count > 0)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Message));
+            throw new InvalidOperationException($"GraphQL errors: {errors}");
+        }
+        
+        if (result.Data?.Products == null)
+        {
+            throw new InvalidOperationException("No data returned from GraphQL query");
+        }
+        
+        return result.Data.Products.ToList();
     }
 
     private async Task OnSearchKeyUp(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            await SearchProducts();
+            await LoadProducts();
         }
     }
 
@@ -195,9 +221,10 @@ else
         Navigation.NavigateTo($"/products/edit/{productId}");
     }
 
-    private void ConfirmDeleteProduct(Product product)
+    private void ConfirmDeleteProduct(IGetProducts_Products product)
     {
         productToDelete = product;
+        errorMessage = null;
         StateHasChanged();
     }
 
@@ -209,21 +236,31 @@ else
 
     private async Task DeleteProduct()
     {
-        if (productToDelete != null)
+        if (productToDelete == null) return;
+        
+        try
         {
-            try
-            {
-                DbContext.Products.Remove(productToDelete);
-                await DbContext.SaveChangesAsync();
-                productToDelete = null;
-                await LoadProducts();
-                StateHasChanged();
-            }
-            catch (Exception ex)
-            {
-                await JSRuntime.InvokeVoidAsync("console.error", "Error deleting product:", ex.Message);
-                await JSRuntime.InvokeVoidAsync("alert", $"Error deleting product: {ex.Message}");
-            }
+            await DeleteProductAsync(productToDelete.Id);
+            productToDelete = null;
+            await LoadProducts();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting product {ProductId}", productToDelete.Id);
+            errorMessage = $"Error deleting product: {ex.Message}";
+            productToDelete = null;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteProductAsync(Guid productId)
+    {
+        var result = await GraphQLClient.DeleteProduct.ExecuteAsync(productId);
+        
+        if (result.Errors != null && result.Errors.Count > 0)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Message));
+            throw new InvalidOperationException($"GraphQL errors: {errors}");
         }
     }
 

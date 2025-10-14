@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="StrawberryShake.Core" Version="15.1.10" />
     <PackageReference Include="StrawberryShake.Transport.Http" Version="15.1.10" />
+    <PackageReference Include="StrawberryShake.Transport.InMemory" Version="15.1.10" />
   </ItemGroup>
 
 </Project>

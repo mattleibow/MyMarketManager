@@ -23,13 +23,30 @@ Unit tests for the data layer.
 
 **Database:** Uses SQLite in-memory databases via `SqliteHelper`.
 
+### MyMarketManager.Components.Tests
+
+Unit tests for Blazor components that use the GraphQL client.
+
+**Test Types:**
+- Component rendering tests
+- Loading state verification
+- Error alert absence validation
+- Form field presence checks
+
+**Technology:**
+- bUnit 1.36 - Blazor component testing
+- NSubstitute - Mocking GraphQL client interface
+- FluentAssertions - Readable assertions
+
+Tests mock `IMyMarketManagerClient` and verify components work correctly in isolation.
+
 ### MyMarketManager.Integration.Tests
 
 End-to-end integration tests using Aspire for orchestration.
 
 **Test Types:**
 - GraphQL endpoint tests
-- Playwright UI tests (page load validation)
+- Playwright UI tests (page load validation and complete workflows)
 - Full application stack tests
 - API contract tests
 
@@ -260,9 +277,44 @@ public class MyApiTests(ITestOutputHelper outputHelper) : WebAppTestsBase(output
 - `WebAppHttpClient`: Configured `HttpClient` for the WebApp
 - Helper methods for making requests
 
+### Component Unit Tests with bUnit
+
+bUnit tests validate Blazor components in isolation by mocking dependencies:
+
+```csharp
+public class ProductsTests : TestContext
+{
+    [Fact]
+    public void Products_ShowsNoErrorAlertOnSuccessfulLoad()
+    {
+        // Arrange - mock GraphQL client
+        var mockClient = Substitute.For<IMyMarketManagerClient>();
+        var mockQuery = Substitute.For<IGetProductsQuery>();
+        var mockResult = Substitute.For<IOperationResult<IGetProductsResult>>();
+        
+        mockResult.IsSuccess.Returns(true);
+        mockResult.Errors.Returns((IReadOnlyList<IClientError>?)null);
+        mockResult.Data.Returns(Substitute.For<IGetProductsResult>());
+        
+        mockQuery.ExecuteAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(mockResult));
+        mockClient.GetProducts.Returns(mockQuery);
+        
+        Services.AddSingleton(mockClient);
+        Services.AddSingleton(Substitute.For<ILogger<Products>>());
+        
+        // Act - render component
+        var cut = RenderComponent<Products>();
+        
+        // Assert - no error alert displayed
+        cut.FindAll("[data-testid='error-alert']").Should().BeEmpty();
+    }
+}
+```
+
 ### Playwright UI Tests
 
-Playwright tests validate that pages load correctly in a real browser without errors. These tests extend `PlaywrightTestsBase`:
+Playwright tests validate that pages load correctly in a real browser without errors. These tests extend `PlaywrightTestsBase` and include both page load validation and complete workflow tests:
 
 ```csharp
 using Microsoft.Playwright;
@@ -301,10 +353,46 @@ Playwright tests require browser installation. Building the integration tests pr
 dotnet build tests/MyMarketManager.Integration.Tests --configuration Release
 ```
 
+**Workflow Tests:**
+
+Playwright also includes end-to-end workflow tests that verify complete user journeys:
+
+```csharp
+[Fact]
+public async Task CreateProduct_WorkflowCompletes_Successfully()
+{
+    // Navigate to products page
+    await NavigateToAppAsync("/products");
+    
+    // Verify no errors
+    await Expect(Page!.Locator("[data-testid='error-alert']")).Not.ToBeVisibleAsync();
+    
+    // Click Add Product
+    await Page.GetByRole(AriaRole.Link, new() { Name = "Add Product" }).ClickAsync();
+    
+    // Fill form
+    await Page.GetByLabel("SKU").FillAsync($"TEST-{DateTime.Now.Ticks}");
+    await Page.GetByLabel("Name").FillAsync("Test Product");
+    await Page.GetByLabel("Quality").SelectOptionAsync("Good");
+    
+    // Submit
+    await Page.GetByRole(AriaRole.Button, new() { Name = "Save Product" }).ClickAsync();
+    
+    // Verify navigation back to products page
+    await Expect(Page).ToHaveURLAsync(new Regex(".*/products$"));
+    
+    // Verify product is visible
+    await Expect(Page.GetByText("Test Product")).ToBeVisibleAsync();
+    
+    // Verify no errors
+    await Expect(Page.Locator("[data-testid='error-alert']")).Not.ToBeVisibleAsync();
+}
+```
+
 **Running Playwright Tests:**
 ```bash
 # Run all Playwright tests
-dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~PageLoadTests"
+dotnet test tests/MyMarketManager.Integration.Tests --filter "FullyQualifiedName~PageLoadTests|FullyQualifiedName~ProductWorkflowTests"
 
 # Run all integration tests
 dotnet test tests/MyMarketManager.Integration.Tests

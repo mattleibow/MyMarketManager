@@ -18,8 +18,8 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
         // Assert
         await Expect(Page!).ToHaveTitleAsync(new System.Text.RegularExpressions.Regex(".*"));
         
-        // Verify no JavaScript errors by checking console logs
-        // The base class already logs console errors via Page.Console event
+        // Verify no error alerts on page
+        await ExpectNoErrorsAsync();
         
         // Check that the page loaded successfully (status code 200)
         var response = await Page.GotoAsync(WebAppHttpClient.BaseAddress!.ToString(), new() { WaitUntil = WaitUntilState.NetworkIdle });
@@ -41,6 +41,9 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
         
         // Verify search box is present
         await Expect(Page.GetByPlaceholder("Search products...")).ToBeVisibleAsync();
+        
+        // Verify no error alerts on page
+        await ExpectNoErrorsAsync();
     }
 
     [Fact]
@@ -60,6 +63,9 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
         // Verify Create Product and Cancel buttons are present
         await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Create Product" })).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Cancel" })).ToBeVisibleAsync();
+        
+        // Verify no error alerts on page
+        await ExpectNoErrorsAsync();
     }
 
     [Fact]

@@ -3,6 +3,8 @@ using MyMarketManager.Data.Services;
 using MyMarketManager.WebApp.Components;
 using MyMarketManager.WebApp.GraphQL;
 using MyMarketManager.WebApp.Services;
+using MyMarketManager.GraphQL.Client;
+using HotChocolate.Execution;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,14 +24,17 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// Add the GraphQL client to be used by the web app to call the GraphQL API
-builder.Services.AddMyMarketManagerClient();
-
-// Add GraphQL server with HotChocolate
+// Add GraphQL server with HotChocolate first
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<ProductQueries>()
     .AddMutationType<ProductMutations>();
+
+// Add GraphQL client using InMemory transport for server-side execution
+// This avoids HTTP overhead and URL configuration issues
+builder.Services
+    .AddMyMarketManagerClient(profile: MyMarketManagerClientProfileKind.InMemory)
+    .ConfigureInMemoryClient();
 
 var app = builder.Build();
 
