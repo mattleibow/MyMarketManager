@@ -13,6 +13,8 @@
     <Project Path="tests/MyMarketManager.Components.Tests/MyMarketManager.Components.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Data.Tests/MyMarketManager.Data.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Integration.Tests/MyMarketManager.Integration.Tests.csproj" />
+    <Project Path="tests/MyMarketManager.Scrapers.Core.Tests/MyMarketManager.Scrapers.Core.Tests.csproj" />
+    <Project Path="tests/MyMarketManager.Scrapers.Tests/MyMarketManager.Scrapers.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Tests.Shared/MyMarketManager.Tests.Shared.csproj" />
   </Folder>
 </Solution>

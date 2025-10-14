@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -6,22 +6,12 @@
     <Nullable>enable</Nullable>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
-
-    <!-- To enable Microsoft.Testing.Platform, uncomment the following line. -->
-    <!-- <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner> -->
-    <!-- Note: to use Microsoft.Testing.Platform correctly with dotnet test: -->
-    <!-- 1. You must add dotnet.config specifying the test runner to be Microsoft.Testing.Platform -->
-    <!-- 2. You must use .NET 10 SDK or later -->
-    <!-- For more information, see https://aka.ms/dotnet-test/mtp and https://xunit.net/docs/getting-started/v3/microsoft-testing-platform -->
-    <!-- To enable code coverage with Microsoft.Testing.Platform, add a package reference to Microsoft.Testing.Extensions.CodeCoverage -->
-    <!-- https://learn.microsoft.comdotnet/core/testing/microsoft-testing-platform-extensions-code-coverage -->
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
-    <PackageReference Include="MartinCostello.Logging.XUnit.v3" Version="0.6.0" />
     <PackageReference Include="xunit.v3" Version="3.1.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -31,6 +21,7 @@
 
   <ItemGroup>
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Fixtures\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,6 +30,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MyMarketManager.Data\MyMarketManager.Data.csproj" />
+    <ProjectReference Include="..\..\src\MyMarketManager.Scrapers.Core\MyMarketManager.Scrapers.Core.csproj" />
+    <ProjectReference Include="..\..\src\MyMarketManager.Scrapers\MyMarketManager.Scrapers.csproj" />
+    <ProjectReference Include="..\MyMarketManager.Data.Tests\MyMarketManager.Data.Tests.csproj" />
     <ProjectReference Include="..\MyMarketManager.Tests.Shared\MyMarketManager.Tests.Shared.csproj" />
   </ItemGroup>
 

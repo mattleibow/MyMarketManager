@@ -1,7 +1,7 @@
 using MyMarketManager.Scrapers;
 using Xunit;
 
-namespace MyMarketManager.Data.Tests.Services;
+namespace MyMarketManager.Scrapers.Tests.Services;
 
 public class ScraperConfigurationTests
 {

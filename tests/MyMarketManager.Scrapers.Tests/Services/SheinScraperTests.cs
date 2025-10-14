@@ -2,14 +2,15 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
-using MyMarketManager.Data.Tests.Helpers;
-using MyMarketManager.Data.Tests.Mocks;
+using MyMarketManager.Data.Tests;
+using MyMarketManager.Scrapers.Tests.Helpers;
+using MyMarketManager.Scrapers.Tests.Mocks;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Core;
 using MyMarketManager.Tests.Shared;
 using Xunit;
 
-namespace MyMarketManager.Data.Tests.Services;
+namespace MyMarketManager.Scrapers.Tests.Services;
 
 [Trait(TestCategories.Key, TestCategories.Values.Database)]
 public class SheinScraperTests(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper)

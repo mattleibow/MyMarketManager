@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MyMarketManager.Data;
-using MyMarketManager.Data.Tests.Helpers;
+using MyMarketManager.Scrapers.Tests.Helpers;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Core;
 
-namespace MyMarketManager.Data.Tests.Mocks;
+namespace MyMarketManager.Scrapers.Tests.Mocks;
 
 /// <summary>
 /// Mock SheinScraper that uses cached HTML fixtures instead of making real HTTP requests.

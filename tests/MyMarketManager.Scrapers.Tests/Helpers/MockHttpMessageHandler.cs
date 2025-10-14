@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace MyMarketManager.Data.Tests.Helpers;
+namespace MyMarketManager.Scrapers.Tests.Helpers;
 
 /// <summary>
 /// Mock HTTP message handler that returns HTML fixtures instead of making real HTTP requests.

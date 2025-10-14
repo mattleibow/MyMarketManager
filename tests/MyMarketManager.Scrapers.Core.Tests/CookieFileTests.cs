@@ -2,7 +2,7 @@ using System.Text.Json;
 using MyMarketManager.Scrapers.Core;
 using Xunit;
 
-namespace MyMarketManager.Data.Tests.Services;
+namespace MyMarketManager.Scrapers.Core.Tests;
 
 public class CookieFileTests
 {
