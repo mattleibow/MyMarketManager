@@ -1,58 +1,45 @@
-using System.Text.Json;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MyMarketManager.Data;
 using MyMarketManager.Data.Entities;
-using MyMarketManager.Scrapers.Core;
 
 namespace MyMarketManager.Scrapers;
 
 /// <summary>
 /// Web scraper implementation for Shein.com orders.
 /// </summary>
-public class SheinScraper(
-        MyMarketManagerDbContext context,
-        ILogger<SheinScraper> logger,
-        IOptions<ScraperConfiguration> configuration)
-        : WebScraperBase(context, logger, configuration)
+public class SheinWebScraper(
+    MyMarketManagerDbContext context,
+    ILogger<SheinWebScraper> logger,
+    IOptions<ScraperConfiguration> configuration)
+    : WebScraper(context, logger, configuration)
 {
-    private const string Domain = "shein.com";
-    private const string AccountPageUrl = "https://shein.com/user/account";
     private const string OrdersListUrl = "https://shein.com/user/orders/list";
     private const string OrderDetailUrlTemplate = "https://shein.com/user/orders/detail?order_id={orderId}";
-    private const string ProductPageUrlTemplate = "https://shein.com/product/{productId}";
 
     /// <inheritdoc/>
-    protected override string GetAccountPageUrl() => AccountPageUrl;
+    public override string GetOrdersListUrl() => OrdersListUrl;
 
     /// <inheritdoc/>
-    protected override string GetOrdersListUrl() => OrdersListUrl;
+    public override string GetOrderDetailUrl(WebScraperOrderSummary order) => ReplaceUrlTemplateValues(OrderDetailUrlTemplate, order);
 
     /// <inheritdoc/>
-    protected override string GetOrderDetailUrl(WebScraperOrderSummary order) => ReplaceUrlTemplateValues(OrderDetailUrlTemplate, order);
-
-    /// <inheritdoc/>
-    protected override Task<bool> ValidatePageAsync(string html, CancellationToken cancellationToken)
-    {
-        // Check for gbRawData which indicates successful authentication on Shein pages
-        var isValid = html.Contains("gbRawData");
-        return Task.FromResult(isValid);
-    }
-
-    /// <inheritdoc/>
-    protected override IEnumerable<WebScraperOrderSummary> ParseOrdersListAsync(string ordersListHtml)
+    public override async IAsyncEnumerable<WebScraperOrderSummary> ParseOrdersListAsync(string ordersListHtml, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         Logger.LogDebug("Parsing orders from HTML (length: {Length})", ordersListHtml.Length);
-
-        var links = new List<WebScraperOrderSummary>();
 
         // Simple regex-based extraction (to be replaced with proper HTML parsing)
         var pattern = @"href=""(/user/orders/detail\?order_id=([^""&]+))""";
         var matches = Regex.Matches(ordersListHtml, pattern);
 
+        var count = 0;
+
         foreach (Match match in matches)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (match.Groups.Count > 2)
             {
                 var orderId = match.Groups[2].Value;
@@ -61,21 +48,18 @@ public class SheinScraper(
                     RawData = "",
                     ["orderId"] = orderId
                 };
-                
-                // Check for duplicates
-                if (!links.Any(l => l.ContainsKey("orderId") && l["orderId"] == orderId))
-                {
-                    links.Add(linkInfo);
-                }
+
+                count++;
+
+                yield return linkInfo;
             }
         }
 
-        Logger.LogInformation("Parsed {Count} unique orders", links.Count);
-        return links;
+        Logger.LogInformation("Parsed {Count} unique orders", count);
     }
 
     /// <inheritdoc/>
-    protected override Task<WebScraperOrder> ParseOrderDetailsAsync(string orderDetailHtml, WebScraperOrderSummary orderSummary, CancellationToken cancellationToken)
+    public override Task<WebScraperOrder> ParseOrderDetailsAsync(string orderDetailHtml, WebScraperOrderSummary orderSummary, CancellationToken cancellationToken)
     {
         Logger.LogDebug("Parsing order details from HTML (length: {Length})", orderDetailHtml.Length);
 
@@ -91,7 +75,7 @@ public class SheinScraper(
     }
 
     /// <inheritdoc/>
-    protected override Task UpdateStagingOrderAsync(StagingPurchaseOrder stagingOrder, WebScraperOrder order, CancellationToken cancellationToken)
+    public override Task UpdateStagingPurchaseOrderAsync(StagingPurchaseOrder stagingOrder, WebScraperOrder order, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

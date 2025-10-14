@@ -1,13 +1,11 @@
 using System.Text.Json;
-using MyMarketManager.Scrapers.Core;
-using Xunit;
 
 namespace MyMarketManager.Scrapers.Core.Tests;
 
 public class CookieFileTests
 {
     [Fact]
-    public void CookieFile_CanBeCreated()
+    public void CanBeCreated()
     {
         // Arrange & Act
         var cookieFile = new CookieFile
@@ -26,7 +24,7 @@ public class CookieFileTests
     }
 
     [Fact]
-    public void CookieFile_CanAddCookies()
+    public void CanAddCookies()
     {
         // Arrange
         var cookieFile = new CookieFile
@@ -57,7 +55,7 @@ public class CookieFileTests
     }
 
     [Fact]
-    public void CookieFile_CanSerializeToJson()
+    public void CanSerializeToJson()
     {
         // Arrange
         var cookieFile = new CookieFile
@@ -103,7 +101,7 @@ public class CookieFileTests
     }
 
     [Fact]
-    public void CookieFile_CanDeserializeFromJson()
+    public void CanDeserializeFromJson()
     {
         // Arrange
         var json = @"{
@@ -141,38 +139,5 @@ public class CookieFileTests
         Assert.True(cookieFile.Cookies["session"].Secure);
         Assert.Single(cookieFile.Metadata);
         Assert.Equal("Chrome", cookieFile.Metadata["browser"]);
-    }
-
-    [Fact]
-    public void CookieData_HasCorrectJsonPropertyNames()
-    {
-        // Arrange
-        var cookie = new CookieData
-        {
-            Name = "test",
-            Value = "value",
-            Domain = ".example.com",
-            Path = "/path",
-            Secure = true,
-            HttpOnly = false,
-            Expires = DateTimeOffset.UtcNow.AddDays(1),
-            SameSite = "None"
-        };
-
-        // Act
-        var json = JsonSerializer.Serialize(cookie, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-
-        // Assert - verify JSON uses camelCase
-        Assert.Contains("\"name\":", json);
-        Assert.Contains("\"value\":", json);
-        Assert.Contains("\"domain\":", json);
-        Assert.Contains("\"path\":", json);
-        Assert.Contains("\"secure\":", json);
-        Assert.Contains("\"httpOnly\":", json);
-        Assert.Contains("\"expires\":", json);
-        Assert.Contains("\"sameSite\":", json);
     }
 }

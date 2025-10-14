@@ -16,8 +16,4 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MyMarketManager.Scrapers.Core\MyMarketManager.Scrapers.Core.csproj" />
-  </ItemGroup>
-
 </Project>
