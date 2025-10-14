@@ -9,21 +9,17 @@ namespace MyMarketManager.Data.Services.Scraping;
 /// <summary>
 /// Web scraper implementation for Shein.com orders.
 /// </summary>
-public class SheinScraper : WebScraperBase
+public class SheinScraper(
+        MyMarketManagerDbContext context,
+        ILogger<SheinScraper> logger,
+        IOptions<ScraperConfiguration> configuration)
+        : WebScraperBase(context, logger, configuration)
 {
     private const string Domain = "shein.com";
     private const string AccountPageUrl = "https://shein.com/user/account";
     private const string OrdersListUrl = "https://shein.com/user/orders/list";
     private const string OrderDetailUrlTemplate = "https://shein.com/user/orders/detail?order_id={orderId}";
     private const string ProductPageUrlTemplate = "https://shein.com/product/{productId}";
-
-    public SheinScraper(
-        MyMarketManagerDbContext context,
-        ILogger<SheinScraper> logger,
-        IOptions<ScraperConfiguration> configuration)
-        : base(context, logger, configuration)
-    {
-    }
 
     /// <inheritdoc/>
     protected override string GetAccountPageUrl() => AccountPageUrl;
@@ -32,14 +28,9 @@ public class SheinScraper : WebScraperBase
     protected override string GetOrdersListUrl() => OrdersListUrl;
 
     /// <inheritdoc/>
-    protected override string GetOrderDetailUrl(Dictionary<string, string> orderLinkInfo)
-    {
-        return ReplaceUrlTemplateValues(OrderDetailUrlTemplate, orderLinkInfo);
-    }
+    protected override string GetOrderDetailUrl(WebScraperOrderSummary order) => ReplaceUrlTemplateValues(OrderDetailUrlTemplate, order);
 
-    /// <summary>
-    /// Validates a page's HTML content by checking for gbRawData which indicates successful authentication.
-    /// </summary>
+    /// <inheritdoc/>
     protected override Task<bool> ValidatePageAsync(string html, CancellationToken cancellationToken)
     {
         // Check for gbRawData which indicates successful authentication on Shein pages
@@ -47,14 +38,12 @@ public class SheinScraper : WebScraperBase
         return Task.FromResult(isValid);
     }
 
-    /// <summary>
-    /// Parses the orders list page and extracts order information.
-    /// </summary>
-    protected override IEnumerable<Dictionary<string, string>> ParseOrdersListAsync(string ordersListHtml)
+    /// <inheritdoc/>
+    protected override IEnumerable<WebScraperOrderSummary> ParseOrdersListAsync(string ordersListHtml)
     {
         Logger.LogDebug("Parsing orders from HTML (length: {Length})", ordersListHtml.Length);
 
-        var links = new List<Dictionary<string, string>>();
+        var links = new List<WebScraperOrderSummary>();
 
         // Simple regex-based extraction (to be replaced with proper HTML parsing)
         var pattern = @"href=""(/user/orders/detail\?order_id=([^""&]+))""";
@@ -65,9 +54,10 @@ public class SheinScraper : WebScraperBase
             if (match.Groups.Count > 2)
             {
                 var orderId = match.Groups[2].Value;
-                var linkInfo = new Dictionary<string, string>
+                var linkInfo = new WebScraperOrderSummary
                 {
-                    { "orderId", orderId }
+                    RawData = "",
+                    ["orderId"] = orderId
                 };
                 
                 // Check for duplicates
@@ -82,30 +72,26 @@ public class SheinScraper : WebScraperBase
         return links;
     }
 
-    /// <summary>
-    /// Parses order details from an order detail page.
-    /// </summary>
-    protected override Task<Dictionary<string, object>> ParseOrderDetailsAsync(string orderDetailHtml, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    protected override Task<WebScraperOrder> ParseOrderDetailsAsync(string orderDetailHtml, WebScraperOrderSummary orderSummary, CancellationToken cancellationToken)
     {
         Logger.LogDebug("Parsing order details from HTML (length: {Length})", orderDetailHtml.Length);
 
         // Extract gbRawData from the page
         var gbRawData = ExtractGbRawData(orderDetailHtml);
 
-        var orderData = new Dictionary<string, object>
+        var orderData = new WebScraperOrder(orderSummary)
         {
-            { "html_length", orderDetailHtml.Length },
-            { "scraped_at", DateTimeOffset.UtcNow.ToString("o") },
-            { "has_gbRawData", gbRawData != null }
+            RawData = gbRawData ?? string.Empty,
         };
 
-        // Store the actual gbRawData if found
-        if (gbRawData != null)
-        {
-            orderData["raw_data"] = gbRawData;
-        }
-
         return Task.FromResult(orderData);
+    }
+
+    /// <inheritdoc/>
+    protected override Task UpdateStagingOrderAsync(StagingPurchaseOrder stagingOrder, WebScraperOrder order, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 
     /// <summary>
