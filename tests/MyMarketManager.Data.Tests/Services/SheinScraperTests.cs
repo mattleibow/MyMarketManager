@@ -2,7 +2,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
-using MyMarketManager.Data.Services.Scraping;
+using MyMarketManager.Scrapers;
+using MyMarketManager.Scrapers.Core;
 using MyMarketManager.Tests.Shared;
 using Xunit;
 

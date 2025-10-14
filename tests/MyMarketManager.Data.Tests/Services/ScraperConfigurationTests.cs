@@ -1,4 +1,4 @@
-using MyMarketManager.Data.Services.Scraping;
+using MyMarketManager.Scrapers;
 using Xunit;
 
 namespace MyMarketManager.Data.Tests.Services;

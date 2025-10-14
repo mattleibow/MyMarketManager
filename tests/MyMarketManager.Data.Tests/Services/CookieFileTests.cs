@@ -1,5 +1,5 @@
 using System.Text.Json;
-using MyMarketManager.Data.Services.Scraping;
+using MyMarketManager.Scrapers.Core;
 using Xunit;
 
 namespace MyMarketManager.Data.Tests.Services;

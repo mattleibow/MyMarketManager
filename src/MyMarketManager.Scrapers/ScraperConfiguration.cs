@@ -1,4 +1,4 @@
-namespace MyMarketManager.Data.Services.Scraping;
+namespace MyMarketManager.Scrapers;
 
 /// <summary>
 /// Configuration for web scrapers including HTTP settings and scraping behavior.

@@ -2,9 +2,11 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MyMarketManager.Data;
 using MyMarketManager.Data.Entities;
+using MyMarketManager.Scrapers.Core;
 
-namespace MyMarketManager.Data.Services.Scraping;
+namespace MyMarketManager.Scrapers;
 
 /// <summary>
 /// Web scraper implementation for Shein.com orders.

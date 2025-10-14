@@ -1,4 +1,4 @@
-namespace MyMarketManager.Data.Services.Scraping;
+namespace MyMarketManager.Scrapers.Core;
 
 /// <summary>
 /// Represents a cookie file format for web scraping sessions.

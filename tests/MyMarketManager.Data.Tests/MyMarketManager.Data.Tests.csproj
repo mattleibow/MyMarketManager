@@ -40,6 +40,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MyMarketManager.Data\MyMarketManager.Data.csproj" />
     <ProjectReference Include="..\MyMarketManager.Tests.Shared\MyMarketManager.Tests.Shared.csproj" />
+    <ProjectReference Include="..\..\src\MyMarketManager.Scrapers.Core\MyMarketManager.Scrapers.Core.csproj" />
+    <ProjectReference Include="..\..\src\MyMarketManager.Scrapers\MyMarketManager.Scrapers.csproj" />
   </ItemGroup>
 
 </Project>
