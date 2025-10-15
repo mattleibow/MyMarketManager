@@ -95,7 +95,7 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
 
     private SheinWebScraper MockScraper(Dictionary<string, string?>? customResponses = null)
     {
-        var scraper = Substitute.For<SheinWebScraper>(Context, ScraperLogger, ScraperConfig);
+        var scraper = Substitute.ForPartsOf<SheinWebScraper>(Context, ScraperLogger, ScraperConfig);
         
         MockResponses(scraper, customResponses);
 
