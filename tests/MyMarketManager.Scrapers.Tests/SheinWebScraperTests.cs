@@ -27,7 +27,7 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         var orders = await scraper.ParseOrdersListAsync(ordersListHtml, Cancel).ToListAsync(Cancel);
 
         // Assert
-        Assert.Equal(2, orders.Count);
+        Assert.Single(orders);
         Assert.Contains(orders, o => o.ContainsKey("orderId") && o["orderId"] == "TEST001ORDER001");
     }
 
@@ -61,7 +61,7 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         var scraper = MockScraper(new()
         {
             ["https://shein.com/user/orders/list"] = LoadHtmlFixture("shein_order_list.html"),
-            ["https://shein.com/user/orders/detail/TEST001ORDER001"] = LoadHtmlFixture("shein_order_detail_test001order001.html")
+            ["https://shein.com/user/orders/detail/TEST001ORDER001"] = LoadHtmlFixture("shein_order_detail_TEST001ORDER001.html")
         });
 
         // Act - Using mock scraper with cached HTML fixtures
@@ -73,16 +73,16 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         Assert.Equal(supplier.Id, sessions[0].SupplierId);
         Assert.Equal(ProcessingStatus.Completed, sessions[0].Status);
 
-        // Verify orders were scraped (even if they failed due to not implemented UpdateStagingOrderAsync)
+        // Verify orders were scraped
         var orders = Context.StagingPurchaseOrders.ToList();
-        Assert.Equal(2, orders.Count); // Should have scraped ORDER123 and ORDER456
+        Assert.Single(orders); // Should have scraped TEST001ORDER001
         
-        // Orders fail with NotImplementedException until UpdateStagingOrderAsync is implemented
-        Assert.All(orders, order => 
-        {
-            Assert.Equal(ProcessingStatus.Failed, order.Status);
-            Assert.Contains("not implemented", order.ErrorMessage ?? string.Empty, StringComparison.OrdinalIgnoreCase);
-        });
+        // Order should be completed successfully now
+        var order = orders[0];
+        Assert.Equal(ProcessingStatus.Completed, order.Status);
+        Assert.Equal("TEST001ORDER001", order.SupplierReference);
+        Assert.NotNull(order.RawData);
+        Assert.NotEmpty(order.Items);
     }
 
     private SheinWebScraper MockScraper(Dictionary<string, string?>? customResponses = null)
