@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MyMarketManager.Data.Tests;
+using MyMarketManager.Scrapers.Core;
 using MyMarketManager.Tests.Shared;
 using NSubstitute;
 
@@ -17,8 +18,8 @@ public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteT
 
     protected void MockResponses(WebScraper webScraper, Dictionary<string, string?>? customResponses = null)
     {
-        webScraper.CreateHttpClient(Arg.Any<HttpClientHandler>())
-            .Returns(x => new FixturesHttpClient(x.ArgAt<HttpClientHandler>(0), customResponses));
+        webScraper.CreateHttpClient(Arg.Any<CookieFile>())
+            .Returns(x => new FixturesHttpClient(customResponses));
     }
 
     protected static ILogger<TScraper> CreateLogger()
@@ -53,7 +54,7 @@ public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteT
         return File.ReadAllText(fixturePath);
     }
 
-    class FixturesHttpClient(HttpMessageHandler handler, Dictionary<string, string?>? customResponses) : HttpClient(handler)
+    class FixturesHttpClient(Dictionary<string, string?>? customResponses) : HttpClient(new HttpClientHandler())
     {
         public override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken) =>
             throw new NotSupportedException();

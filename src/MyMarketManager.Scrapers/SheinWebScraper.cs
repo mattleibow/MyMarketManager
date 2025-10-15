@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MyMarketManager.Data;
 using MyMarketManager.Data.Entities;
+using MyMarketManager.Data.Enums;
 
 namespace MyMarketManager.Scrapers;
 
@@ -73,10 +74,136 @@ public class SheinWebScraper(
         // Extract gbRawData from the page
         var gbRawData = ExtractGbRawData(orderDetailHtml);
 
+        if (string.IsNullOrEmpty(gbRawData))
+        {
+            throw new InvalidOperationException("Could not extract gbRawData from order detail page");
+        }
+
+        // Parse the JSON to extract order details
+        var json = JsonDocument.Parse(gbRawData);
+        var root = json.RootElement;
+
+        // Find orderInfo
+        if (!root.TryGetProperty("orderInfo", out var orderInfo))
+        {
+            throw new InvalidOperationException("Could not find orderInfo in gbRawData");
+        }
+
+        // Extract order-level data
         var orderData = new WebScraperOrder(orderSummary)
         {
             RawData = gbRawData,
         };
+
+        // Store order number
+        if (orderInfo.TryGetProperty("billno", out var billno))
+        {
+            orderData["billno"] = billno.GetString() ?? string.Empty;
+        }
+
+        // Store order date (Unix timestamp)
+        if (orderInfo.TryGetProperty("addTime", out var addTime))
+        {
+            orderData["addTime"] = addTime.GetInt64().ToString();
+        }
+
+        // Store payment time
+        if (orderInfo.TryGetProperty("pay_time", out var payTime))
+        {
+            orderData["pay_time"] = payTime.GetInt64().ToString();
+        }
+
+        // Store total price
+        if (orderInfo.TryGetProperty("totalPrice", out var totalPrice) && totalPrice.TryGetProperty("amount", out var amount))
+        {
+            orderData["totalPrice"] = amount.GetString() ?? "0";
+        }
+
+        // Store currency
+        if (orderInfo.TryGetProperty("currency_code", out var currencyCode))
+        {
+            orderData["currency_code"] = currencyCode.GetString() ?? string.Empty;
+        }
+
+        // Store payment method
+        if (orderInfo.TryGetProperty("payment_method", out var paymentMethod))
+        {
+            orderData["payment_method"] = paymentMethod.GetString() ?? string.Empty;
+        }
+
+        // Parse order items
+        if (orderInfo.TryGetProperty("orderGoodsList", out var orderGoodsList) && orderGoodsList.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var goodsItem in orderGoodsList.EnumerateArray())
+            {
+                var item = new WebScraperOrderItem(orderData)
+                {
+                    RawData = goodsItem.GetRawText()
+                };
+
+                // Extract item details
+                if (goodsItem.TryGetProperty("goods_id", out var goodsId))
+                {
+                    item["goods_id"] = goodsId.GetInt64().ToString();
+                }
+
+                if (goodsItem.TryGetProperty("goods_name", out var goodsName))
+                {
+                    item["goods_name"] = goodsName.GetString() ?? string.Empty;
+                }
+
+                if (goodsItem.TryGetProperty("goods_sn", out var goodsSn))
+                {
+                    item["goods_sn"] = goodsSn.GetString() ?? string.Empty;
+                }
+
+                if (goodsItem.TryGetProperty("goods_price", out var goodsPrice))
+                {
+                    item["goods_price"] = goodsPrice.GetString() ?? "0";
+                }
+
+                if (goodsItem.TryGetProperty("goods_qty", out var goodsQty))
+                {
+                    item["goods_qty"] = goodsQty.GetInt32().ToString();
+                }
+
+                if (goodsItem.TryGetProperty("goods_unit_price", out var goodsUnitPrice))
+                {
+                    item["goods_unit_price"] = goodsUnitPrice.GetString() ?? "0";
+                }
+
+                if (goodsItem.TryGetProperty("goods_img", out var goodsImg))
+                {
+                    item["goods_img"] = goodsImg.GetString() ?? string.Empty;
+                }
+
+                if (goodsItem.TryGetProperty("goods_url_name", out var goodsUrlName))
+                {
+                    item["goods_url_name"] = goodsUrlName.GetString() ?? string.Empty;
+                }
+
+                // Extract SKU attributes (color, size, etc.)
+                if (goodsItem.TryGetProperty("sku_sale_attr", out var skuSaleAttr) && skuSaleAttr.ValueKind == JsonValueKind.Array)
+                {
+                    var attrs = new List<string>();
+                    foreach (var attr in skuSaleAttr.EnumerateArray())
+                    {
+                        if (attr.TryGetProperty("attr_name", out var attrName) && 
+                            attr.TryGetProperty("attr_value_name", out var attrValue))
+                        {
+                            attrs.Add($"{attrName.GetString()}: {attrValue.GetString()}");
+                        }
+                    }
+                    item["sku_attributes"] = string.Join(", ", attrs);
+                }
+
+                orderData.OrderItems.Add(item);
+            }
+        }
+
+        Logger.LogInformation("Parsed order {OrderNumber} with {ItemCount} items", 
+            orderData.TryGetValue("billno", out var bn) ? bn : "unknown", 
+            orderData.OrderItems.Count);
 
         return Task.FromResult(orderData);
     }
@@ -84,7 +211,69 @@ public class SheinWebScraper(
     /// <inheritdoc/>
     public override Task UpdateStagingPurchaseOrderAsync(StagingPurchaseOrder stagingOrder, WebScraperOrder order, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        // Update order-level fields
+        if (order.TryGetValue("billno", out var billno))
+        {
+            stagingOrder.SupplierReference = billno;
+        }
+
+        // Parse order date from Unix timestamp
+        if (order.TryGetValue("addTime", out var addTimeStr) && long.TryParse(addTimeStr, out var addTime))
+        {
+            stagingOrder.OrderDate = DateTimeOffset.FromUnixTimeSeconds(addTime);
+        }
+
+        // Store the raw JSON data
+        stagingOrder.RawData = order.RawData ?? "{}";
+        stagingOrder.Status = ProcessingStatus.Completed;
+
+        // Update order items
+        foreach (var item in order.OrderItems)
+        {
+            var stagingItem = new StagingPurchaseOrderItem
+            {
+                StagingPurchaseOrderId = stagingOrder.Id,
+                StagingPurchaseOrder = stagingOrder,
+                RawData = item.RawData ?? "{}",
+                Status = CandidateStatus.Pending
+            };
+
+            // Set item fields
+            if (item.TryGetValue("goods_sn", out var goodsSn))
+            {
+                stagingItem.SupplierReference = goodsSn;
+            }
+
+            if (item.TryGetValue("goods_name", out var goodsName))
+            {
+                stagingItem.Name = goodsName;
+            }
+
+            if (item.TryGetValue("sku_attributes", out var skuAttributes))
+            {
+                stagingItem.Description = skuAttributes;
+            }
+
+            if (item.TryGetValue("goods_qty", out var goodsQtyStr) && int.TryParse(goodsQtyStr, out var goodsQty))
+            {
+                stagingItem.Quantity = goodsQty;
+            }
+
+            if (item.TryGetValue("goods_unit_price", out var unitPriceStr) && decimal.TryParse(unitPriceStr, out var unitPrice))
+            {
+                stagingItem.ListedUnitPrice = unitPrice;
+                stagingItem.ActualUnitPrice = unitPrice;
+            }
+
+            if (item.TryGetValue("goods_url_name", out var goodsUrlName))
+            {
+                stagingItem.SupplierProductUrl = $"https://shein.com/{goodsUrlName}";
+            }
+
+            stagingOrder.Items.Add(stagingItem);
+        }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -95,16 +284,47 @@ public class SheinWebScraper(
         try
         {
             // Look for gbRawData in the HTML
-            var pattern = @"gbRawData\s*=\s*(\{.*\})";
-            var match = Regex.Match(html, pattern, RegexOptions.Singleline);
+            var pattern = @"gbRawData\s*=\s*\{";
+            var match = Regex.Match(html, pattern);
 
-            if (match.Success && match.Groups.Count > 1)
+            if (!match.Success)
             {
-                return match.Groups[1].Value;
+                Logger.LogWarning("Could not find gbRawData in HTML");
+                return null;
             }
 
-            Logger.LogWarning("Could not extract gbRawData from HTML");
-            return null;
+            // Find the start of the JSON object
+            var startIndex = match.Index + match.Length - 1; // Include the opening brace
+            
+            // Extract the complete JSON object by counting braces
+            var braceCount = 0;
+            var endIndex = startIndex;
+            
+            for (var i = startIndex; i < html.Length; i++)
+            {
+                if (html[i] == '{')
+                {
+                    braceCount++;
+                }
+                else if (html[i] == '}')
+                {
+                    braceCount--;
+                    if (braceCount == 0)
+                    {
+                        endIndex = i + 1;
+                        break;
+                    }
+                }
+            }
+
+            if (braceCount != 0)
+            {
+                Logger.LogWarning("Unbalanced braces in gbRawData");
+                return null;
+            }
+
+            var jsonData = html.Substring(startIndex, endIndex - startIndex);
+            return jsonData;
         }
         catch (Exception ex)
         {
