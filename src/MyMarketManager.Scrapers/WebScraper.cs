@@ -216,7 +216,7 @@ public abstract class WebScraper(
     /// <summary>
     /// Creates an HttpClient configured with cookies and headers for scraping.
     /// </summary>
-    public virtual HttpClient CreateHttpClient(CookieFile cookies)
+    protected virtual HttpClient CreateHttpClient(CookieFile cookies)
     {
         var handler = new HttpClientHandler
         {
