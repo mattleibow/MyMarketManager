@@ -2,7 +2,6 @@ using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MyMarketManager.Data.Tests;
-using MyMarketManager.Scrapers.Core;
 using MyMarketManager.Tests.Shared;
 using NSubstitute;
 
@@ -18,8 +17,8 @@ public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteT
 
     protected void MockResponses(WebScraper webScraper, Dictionary<string, string?>? customResponses = null)
     {
-        webScraper.CreateHttpClient(Arg.Any<CookieFile>())
-            .Returns(x => new FixturesHttpClient(new HttpClientHandler(), customResponses));
+        webScraper.ConfigureHttpMessageHandler(Arg.Any<HttpMessageHandler>())
+            .Returns(x => new FixturesHttpMessageHandler(x.ArgAt<HttpMessageHandler>(0), customResponses));
     }
 
     protected static ILogger<TScraper> CreateLogger()
@@ -42,7 +41,7 @@ public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteT
         // Get the directory where the test assembly is located
         var assemblyLocation = Assembly.GetExecutingAssembly().Location;
         var assemblyDir = Path.GetDirectoryName(assemblyLocation) ?? throw new InvalidOperationException("Could not determine assembly directory");
-        
+
         // Construct path to fixtures directory
         var fixturePath = Path.Combine(assemblyDir, "Fixtures", "Html", fileName);
 
@@ -54,12 +53,13 @@ public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteT
         return File.ReadAllText(fixturePath);
     }
 
-    class FixturesHttpClient(HttpMessageHandler handler, Dictionary<string, string?>? customResponses) : HttpClient(handler)
+    class FixturesHttpMessageHandler(HttpMessageHandler innerHandler, Dictionary<string, string?>? customResponses)
+        : DelegatingHandler(innerHandler)
     {
-        public override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken) =>
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var uri = request.RequestUri?.AbsoluteUri;
 

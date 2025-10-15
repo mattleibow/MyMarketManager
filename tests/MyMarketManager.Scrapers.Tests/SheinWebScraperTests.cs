@@ -65,15 +65,8 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
             ["https://shein.com/user/orders/detail/TEST001ORDER001"] = LoadHtmlFixture("shein_order_detail_TEST001ORDER001.html")
         });
 
-        var cookies = new CookieFile
-        {
-            Domain = "shein.com",
-            CapturedAt = DateTimeOffset.UtcNow,
-            Cookies = new Dictionary<string, CookieData>()
-        };
-
         // Act - Using mock scraper with cached HTML fixtures
-        await scraper.StartScrapingAsync(supplier.Id, cookies, TestContext.Current.CancellationToken);
+        await scraper.StartScrapingAsync(supplier.Id, null, TestContext.Current.CancellationToken);
 
         // Assert - Verify session was created
         var sessions = Context.ScraperSessions.ToList();
