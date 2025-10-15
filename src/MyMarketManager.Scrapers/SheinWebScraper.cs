@@ -103,13 +103,17 @@ public class SheinWebScraper(
         // Store order date (Unix timestamp)
         if (orderInfo.TryGetProperty("addTime", out var addTime))
         {
-            orderData["addTime"] = addTime.GetInt64().ToString();
+            orderData["addTime"] = addTime.ValueKind == JsonValueKind.Number 
+                ? addTime.GetInt64().ToString() 
+                : addTime.GetString() ?? string.Empty;
         }
 
         // Store payment time
         if (orderInfo.TryGetProperty("pay_time", out var payTime))
         {
-            orderData["pay_time"] = payTime.GetInt64().ToString();
+            orderData["pay_time"] = payTime.ValueKind == JsonValueKind.Number 
+                ? payTime.GetInt64().ToString() 
+                : payTime.GetString() ?? string.Empty;
         }
 
         // Store total price
@@ -143,7 +147,9 @@ public class SheinWebScraper(
                 // Extract item details
                 if (goodsItem.TryGetProperty("goods_id", out var goodsId))
                 {
-                    item["goods_id"] = goodsId.GetInt64().ToString();
+                    item["goods_id"] = goodsId.ValueKind == JsonValueKind.Number 
+                        ? goodsId.GetInt64().ToString() 
+                        : goodsId.GetString() ?? string.Empty;
                 }
 
                 if (goodsItem.TryGetProperty("goods_name", out var goodsName))
@@ -163,7 +169,9 @@ public class SheinWebScraper(
 
                 if (goodsItem.TryGetProperty("goods_qty", out var goodsQty))
                 {
-                    item["goods_qty"] = goodsQty.GetInt32().ToString();
+                    item["goods_qty"] = goodsQty.ValueKind == JsonValueKind.Number 
+                        ? goodsQty.GetInt32().ToString() 
+                        : goodsQty.GetString() ?? "0";
                 }
 
                 if (goodsItem.TryGetProperty("goods_unit_price", out var goodsUnitPrice))
