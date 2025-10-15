@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -36,34 +37,32 @@ public class SheinWebScraper(
         var json = JsonDocument.Parse(gbRawData ?? "{}");
 
         var orders = json.RootElement.GetProperty("order_list").EnumerateArray().ToList();
-        var orderNumbers = orders.Select(o => o.GetProperty("billno").GetString()).ToList();
 
-        // Simple regex-based extraction (to be replaced with proper HTML parsing)
-        var pattern = @"href=""(/user/orders/detail\?order_id=([^""&]+))""";
-        var matches = Regex.Matches(ordersListHtml, pattern);
-
-        var count = 0;
-
-        foreach (Match match in matches)
+        var orderCount = 0;
+        foreach (var order in orders)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (match.Groups.Count > 2)
+            var orderNumber = order.GetProperty("billno").GetString();
+
+            if (string.IsNullOrEmpty(orderNumber))
             {
-                var orderId = match.Groups[2].Value;
-                var linkInfo = new WebScraperOrderSummary
-                {
-                    RawData = "",
-                    ["orderId"] = orderId
-                };
-
-                count++;
-
-                yield return linkInfo;
+                Logger.LogWarning("Skipping order with missing order number");
+                continue;
             }
+
+            orderCount++;
+
+            var linkInfo = new WebScraperOrderSummary
+            {
+                RawData = order.GetRawText(),
+                ["orderId"] = orderNumber
+            };
+
+            yield return linkInfo;
         }
 
-        Logger.LogInformation("Parsed {Count} unique orders", count);
+        Logger.LogInformation("Parsed {Count} unique orders", orderCount);
     }
 
     /// <inheritdoc/>
@@ -279,22 +278,22 @@ public class SheinWebScraper(
     /// <summary>
     /// Extracts gbRawData JSON object from the HTML page.
     /// </summary>
-    private string? ExtractGbRawData(string html)
+    private string? ExtractGbRawData(ReadOnlySpan<char> html)
     {
         try
         {
             // Look for gbRawData in the HTML
-            var pattern = @"gbRawData\s*=\s*\{";
-            var match = Regex.Match(html, pattern);
-
-            if (!match.Success)
+            var pattern = @"var gbRawData = {";
+            var matchIndex = html.IndexOf(pattern, StringComparison.Ordinal);
+            
+            if (matchIndex == -1)
             {
                 Logger.LogWarning("Could not find gbRawData in HTML");
                 return null;
             }
 
             // Find the start of the JSON object
-            var startIndex = match.Index + match.Length - 1; // Include the opening brace
+            var startIndex = matchIndex + pattern.Length - 1; // Include the opening brace
             
             // Extract the complete JSON object by counting braces
             var braceCount = 0;
@@ -323,8 +322,9 @@ public class SheinWebScraper(
                 return null;
             }
 
-            var jsonData = html.Substring(startIndex, endIndex - startIndex);
-            return jsonData;
+            var jsonData = html.Slice(startIndex, endIndex - startIndex);
+
+            return jsonData.ToString();
         }
         catch (Exception ex)
         {

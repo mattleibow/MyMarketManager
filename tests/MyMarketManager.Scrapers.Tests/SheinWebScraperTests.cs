@@ -37,7 +37,7 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
     {
         // Arrange
         var scraper = new SheinWebScraper(Context, ScraperLogger, ScraperConfig);
-        var orderDetailsHtml = LoadHtmlFixture($"shein_order_detail_{orderId.ToLower()}.html");
+        var orderDetailsHtml = LoadHtmlFixture($"shein_order_detail_{orderId}.html");
 
         // Act
         var order = await scraper.ParseOrderDetailsAsync(orderDetailsHtml, new(), Cancel);

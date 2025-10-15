@@ -215,9 +215,8 @@ public abstract class WebScraper(
 
     /// <summary>
     /// Creates an HttpClient configured with cookies and headers for scraping.
-    /// This method can be overridden for testing.
     /// </summary>
-    protected virtual HttpClient CreateHttpClient(CookieFile cookies)
+    private HttpClient CreateHttpClient(CookieFile cookies)
     {
         var handler = new HttpClientHandler
         {
@@ -247,7 +246,7 @@ public abstract class WebScraper(
         }
 
         // Create the actual HttpClient
-        var client = new HttpClient(handler);
+        var client = CreateHttpClient(handler);
 
         // Set timeouts
         client.Timeout = Configuration.RequestTimeout;
@@ -261,6 +260,12 @@ public abstract class WebScraper(
 
         return client;
     }
+
+    /// <summary>
+    /// Creates an HttpClient instance. Can be overridden for testing/mocking.
+    /// </summary>
+    public virtual HttpClient CreateHttpClient(HttpClientHandler handler) =>
+        new HttpClient(handler);
 
     /// <summary>
     /// Replaces template placeholders in a URL with actual values from the dictionary.
