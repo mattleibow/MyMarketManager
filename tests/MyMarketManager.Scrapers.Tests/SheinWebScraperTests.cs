@@ -61,7 +61,7 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         var scraper = MockScraper(new()
         {
             ["https://shein.com/user/orders/list"] = LoadHtmlFixture("shein_order_list.html"),
-            ["https://shein.com/user/orders/detail/GSH14130W00M3CM"] = LoadHtmlFixture("shein_order_detail_GSH14130W00M3CM.html")
+            ["https://shein.com/user/orders/detail/TEST001ORDER001"] = LoadHtmlFixture("shein_order_detail_test001order001.html")
         });
 
         // Act - Using mock scraper with cached HTML fixtures
