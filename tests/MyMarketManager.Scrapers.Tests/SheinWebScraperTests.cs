@@ -29,7 +29,7 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
 
         // Assert
         Assert.Single(orders);
-        Assert.Contains(orders, o => o.ContainsKey("orderId") && o["orderId"] == "TEST001ORDER001");
+        Assert.Contains(orders, o => o.ContainsKey("orderNumber") && o["orderNumber"] == "TEST001ORDER001");
     }
 
     [Theory]
