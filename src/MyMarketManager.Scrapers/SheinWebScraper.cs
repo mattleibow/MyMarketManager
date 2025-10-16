@@ -20,7 +20,7 @@ public class SheinWebScraper(
     : WebScraper(context, logger, configuration)
 {
     private const string OrdersListUrl = "https://shein.com/user/orders/list";
-    private const string OrderDetailUrlTemplate = "https://shein.com/user/orders/detail/{orderId}";
+    private const string OrderDetailUrlTemplate = "https://shein.com/user/orders/detail/{orderNumber}";
 
     /// <inheritdoc/>
     public override string GetOrdersListUrl() => OrdersListUrl;
@@ -56,7 +56,7 @@ public class SheinWebScraper(
             var linkInfo = new WebScraperOrderSummary
             {
                 RawData = order.GetRawText(),
-                ["orderId"] = orderNumber
+                ["orderNumber"] = orderNumber
             };
 
             yield return linkInfo;

@@ -31,19 +31,9 @@ public class MyMarketManagerDbContext : DbContext
     public DbSet<StagingSale> StagingSales => Set<StagingSale>();
     public DbSet<StagingSaleItem> StagingSaleItems => Set<StagingSaleItem>();
 
-    // Scraping entities
-    public DbSet<ScraperSession> ScraperSessions => Set<ScraperSession>();
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        // Configure 1:1 relationship between StagingBatch and ScraperSession
-        modelBuilder.Entity<StagingBatch>()
-            .HasOne(b => b.ScraperSession)
-            .WithOne(s => s.StagingBatch)
-            .HasForeignKey<StagingBatch>(b => b.ScraperSessionId)
-            .IsRequired(false);
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {

@@ -15,7 +15,8 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
         var batch = new StagingBatch
         {
             Id = Guid.NewGuid(),
-            UploadDate = DateTimeOffset.UtcNow,
+            BatchType = StagingBatchType.BlobUpload,
+            StartedAt = DateTimeOffset.UtcNow,
             FileHash = "abc123",
             Status = ProcessingStatus.Queued
         };
@@ -60,7 +61,8 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
         var batch = new StagingBatch
         {
             Id = Guid.NewGuid(),
-            UploadDate = DateTimeOffset.UtcNow,
+            BatchType = StagingBatchType.BlobUpload,
+            StartedAt = DateTimeOffset.UtcNow,
             FileHash = "xyz789",
             Status = ProcessingStatus.Queued
         };
@@ -133,7 +135,8 @@ public class StagingEntityTests(ITestOutputHelper outputHelper) : SqliteTestBase
         var batch = new StagingBatch
         {
             Id = Guid.NewGuid(),
-            UploadDate = DateTimeOffset.UtcNow,
+            BatchType = StagingBatchType.BlobUpload,
+            StartedAt = DateTimeOffset.UtcNow,
             FileHash = "sale123",
             Status = ProcessingStatus.Queued
         };

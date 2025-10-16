@@ -62,36 +62,25 @@ public abstract class WebScraper(
     {
         Logger.LogInformation("Starting scraping for supplier {SupplierId}", supplierId);
 
-        var sessionId = Guid.NewGuid();
         var batchId = Guid.NewGuid();
 
-        // Create scraper session
-        var session = new ScraperSession
-        {
-            Id = sessionId,
-            SupplierId = supplierId,
-            StartedAt = DateTimeOffset.UtcNow,
-            Status = ProcessingStatus.Started,
-            CookieFileJson = JsonSerializer.Serialize(cookies, JsonSerializerOptions.Web),
-            StagingBatchId = batchId
-        };
-        Context.ScraperSessions.Add(session);
-
-        // Create staging batch
+        // Create staging batch for web scrape
         var batch = new StagingBatch
         {
             Id = batchId,
-            UploadDate = DateTimeOffset.UtcNow,
-            FileHash = ComputeFileHash(session.CookieFileJson),
+            BatchType = StagingBatchType.WebScrape,
+            SupplierId = supplierId,
+            StartedAt = DateTimeOffset.UtcNow,
             Status = ProcessingStatus.Started,
-            Notes = $"Scraped at {DateTimeOffset.UtcNow}",
-            ScraperSessionId = sessionId
+            FileContents = JsonSerializer.Serialize(cookies, JsonSerializerOptions.Web),
+            FileHash = ComputeFileHash(JsonSerializer.Serialize(cookies, JsonSerializerOptions.Web)),
+            Notes = $"Scraped at {DateTimeOffset.UtcNow}"
         };
         Context.StagingBatches.Add(batch);
 
         await Context.SaveChangesAsync(cancellationToken);
 
-        Logger.LogInformation("Started scraper session {SessionId} and staging batch {BatchId}", sessionId, batchId);
+        Logger.LogInformation("Started scraping staging batch {BatchId}", batchId);
 
         try
         {
@@ -100,12 +89,11 @@ public abstract class WebScraper(
 
             // Mark as complete
             batch.Status = ProcessingStatus.Completed;
-            session.Status = ProcessingStatus.Completed;
-            session.CompletedAt = DateTimeOffset.UtcNow;
+            batch.CompletedAt = DateTimeOffset.UtcNow;
 
             await Context.SaveChangesAsync(cancellationToken);
 
-            Logger.LogInformation("Successfully completed scraping. Scraper session {SessionId} and staging batch {BatchId}", sessionId, batchId);
+            Logger.LogInformation("Successfully completed scraping. Staging batch {BatchId}", batchId);
         }
         catch (Exception ex)
         {
@@ -113,9 +101,6 @@ public abstract class WebScraper(
 
             batch.Status = ProcessingStatus.Failed;
             batch.ErrorMessage = ex.Message;
-
-            session.Status = ProcessingStatus.Failed;
-            session.ErrorMessage = ex.Message;
 
             await Context.SaveChangesAsync(cancellationToken);
 
@@ -132,7 +117,7 @@ public abstract class WebScraper(
     public async Task ScrapeBatchAsync(StagingBatch batch, CancellationToken cancellationToken)
     {
         // Step 0: Create HttpClient with cookies and headers
-        var cookies = JsonSerializer.Deserialize<CookieFile>(batch.ScraperSession?.CookieFileJson ?? "{}", JsonSerializerOptions.Web) ?? new CookieFile();
+        var cookies = JsonSerializer.Deserialize<CookieFile>(batch.FileContents ?? "{}", JsonSerializerOptions.Web) ?? new CookieFile();
         using var httpClient = CreateHttpClient(cookies);
 
         // Step 1: Scrape orders list page

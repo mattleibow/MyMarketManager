@@ -4,16 +4,36 @@ using MyMarketManager.Data.Enums;
 namespace MyMarketManager.Data.Entities;
 
 /// <summary>
-/// Represents a single data upload (e.g. Shein ZIP, sales data upload), grouping all parsed orders, sales and items.
-/// The source (supplier, store, etc.) is tracked through related entities like ScraperSession.
+/// Represents a single data upload (e.g. Shein ZIP, sales data upload, web scrape), grouping all parsed orders, sales and items.
 /// </summary>
 public class StagingBatch : EntityBase
 {
-    public DateTimeOffset UploadDate { get; set; }
+    /// <summary>
+    /// The type of staging batch (web scrape, blob upload, etc.).
+    /// </summary>
+    public StagingBatchType BatchType { get; set; }
+
+    /// <summary>
+    /// The supplier this batch is for (for web scrapes).
+    /// </summary>
+    public Guid? SupplierId { get; set; }
+    public Supplier? Supplier { get; set; }
+
+    /// <summary>
+    /// When this batch started processing.
+    /// </summary>
+    public DateTimeOffset StartedAt { get; set; }
+
+    /// <summary>
+    /// When this batch completed processing (if successful).
+    /// </summary>
+    public DateTimeOffset? CompletedAt { get; set; }
 
     [Required]
     public string FileHash { get; set; } = string.Empty;
+    
     public ProcessingStatus Status { get; set; }
+    
     public string? Notes { get; set; }
 
     /// <summary>
@@ -22,10 +42,9 @@ public class StagingBatch : EntityBase
     public string? ErrorMessage { get; set; }
 
     /// <summary>
-    /// The scraper session that created this batch, if any.
+    /// File contents (e.g. serialized cookie JSON for web scrapes).
     /// </summary>
-    public Guid? ScraperSessionId { get; set; }
-    public ScraperSession? ScraperSession { get; set; }
+    public string? FileContents { get; set; }
 
     // Navigation properties
     public ICollection<StagingPurchaseOrder> StagingPurchaseOrders { get; set; } = new List<StagingPurchaseOrder>();
