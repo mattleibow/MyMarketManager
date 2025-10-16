@@ -68,11 +68,12 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         // Act - Using mock scraper with cached HTML fixtures
         await scraper.StartScrapingAsync(supplier.Id, null, TestContext.Current.CancellationToken);
 
-        // Assert - Verify session was created
-        var sessions = Context.ScraperSessions.ToList();
-        Assert.Single(sessions);
-        Assert.Equal(supplier.Id, sessions[0].SupplierId);
-        Assert.Equal(ProcessingStatus.Completed, sessions[0].Status);
+        // Assert - Verify batch was created
+        var batches = Context.StagingBatches.ToList();
+        Assert.Single(batches);
+        Assert.Equal(supplier.Id, batches[0].SupplierId);
+        Assert.Equal(ProcessingStatus.Completed, batches[0].Status);
+        Assert.Equal(StagingBatchType.WebScrape, batches[0].BatchType);
 
         // Verify orders were scraped
         var orders = Context.StagingPurchaseOrders.ToList();
