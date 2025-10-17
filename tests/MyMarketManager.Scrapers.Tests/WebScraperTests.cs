@@ -18,9 +18,21 @@ public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteT
 
     protected IWebScraperSessionFactory CreateMockSessionFactory(Dictionary<string, string?> mockResponses)
     {
+        var session = Substitute.For<IWebScraperSession>();
+        session.FetchPageAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var url = callInfo.Arg<string>();
+                if (mockResponses.TryGetValue(url, out var response) && response is not null)
+                {
+                    return Task.FromResult(response);
+                }
+                throw new InvalidOperationException($"No mock response configured for URL: {url}");
+            });
+
         var factory = Substitute.For<IWebScraperSessionFactory>();
         factory.CreateSession(Arg.Any<CookieFile>())
-            .Returns(_ => new MockWebScraperSession(mockResponses));
+            .Returns(session);
         return factory;
     }
 
@@ -56,28 +68,5 @@ public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteT
         return File.ReadAllText(fixturePath);
     }
 
-    /// <summary>
-    /// Mock implementation of IWebScraperSession for testing without HTTP.
-    /// </summary>
-    class MockWebScraperSession(Dictionary<string, string?> mockResponses) : IWebScraperSession
-    {
-        private bool _disposed;
 
-        public Task<string> FetchPageAsync(string url, CancellationToken cancellationToken = default)
-        {
-            ObjectDisposedException.ThrowIf(_disposed, this);
-
-            if (mockResponses.TryGetValue(url, out var response) && response is not null)
-            {
-                return Task.FromResult(response);
-            }
-
-            throw new InvalidOperationException($"No mock response configured for URL: {url}");
-        }
-
-        public void Dispose()
-        {
-            _disposed = true;
-        }
-    }
 }
