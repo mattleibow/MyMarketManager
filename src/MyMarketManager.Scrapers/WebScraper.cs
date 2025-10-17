@@ -17,13 +17,16 @@ namespace MyMarketManager.Scrapers;
 public abstract class WebScraper(
     MyMarketManagerDbContext context,
     ILogger logger,
-    IOptions<ScraperConfiguration> configuration)
+    IOptions<ScraperConfiguration> configuration,
+    IWebScraperSessionFactory sessionFactory)
 {
     protected MyMarketManagerDbContext Context { get; } = context;
 
     protected ILogger Logger { get; } = logger;
 
     protected ScraperConfiguration Configuration { get; } = configuration.Value;
+
+    protected IWebScraperSessionFactory SessionFactory { get; } = sessionFactory;
 
     /// <summary>
     /// Gets the orders list page URL.
@@ -116,13 +119,13 @@ public abstract class WebScraper(
     /// </summary>
     public async Task ScrapeBatchAsync(StagingBatch batch, CancellationToken cancellationToken)
     {
-        // Step 0: Create HttpClient with cookies and headers
+        // Step 0: Create scraping session with cookies
         var cookies = JsonSerializer.Deserialize<CookieFile>(batch.FileContents ?? "{}", JsonSerializerOptions.Web) ?? new CookieFile();
-        using var httpClient = CreateHttpClient(cookies);
+        using var session = SessionFactory.CreateSession(cookies);
 
         // Step 1: Scrape orders list page
         Logger.LogInformation("Fetching orders list page");
-        var ordersListHtml = await FetchPageAsync(GetOrdersListUrl(), httpClient, cancellationToken);
+        var ordersListHtml = await session.FetchPageAsync(GetOrdersListUrl(), cancellationToken);
 
         // Step 2: Parse order links
         Logger.LogInformation("Parsing orders from list page");
@@ -158,7 +161,7 @@ public abstract class WebScraper(
             try
             {
                 // Scrape the order page
-                var orderDetailsHtml = await FetchPageAsync(orderUrl, httpClient, cancellationToken);
+                var orderDetailsHtml = await session.FetchPageAsync(orderUrl, cancellationToken);
 
                 // Parse order details
                 var order = await ParseOrderDetailsAsync(orderDetailsHtml, orderSummary, cancellationToken);
@@ -184,74 +187,6 @@ public abstract class WebScraper(
 
         Logger.LogInformation("Completed scraping {Count} orders", orderCount);
     }
-
-    /// <summary>
-    /// Scrapes a specific page and returns the raw HTML.
-    /// </summary>
-    public async Task<string> FetchPageAsync(string url, HttpClient httpClient, CancellationToken cancellationToken)
-    {
-        Logger.LogDebug("Fetching from {Url}", url);
-
-        var response = await httpClient.GetAsync(url, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        return await response.Content.ReadAsStringAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// Creates an HttpClient configured with cookies and headers for scraping.
-    /// </summary>
-    private HttpClient CreateHttpClient(CookieFile cookies)
-    {
-        var handler = new HttpClientHandler
-        {
-            UseCookies = true,
-            CookieContainer = new CookieContainer()
-        };
-
-        var httpMessageHandler = ConfigureHttpMessageHandler(handler) ?? handler;
-
-        // Add cookies to the container
-        foreach (var cookie in cookies.Cookies.Values)
-        {
-            try
-            {
-                handler.CookieContainer.Add(new Uri($"https://{cookies.Domain}"), new Cookie
-                {
-                    Name = cookie.Name,
-                    Value = cookie.Value,
-                    Domain = cookie.Domain ?? $".{cookies.Domain}",
-                    Path = cookie.Path ?? "/",
-                    Secure = cookie.Secure,
-                    HttpOnly = cookie.HttpOnly
-                });
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Failed to add cookie {CookieName}", cookie.Name);
-            }
-        }
-
-        // Create the actual HttpClient
-        var client = new HttpClient(httpMessageHandler);
-
-        // Set timeouts
-        client.Timeout = Configuration.RequestTimeout;
-
-        // Add headers
-        client.DefaultRequestHeaders.Add("user-agent", Configuration.UserAgent);
-        foreach (var header in Configuration.AdditionalHeaders)
-        {
-            client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
-        }
-
-        return client;
-    }
-
-    /// <summary>
-    /// Allows derived scrapers to customize the HttpClientHandler (e.g., to set proxy, SSL options).
-    /// </summary>
-    public virtual HttpMessageHandler ConfigureHttpMessageHandler(HttpMessageHandler handler) => handler;
 
     /// <summary>
     /// Replaces template placeholders in a URL with actual values from the dictionary.

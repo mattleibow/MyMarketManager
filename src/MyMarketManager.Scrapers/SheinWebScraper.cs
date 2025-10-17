@@ -16,8 +16,9 @@ namespace MyMarketManager.Scrapers;
 public class SheinWebScraper(
     MyMarketManagerDbContext context,
     ILogger<SheinWebScraper> logger,
-    IOptions<ScraperConfiguration> configuration)
-    : WebScraper(context, logger, configuration)
+    IOptions<ScraperConfiguration> configuration,
+    IWebScraperSessionFactory sessionFactory)
+    : WebScraper(context, logger, configuration, sessionFactory)
 {
     private const string OrdersListUrl = "https://shein.com/user/orders/list";
     private const string OrderDetailUrlTemplate = "https://shein.com/user/orders/detail/{orderNumber}";

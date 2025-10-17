@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MyMarketManager.Data.Tests;
+using MyMarketManager.Scrapers.Core;
 using MyMarketManager.Tests.Shared;
 using NSubstitute;
 
@@ -15,10 +16,12 @@ public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteT
 
     protected IOptions<ScraperConfiguration> ScraperConfig { get; } = CreateConfiguration();
 
-    protected void MockResponses(WebScraper webScraper, Dictionary<string, string?>? customResponses = null)
+    protected IWebScraperSessionFactory CreateMockSessionFactory(Dictionary<string, string?> mockResponses)
     {
-        webScraper.ConfigureHttpMessageHandler(Arg.Any<HttpMessageHandler>())
-            .Returns(x => new FixturesHttpMessageHandler(x.ArgAt<HttpMessageHandler>(0), customResponses));
+        var factory = Substitute.For<IWebScraperSessionFactory>();
+        factory.CreateSession(Arg.Any<CookieFile>())
+            .Returns(_ => new MockWebScraperSession(mockResponses));
+        return factory;
     }
 
     protected static ILogger<TScraper> CreateLogger()
@@ -53,24 +56,28 @@ public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteT
         return File.ReadAllText(fixturePath);
     }
 
-    class FixturesHttpMessageHandler(HttpMessageHandler innerHandler, Dictionary<string, string?>? customResponses)
-        : DelegatingHandler(innerHandler)
+    /// <summary>
+    /// Mock implementation of IWebScraperSession for testing without HTTP.
+    /// </summary>
+    class MockWebScraperSession(Dictionary<string, string?> mockResponses) : IWebScraperSession
     {
-        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
+        private bool _disposed;
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        public Task<string> FetchPageAsync(string url, CancellationToken cancellationToken = default)
         {
-            var uri = request.RequestUri?.AbsoluteUri;
+            ObjectDisposedException.ThrowIf(_disposed, this);
 
-            if (customResponses?.TryGetValue(uri ?? string.Empty, out var customResponse) != true)
-                throw new NotSupportedException($"Unknown request URL: {uri}");
+            if (mockResponses.TryGetValue(url, out var response) && response is not null)
+            {
+                return Task.FromResult(response);
+            }
 
-            var response = customResponse is null
-                ? new HttpResponseMessage(System.Net.HttpStatusCode.NotFound)
-                : new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(customResponse) };
+            throw new InvalidOperationException($"No mock response configured for URL: {url}");
+        }
 
-            return Task.FromResult(response);
+        public void Dispose()
+        {
+            _disposed = true;
         }
     }
 }

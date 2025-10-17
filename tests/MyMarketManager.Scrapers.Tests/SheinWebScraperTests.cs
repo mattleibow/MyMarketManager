@@ -14,14 +14,16 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
     [Fact]
     public void CanBeCreated()
     {
-        new SheinWebScraper(Context, ScraperLogger, ScraperConfig);
+        var sessionFactory = CreateMockSessionFactory(new());
+        new SheinWebScraper(Context, ScraperLogger, ScraperConfig, sessionFactory);
     }
 
     [Fact]
     public async Task ParsesOrdersListCorrectly()
     {
         // Arrange
-        var scraper = new SheinWebScraper(Context, ScraperLogger, ScraperConfig);
+        var sessionFactory = CreateMockSessionFactory(new());
+        var scraper = new SheinWebScraper(Context, ScraperLogger, ScraperConfig, sessionFactory);
         var ordersListHtml = LoadHtmlFixture("shein_order_list.html");
 
         // Act
@@ -37,7 +39,8 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
     public async Task ParsesOrderDetailsCorrectly(string orderId)
     {
         // Arrange
-        var scraper = new SheinWebScraper(Context, ScraperLogger, ScraperConfig);
+        var sessionFactory = CreateMockSessionFactory(new());
+        var scraper = new SheinWebScraper(Context, ScraperLogger, ScraperConfig, sessionFactory);
         var orderDetailsHtml = LoadHtmlFixture($"shein_order_detail_{orderId}.html");
 
         // Act
@@ -59,11 +62,13 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         Context.Suppliers.Add(supplier);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var scraper = MockScraper(new()
+        var mockResponses = new Dictionary<string, string?>
         {
             ["https://shein.com/user/orders/list"] = LoadHtmlFixture("shein_order_list.html"),
             ["https://shein.com/user/orders/detail/TEST001ORDER001"] = LoadHtmlFixture("shein_order_detail_TEST001ORDER001.html")
-        });
+        };
+        var sessionFactory = CreateMockSessionFactory(mockResponses);
+        var scraper = new SheinWebScraper(Context, ScraperLogger, ScraperConfig, sessionFactory);
 
         // Act - Using mock scraper with cached HTML fixtures
         await scraper.StartScrapingAsync(supplier.Id, null, TestContext.Current.CancellationToken);
@@ -85,14 +90,5 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         Assert.Equal("TEST001ORDER001", order.SupplierReference);
         Assert.NotNull(order.RawData);
         Assert.NotEmpty(order.Items);
-    }
-
-    private SheinWebScraper MockScraper(Dictionary<string, string?>? customResponses = null)
-    {
-        var scraper = Substitute.ForPartsOf<SheinWebScraper>(Context, ScraperLogger, ScraperConfig);
-        
-        MockResponses(scraper, customResponses);
-
-        return scraper;
     }
 }
