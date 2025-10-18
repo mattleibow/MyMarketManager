@@ -5,6 +5,7 @@ using MyMarketManager.Tests.Shared;
 namespace MyMarketManager.Integration.Tests;
 
 [Trait(TestCategories.Key, TestCategories.Values.GraphQL)]
+[Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
 [Trait(TestRequirements.Key, TestRequirements.Values.SSL)]
 public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsBase(outputHelper)
 {
