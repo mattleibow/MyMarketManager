@@ -22,10 +22,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         include:
-          - os: ubuntu-latest
-            filter: --filter "Category!=LongRunning"
           - os: windows-latest
-            filter: --filter "Category!=LongRunning&Requires!=SSL"
+            filter: --filter "Requires!=SSL"
 
     steps:
       - name: Checkout code

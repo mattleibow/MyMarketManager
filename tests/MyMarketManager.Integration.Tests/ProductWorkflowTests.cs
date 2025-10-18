@@ -1,5 +1,4 @@
 using Microsoft.Playwright;
-using MyMarketManager.Tests.Shared;
 using static Microsoft.Playwright.Assertions;
 
 namespace MyMarketManager.Integration.Tests;
@@ -7,7 +6,6 @@ namespace MyMarketManager.Integration.Tests;
 /// <summary>
 /// Playwright-based UI tests for end-to-end product workflows
 /// </summary>
-[Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
 public class ProductWorkflowTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase(outputHelper)
 {
     [Fact]
