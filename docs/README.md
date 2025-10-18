@@ -19,6 +19,7 @@ Resources for developers working on MyMarketManager:
 - **[Data Layer](data-layer.md)** - Entity Framework Core, migrations, and database management
 - **[GraphQL Server](graphql-server.md)** - Server implementation, operations, and extending the API
 - **[GraphQL Client](graphql-client.md)** - Client library usage, service registration, and examples
+- **[Web Scraping](web-scraping.md)** - Web scraping infrastructure for data ingestion from supplier websites
 
 ## Reference
 

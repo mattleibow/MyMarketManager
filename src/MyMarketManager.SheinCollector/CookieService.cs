@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using MyMarketManager.Scrapers.Core;
 
 namespace MyMarketManager.SheinCollector;
 
@@ -122,6 +123,31 @@ public class CookieService
         return filePath;
     }
 
+    public string CreateCookieFileJson(List<CookieData> cookies)
+    {
+        var cookieFile = new CookieFile
+        {
+            Domain = "shein.com",
+            CapturedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddDays(7), // Assume cookies expire in 7 days
+            Cookies = cookies.ToDictionary(c => c.Name, c => c),
+            Metadata = new Dictionary<string, string>
+            {
+                { "source", "SheinCollector MAUI App" },
+                { "platform", DeviceInfo.Platform.ToString() },
+                { "version", AppInfo.VersionString }
+            }
+        };
+
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        return JsonSerializer.Serialize(cookieFile, options);
+    }
+
     public async Task<string> FetchOrdersWithCookies(List<CookieData> cookies)
     {
         using var handler = new HttpClientHandler
@@ -166,14 +192,4 @@ public class CookieService
 
         return await response.Content.ReadAsStringAsync();
     }
-}
-
-public class CookieData
-{
-    public string Name { get; set; } = string.Empty;
-    public string Value { get; set; } = string.Empty;
-    public string? Domain { get; set; }
-    public string? Path { get; set; }
-    public bool Secure { get; set; }
-    public bool HttpOnly { get; set; }
 }
