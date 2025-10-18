@@ -18,19 +18,14 @@ public class WebScraperSessionFactory(
     /// <inheritdoc/>
     public IWebScraperSession CreateSession(CookieFile cookies)
     {
-        var handler = CreateHttpHandler(cookies);
-        return new WebScraperSession(
-            handler, 
-            _configuration.RequestTimeout,
-            _configuration.UserAgent,
-            _configuration.AdditionalHeaders,
-            _logger);
+        var httpClient = CreateHttpClient(cookies);
+        return new WebScraperSession(httpClient, _logger);
     }
 
     /// <summary>
-    /// Creates an HTTP handler configured with cookies for scraping.
+    /// Creates an HttpClient configured with cookies and headers for scraping.
     /// </summary>
-    protected virtual HttpClientHandler CreateHttpHandler(CookieFile cookies)
+    protected virtual HttpClient CreateHttpClient(CookieFile cookies)
     {
         var handler = new HttpClientHandler
         {
@@ -59,6 +54,19 @@ public class WebScraperSessionFactory(
             }
         }
 
-        return handler;
+        // Create the actual HttpClient
+        var client = new HttpClient(handler);
+
+        // Set timeouts
+        client.Timeout = _configuration.RequestTimeout;
+
+        // Add headers
+        client.DefaultRequestHeaders.Add("user-agent", _configuration.UserAgent);
+        foreach (var header in _configuration.AdditionalHeaders)
+        {
+            client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
+        }
+
+        return client;
     }
 }
