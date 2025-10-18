@@ -19,6 +19,9 @@ The solution is organized into the following projects:
 - **MyMarketManager.Data** - Data layer with Entity Framework Core entities, DbContext, and migrations for SQL Server
 - **MyMarketManager.WebApp** - Blazor Server web application with integrated GraphQL API server
 - **MyMarketManager.GraphQL.Client** - Standalone GraphQL client library (StrawberryShake) compatible with MAUI, Blazor WASM, and other .NET applications
+- **MyMarketManager.Scrapers.Core** - Cookie file format and core types for web scraping
+- **MyMarketManager.Scrapers** - Web scraping framework and supplier scraper implementations
+- **MyMarketManager.SheinCollector** - MAUI app for capturing browser cookies for scraping
 - **MyMarketManager.ServiceDefaults** - Shared .NET Aspire service defaults
 - **MyMarketManager.AppHost** - .NET Aspire app host for local development orchestration
 - **MyMarketManager.Integration.Tests** - Integration tests using Aspire.Hosting.Testing
@@ -82,6 +85,29 @@ Entities are grouped into two categories:
 2. **Staging Entities** - Import/validation data (StagingBatch, StagingPurchaseOrder, StagingSale)
 
 See [Data Model](data-model.md) for complete entity documentation.
+
+## Web Scraping Architecture
+
+The web scraping system extracts order data from supplier websites for import into the application.
+
+### Scraper Projects
+
+- **MyMarketManager.Scrapers.Core** - Cookie file format (`CookieFile`, `CookieData`) for authentication
+- **MyMarketManager.Scrapers** - Base scraper framework (`WebScraper`, `IWebScraperSession`) and implementations (e.g., `SheinWebScraper`)
+- **MyMarketManager.SheinCollector** - MAUI mobile app for capturing authenticated browser cookies
+
+### Scraping Workflow
+
+1. **Cookie Capture**: MAUI app captures browser cookies during authenticated session
+2. **Cookie Submission**: Cookies sent to server and stored in `StagingBatch.FileContents`
+3. **Scraping Execution**: Background service creates scraper and processes batch
+4. **Data Extraction**: Scraper fetches order pages and parses HTML/JSON
+5. **Staging Storage**: Extracted data stored in `StagingPurchaseOrder` entities
+6. **Review & Import**: Staging data reviewed and imported separately
+
+Scrapers use template method pattern - base `WebScraper` class provides orchestration, concrete implementations (e.g., `SheinWebScraper`) handle supplier-specific parsing.
+
+See [Web Scraping](web-scraping.md) for detailed architecture.
 
 ## Request Flow
 
