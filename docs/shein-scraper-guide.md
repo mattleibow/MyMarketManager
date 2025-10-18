@@ -1,286 +1,143 @@
-# Shein Scraper Quick Start
+# Shein Scraper Usage
 
-This guide shows how to use the Shein scraper to ingest order data from Shein.com.
+This guide shows how to use the Shein scraper to extract order data.
 
 ## Prerequisites
 
-1. Valid Shein account credentials
-2. Captured cookies from authenticated browser session (use `MyMarketManager.SheinCollector` app)
-3. Supplier record in database for Shein
+- Valid Shein account with order history
+- Captured cookies from authenticated browser session
+- Supplier record in database for Shein
 
-## Cookie Capture Process
+## Cookie Capture
 
-Use the `MyMarketManager.SheinCollector` MAUI app to capture cookies:
+Use the `MyMarketManager.SheinCollector` MAUI app:
 
-1. Launch the app on a mobile device or emulator
-2. Login to Shein.com in the WebView
-3. Click "Done - Collect Cookies" button
-4. Cookies are saved to `shein_cookies.json`
+1. Launch app and login to Shein.com in WebView
+2. Click "Done - Collect Cookies"
+3. Cookies saved as JSON in `CookieFile` format
 
 See `src/MyMarketManager.SheinCollector/README.md` for details.
 
-## Cookie File Format
-
-The cookie file must be in JSON format:
+## CookieFile Format
 
 ```json
 {
-  "Id": "12345678-1234-1234-1234-123456789012",
-  "SupplierId": "87654321-4321-4321-4321-210987654321",
-  "Domain": "shein.com",
-  "CapturedAt": "2025-10-10T00:00:00Z",
-  "ExpiresAt": "2025-10-17T00:00:00Z",
-  "Cookies": [
-    {
+  "domain": "shein.com",
+  "capturedAt": "2025-10-10T00:00:00Z",
+  "expiresAt": "2025-10-17T00:00:00Z",
+  "cookies": {
+    "session_id": {
       "name": "session_id",
       "value": "abc123...",
       "domain": ".shein.com",
       "path": "/",
       "secure": true,
-      "httpOnly": true,
-      "sameSite": "Lax"
+      "httpOnly": true
     }
-  ],
-  "Metadata": {
-    "user_agent": "Mozilla/5.0...",
-    "platform": "android"
   }
 }
 ```
 
-## Using the Scraper
-
-### Basic Usage
+## Basic Usage
 
 ```csharp
-using MyMarketManager.Data.Services.Scraping;
+using MyMarketManager.Scrapers;
+using MyMarketManager.Scrapers.Core;
 
-// 1. Load cookie file (from API POST, file system, etc.)
-var cookieJson = await File.ReadAllTextAsync("shein_cookies.json");
-var cookieFile = JsonSerializer.Deserialize<CookieFile>(cookieJson);
+// 1. Load cookie file
+var cookieJson = await File.ReadAllTextAsync("cookies.json");
+var cookies = JsonSerializer.Deserialize<CookieFile>(cookieJson);
 
-// 2. Create scraper instance
-var scraper = new SheinScraper(dbContext, logger);
+// 2. Create scraper with dependencies
+var scraper = new SheinWebScraper(
+    dbContext, 
+    logger, 
+    Options.Create(new ScraperConfiguration()),
+    sessionFactory);
 
-// 3. Get last successful scrape timestamp (optional)
-DateTimeOffset? lastScrape = await dbContext.ScraperSessions
-    .Where(s => s.SupplierId == cookieFile.SupplierId && s.Status == ScraperSessionStatus.Completed)
-    .OrderByDescending(s => s.CompletedAt)
-    .Select(s => s.CompletedAt)
-    .FirstOrDefaultAsync();
-
-// 4. Run the scraper
-try
-{
-    var batchId = await scraper.ScrapeOrdersAsync(cookieFile, lastScrape, cancellationToken);
-    
-    Console.WriteLine($"Scraping completed. Staging batch ID: {batchId}");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Scraping failed: {ex.Message}");
-}
+// 3. Start scraping
+await scraper.StartScrapingAsync(supplierId, cookies, cancellationToken);
 ```
 
-### Validating Cookies
+## How It Works
 
-Before scraping, validate that cookies are still valid:
+The scraper:
+1. Creates a `StagingBatch` with `BatchType.WebScrape`
+2. Fetches `https://shein.com/user/orders/list` with cookies
+3. Extracts `gbRawData` JSON from HTML and parses order numbers
+4. For each order:
+   - Fetches `https://shein.com/user/orders/detail/{orderNumber}`
+   - Parses `gbRawData` JSON for order details and items
+   - Creates `StagingPurchaseOrder` with items
+5. Marks batch as completed
 
-```csharp
-var scraper = new SheinScraper(dbContext, logger);
+## Scraped Data
 
-if (await scraper.ValidateCookiesAsync(cookieFile, cancellationToken))
-{
-    Console.WriteLine("Cookies are valid");
-    // Proceed with scraping
-}
-else
-{
-    Console.WriteLine("Cookies expired or invalid. Re-login required.");
-}
-```
+**Order Fields:**
+- `billno` - Order number (supplier reference)
+- `addTime` - Order date (Unix timestamp)
+- `pay_time` - Payment timestamp
+- `totalPrice.amount` - Total order amount
+- `currency_code` - Currency
 
-### Background Task Example
+**Item Fields:**
+- `goods_sn` - SKU/item reference
+- `goods_name` - Product name
+- `goods_qty` - Quantity ordered
+- `goods_unit_price` - Unit price
+- `sku_attributes` - Color, size, etc.
+- `goods_url_name` - Product page slug
 
-Run scraping as a background task:
+All scraped data stored as JSON in `StagingPurchaseOrder.RawData` and `StagingPurchaseOrderItem.RawData`.
 
-```csharp
-public class ScraperBackgroundService : BackgroundService
-{
-    private readonly IServiceProvider _services;
-    private readonly ILogger<ScraperBackgroundService> _logger;
+## Processing Staging Data
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            using var scope = _services.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<MyMarketManagerDbContext>();
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<SheinScraper>>();
-
-            // Get pending cookie files (implement your own queue/storage)
-            var cookieFiles = await GetPendingCookieFiles();
-
-            foreach (var cookieFile in cookieFiles)
-            {
-                var scraper = new SheinScraper(dbContext, logger);
-                
-                try
-                {
-                    await scraper.ScrapeOrdersAsync(cookieFile, null, stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to scrape for supplier {SupplierId}", cookieFile.SupplierId);
-                }
-            }
-
-            // Wait before next scrape cycle
-            await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
-        }
-    }
-}
-```
-
-## Scraper Configuration
-
-The Shein scraper comes pre-configured with:
-
-- **Domain**: `shein.com`
-- **Orders List URL**: `https://shein.com/user/orders/list`
-- **Order Detail Pattern**: `https://shein.com/user/orders/detail?order_id={orderId}`
-- **Request Delay**: 2 seconds between requests
-- **User Agent**: Chrome/Edge on macOS
-- **Success Indicator**: Response contains `gbRawData` string
-
-To view or modify the configuration:
+After scraping, review and import staging data:
 
 ```csharp
-var scraper = new SheinScraper(dbContext, logger);
-var config = scraper.Configuration;
-
-Console.WriteLine($"Domain: {config.Domain}");
-Console.WriteLine($"Request delay: {config.RequestDelayMs}ms");
-Console.WriteLine($"User agent: {config.UserAgent}");
-```
-
-## Staging Batch Processing
-
-After scraping completes, a `StagingBatch` is created with related `StagingPurchaseOrder` entities:
-
-```csharp
-// Find the staging batch
-var batch = await dbContext.StagingBatches
+var batch = await context.StagingBatches
     .Include(b => b.StagingPurchaseOrders)
-    .FirstOrDefaultAsync(b => b.Id == batchId);
+        .ThenInclude(o => o.Items)
+    .FirstAsync(b => b.Id == batchId);
 
-Console.WriteLine($"Batch status: {batch.Status}");
-Console.WriteLine($"Orders found: {batch.StagingPurchaseOrders.Count}");
-
-// Process each staged order
 foreach (var order in batch.StagingPurchaseOrders)
 {
+    // Review and import to PurchaseOrder entities
     Console.WriteLine($"Order: {order.SupplierReference}");
-    Console.WriteLine($"Date: {order.OrderDate}");
-    Console.WriteLine($"Raw data: {order.RawData}");
-    
-    // TODO: Import logic to map to actual PurchaseOrder entities
+    Console.WriteLine($"Items: {order.Items.Count}");
 }
 ```
 
-## Tracking Scraper Sessions
+## Configuration
 
-Create a `ScraperSession` entity to track each scraping run:
+Default configuration from `ScraperConfiguration`:
+- **Request Delay**: 1 second
+- **Request Timeout**: 30 seconds
+- **User Agent**: Chrome/Edge on macOS
 
-```csharp
-var session = new ScraperSession
-{
-    Id = Guid.NewGuid(),
-    SupplierId = cookieFile.SupplierId,
-    StartedAt = DateTimeOffset.UtcNow,
-    Status = ScraperSessionStatus.Running
-};
-dbContext.ScraperSessions.Add(session);
-await dbContext.SaveChangesAsync();
-
-try
-{
-    var batchId = await scraper.ScrapeOrdersAsync(cookieFile, null, cancellationToken);
-    
-    session.CompletedAt = DateTimeOffset.UtcNow;
-    session.Status = ScraperSessionStatus.Completed;
-    session.StagingBatchId = batchId;
-}
-catch (Exception ex)
-{
-    session.Status = ScraperSessionStatus.Failed;
-    session.ErrorMessage = ex.Message;
-}
-
-await dbContext.SaveChangesAsync();
-```
-
-## Error Handling
-
-Common errors and solutions:
-
-### Invalid Cookies
-```
-InvalidOperationException: Cookies are not valid or have expired
-```
-**Solution**: Re-capture cookies using the MAUI app.
-
-### Rate Limiting
-```
-HttpRequestException: 429 Too Many Requests
-```
-**Solution**: Increase `RequestDelayMs` in scraper configuration or wait before retrying.
-
-### Network Errors
-```
-HttpRequestException: Connection timeout
-```
-**Solution**: Check network connectivity. Increase `RequestTimeoutSeconds` if needed.
-
-### HTML Parsing Errors
-```
-NullReferenceException: Object reference not set
-```
-**Solution**: Shein may have changed their HTML structure. Update selectors in `ScraperConfiguration`.
+Override via application configuration or DI.
 
 ## Testing
 
-Run the scraper tests:
+Run scraper tests:
 
 ```bash
-dotnet test --filter "FullyQualifiedName~SheinScraperTests"
+dotnet test --filter "FullyQualifiedName~SheinWebScraper"
 ```
 
-Test individual components:
+Tests use HTML fixtures from real Shein pages (sanitized) in `tests/MyMarketManager.Scrapers.Tests/Fixtures/Html/`.
 
-```bash
-dotnet test --filter "FullyQualifiedName~CookieFileTests"
-dotnet test --filter "FullyQualifiedName~ScraperConfigurationTests"
-```
+## Common Issues
 
-## Next Steps
+**Invalid Cookies**
+- Cookies expire after ~7 days
+- Re-capture using SheinCollector app
 
-1. **Implement HTML Parsing**: Replace regex with HtmlAgilityPack or AngleSharp
-2. **Add Order Detail Parsing**: Extract all fields from order HTML
-3. **Implement Import Logic**: Map staging orders to actual `PurchaseOrder` entities
-4. **Add Pagination**: Support scraping multiple pages of orders
-5. **Implement API Endpoint**: Create GraphQL mutation or REST endpoint to receive cookies
-6. **Add Scheduling**: Set up periodic scraping with Hangfire or Quartz.NET
+**Rate Limiting**
+- Default 1 second delay should prevent issues
+- Increase via `ScraperConfiguration.RequestDelay` if needed
 
-## Related Documentation
-
-- [Web Scraping Architecture](web-scraping.md) - Complete scraping infrastructure documentation
-- [Data Layer](data-layer.md) - Entity Framework and database management
-- [SheinCollector README](../src/MyMarketManager.SheinCollector/README.md) - Cookie capture app documentation
-
-## Support
-
-For issues or questions:
-- Check logs for detailed error messages
-- Review the test files for usage examples
-- See `docs/web-scraping.md` for architecture details
+**Parsing Errors**
+- Shein may change HTML/JSON structure
+- Check `gbRawData` extraction in `SheinWebScraper.ExtractGbRawData()`
+- Update JSON property paths if needed

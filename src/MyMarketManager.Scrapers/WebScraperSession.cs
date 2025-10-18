@@ -29,6 +29,8 @@ public class WebScraperSession(HttpClient httpClient, ILogger logger) : IWebScra
         if (_disposed)
             return;
 
+        // Dispose HttpClient, which also disposes the underlying handler.
+        // The factory creates the HttpClient for this session to own.
         _httpClient?.Dispose();
         _disposed = true;
     }
