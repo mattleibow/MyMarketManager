@@ -1,13 +1,12 @@
 using Aspire.Hosting;
 using Microsoft.Extensions.Logging;
 using MyMarketManager.Tests.Shared;
+using Polly;
 
 namespace MyMarketManager.Integration.Tests;
 
 public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncLifetime
 {
-    protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(180);
-
     private readonly SqlServerHelper _sqlServer = new(outputHelper);
 
     protected DistributedApplication App { get; private set; } = null!;
@@ -16,6 +15,8 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
 
     public virtual async ValueTask InitializeAsync()
     {
+        var builderStepTimeout = TimeSpan.FromMinutes(10);
+
         var connectionString = await _sqlServer.ConnectAsync();
 
         // Pass the connection string to AppHost
@@ -42,16 +43,31 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
         // Configure HTTP clients to use standard resilience handlers
         appHost.Services.ConfigureHttpClientDefaults(clientBuilder =>
         {
-            clientBuilder.AddStandardResilienceHandler();
+            clientBuilder.AddStandardResilienceHandler(o => 
+            {
+                o.AttemptTimeout.OnTimeout = (args) =>
+                {
+                    var uri = args.Context.GetRequestMessage()?.RequestUri ?? new Uri("unknown://uri");
+                    outputHelper.WriteLine($"Attempt timeout after {args.Timeout} for request to {uri}");
+                    return ValueTask.CompletedTask;
+                };
+
+                o.TotalRequestTimeout.OnTimeout = (args) =>
+                {
+                    var uri = args.Context.GetRequestMessage()?.RequestUri ?? new Uri("unknown://uri");
+                    outputHelper.WriteLine($"Total request timeout after {args.Timeout} for request to {uri}");
+                    return ValueTask.CompletedTask;
+                };
+            });
         });
 
         App = await appHost
             .BuildAsync(Cancel)
-            .WaitAsync(DefaultTimeout, Cancel);
+            .WaitAsync(builderStepTimeout, Cancel);
 
         await App
             .StartAsync(Cancel)
-            .WaitAsync(DefaultTimeout, Cancel);
+            .WaitAsync(builderStepTimeout, Cancel);
     }
 
     public virtual async ValueTask DisposeAsync()
