@@ -7,7 +7,6 @@ namespace MyMarketManager.Integration.Tests;
 /// <summary>
 /// Playwright-based UI tests for end-to-end product workflows
 /// </summary>
-[Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
 public class ProductWorkflowTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase(outputHelper)
 {
     [Fact]
