@@ -1,0 +1,147 @@
+=== ENVIRONMENT INFORMATION ===
+
+Date: 2025-10-19T18:52:00Z
+
+=== SYSTEM INFO ===
+Linux runnervmzdgdc 6.14.0-1012-azure #12~24.04.1-Ubuntu SMP Tue Sep  9 19:01:23 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+
+=== .NET SDK INFO ===
+.NET SDK:
+ Version:           10.0.100-rc.2.25502.107
+ Commit:            89c8f6a112
+ Workload version:  10.0.100-rc.2.25513.4
+ MSBuild version:   18.0.0-preview-25502-107+89c8f6a11
+
+Runtime Environment:
+ OS Name:     ubuntu
+ OS Version:  24.04
+ OS Platform: Linux
+ RID:         linux-x64
+ Base Path:   /usr/share/dotnet/sdk/10.0.100-rc.2.25502.107/
+
+.NET workloads installed:
+ [maui-android]
+   Installation Source: SDK 10.0.100-rc.2
+   Manifest Version:    10.0.0-rc.2.25504.7/10.0.100-rc.2
+   Manifest Path:       /usr/share/dotnet/sdk-manifests/10.0.100-rc.2/microsoft.net.sdk.maui/10.0.0-rc.2.25504.7/WorkloadManifest.json
+   Install Type:        FileBased
+
+Configured to use workload sets when installing new manifests.
+
+Host:
+  Version:      10.0.0-rc.2.25502.107
+  Architecture: x64
+  Commit:       89c8f6a112
+
+.NET SDKs installed:
+  8.0.121 [/usr/share/dotnet/sdk]
+  8.0.206 [/usr/share/dotnet/sdk]
+  8.0.318 [/usr/share/dotnet/sdk]
+  8.0.415 [/usr/share/dotnet/sdk]
+  9.0.111 [/usr/share/dotnet/sdk]
+  9.0.205 [/usr/share/dotnet/sdk]
+  9.0.306 [/usr/share/dotnet/sdk]
+  10.0.100-rc.2.25502.107 [/usr/share/dotnet/sdk]
+
+.NET runtimes installed:
+  Microsoft.AspNetCore.App 8.0.6 [/usr/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 8.0.21 [/usr/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 9.0.6 [/usr/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 9.0.10 [/usr/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 10.0.0-rc.2.25502.107 [/usr/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.NETCore.App 8.0.6 [/usr/share/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 8.0.21 [/usr/share/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 9.0.6 [/usr/share/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 9.0.10 [/usr/share/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 10.0.0-rc.2.25502.107 [/usr/share/dotnet/shared/Microsoft.NETCore.App]
+
+Other architectures found:
+  None
+
+Environment variables:
+  DOTNET_MULTILEVEL_LOOKUP                 [0]
+  DOTNET_NOLOGO                            [1]
+  DOTNET_ROOT                              [/usr/share/dotnet]
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE        [1]
+  DOTNET_SYSTEM_NET_DISABLEIPV6            [1]
+
+global.json file:
+  Not found
+
+Learn more:
+  https://aka.ms/dotnet/info
+
+Download .NET:
+  https://aka.ms/dotnet/download
+
+=== DOCKER INFO ===
+Docker version 28.0.4, build b8034c0
+Client: Docker Engine - Community
+ Version:    28.0.4
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.29.1
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v2.38.2
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 2
+ Server Version: 28.0.4
+ Storage Driver: overlay2
+  Backing Filesystem: extfs
+  Supports d_type: true
+  Using metacopy: false
+  Native Overlay Diff: false
+  userxattr: false
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+
+=== DOCKER IMAGES ===
+REPOSITORY                       TAG           IMAGE ID       CREATED        SIZE
+mcr.microsoft.com/mssql/server   2022-latest   3c94bf005911   2 months ago   1.61GB
+testcontainers/ryuk              0.12.0        a926383422af   4 months ago   15.8MB
+
+=== DCP INFO ===
+{"version":"0.17.2","commitHash":"87a04b7b68549eb11b9bf3ef5a2ad42845656d31","buildTimestamp":"2025-09-23T23:59:43Z"}
+{"version":"0.17.2","commitHash":"87a04b7b68549eb11b9bf3ef5a2ad42845656d31","buildTimestamp":"2025-09-23T23:59:43Z","containers":{"runtime":"docker","hostName":"host.docker.internal","installed":true,"running":true}}
+
+=== NETWORK INFO ===
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host noprefixroute 
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 7c:ed:8d:2a:70:0c brd ff:ff:ff:ff:ff:ff
+    inet 10.1.0.197/20 metric 100 brd 10.1.15.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::7eed:8dff:fe2a:700c/64 scope link 
+       valid_lft forever preferred_lft forever
+3: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+    link/ether ca:1f:87:d3:ad:ca brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::c81f:87ff:fed3:adca/64 scope link 
+       valid_lft forever preferred_lft forever
+
+=== LISTENING PORTS ===
+State  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess                         
+LISTEN 0      4096         0.0.0.0:22         0.0.0.0:*                                   
+LISTEN 0      4096      127.0.0.54:53         0.0.0.0:*                                   
+LISTEN 0      4096   127.0.0.53%lo:53         0.0.0.0:*                                   
+LISTEN 0      511                *:2301             *:*    users:(("node",pid=5994,fd=27))
+LISTEN 0      4096            [::]:22            [::]:*                                   
+LISTEN 0      4096               *:42551            *:*                                   
+LISTEN 0      4096               *:38191            *:*                                   
