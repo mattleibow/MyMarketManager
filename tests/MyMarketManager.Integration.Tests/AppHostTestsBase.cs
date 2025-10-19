@@ -15,6 +15,10 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
 
     public virtual async ValueTask InitializeAsync()
     {
+        // Configure DCP to prefer IPv4 to avoid issues in environments where IPv6 is disabled
+        // (e.g., when DOTNET_SYSTEM_NET_DISABLEIPV6=1 is set)
+        Environment.SetEnvironmentVariable("DCP_IP_VERSION_PREFERENCE", "ipv4");
+
         var builderStepTimeout = TimeSpan.FromMinutes(10);
 
         var connectionString = await _sqlServer.ConnectAsync();
