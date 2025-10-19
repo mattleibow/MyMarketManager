@@ -25,9 +25,6 @@ jobs:
           - os: windows-latest
             filter: --filter "Requires!=SSL"
 
-    env:
-      DCP_IP_VERSION_PREFERENCE: ipv4
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
