@@ -10,7 +10,7 @@ namespace MyMarketManager.Integration.Tests;
 public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase(outputHelper)
 {
     [Fact]
-    [Trait("Category", "LongRunning")]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task HomePage_LoadsWithoutErrors()
     {
         // Arrange & Act
@@ -29,7 +29,7 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
     }
 
     [Fact]
-    [Trait("Category", "LongRunning")]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task ProductsPage_LoadsWithoutErrors()
     {
         // Arrange & Act
@@ -49,7 +49,7 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
     }
 
     [Fact]
-    [Trait("Category", "LongRunning")]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task AddProductPage_LoadsWithoutErrors()
     {
         // Arrange & Act
@@ -72,7 +72,7 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
     }
 
     [Fact]
-    [Trait("Category", "LongRunning")]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task NotFoundPage_LoadsWithoutErrors()
     {
         // Arrange & Act
@@ -89,7 +89,7 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
     }
 
     [Fact]
-    [Trait("Category", "LongRunning")]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task GraphQLEndpoint_IsAccessible()
     {
         // Arrange & Act
@@ -105,7 +105,7 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
     }
 
     [Fact]
-    [Trait("Category", "LongRunning")]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task BrowserConsole_NoUnexpectedErrors()
     {
         // This test verifies that basic navigation doesn't produce console errors

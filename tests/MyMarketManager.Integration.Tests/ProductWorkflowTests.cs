@@ -1,4 +1,5 @@
 using Microsoft.Playwright;
+using MyMarketManager.Tests.Shared;
 using static Microsoft.Playwright.Assertions;
 
 namespace MyMarketManager.Integration.Tests;
@@ -9,7 +10,7 @@ namespace MyMarketManager.Integration.Tests;
 public class ProductWorkflowTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase(outputHelper)
 {
     [Fact]
-    [Trait("Category", "LongRunning")]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task CreateProduct_WorkflowCompletes_Successfully()
     {
         // Arrange - Navigate to products page
@@ -54,7 +55,7 @@ public class ProductWorkflowTests(ITestOutputHelper outputHelper) : PlaywrightTe
     }
 
     [Fact]
-    [Trait("Category", "LongRunning")]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task EditProduct_WorkflowCompletes_Successfully()
     {
         // Arrange - First create a product to edit
@@ -100,7 +101,7 @@ public class ProductWorkflowTests(ITestOutputHelper outputHelper) : PlaywrightTe
     }
 
     [Fact]
-    [Trait("Category", "LongRunning")]
+    [Trait(TestCategories.Key, TestCategories.Values.LongRunning)]
     public async Task ProductsPage_SearchFunctionality_Works()
     {
         // Arrange - Navigate to products page
