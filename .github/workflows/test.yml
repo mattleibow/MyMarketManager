@@ -51,6 +51,8 @@ jobs:
 
       - name: Run tests
         run: dotnet test --no-build --configuration Release --verbosity normal --logger trx --collect:"XPlat Code Coverage" ${{ matrix.filter }}
+        env:
+          DCP_IP_VERSION_PREFERENCE: ipv4
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
