@@ -6,6 +6,7 @@ namespace MyMarketManager.Integration.Tests;
 
 [Trait(TestCategories.Key, TestCategories.Values.GraphQL)]
 [Trait(TestRequirements.Key, TestRequirements.Values.SSL)]
+[Trait("Category", "LongRunning")]
 public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsBase(outputHelper)
 {
     [Fact]
