@@ -109,7 +109,15 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
         {
             if (msg.Type == "error")
             {
-                consoleErrors.Add(msg.Text);
+                // Filter out external resource loading errors (CORS, CDN issues)
+                // These are not application errors and can occur due to network/CDN issues
+                var text = msg.Text;
+                if (text.Contains("Access to font") && text.Contains("CORS policy"))
+                    return;
+                if (text.Contains("Failed to load resource") && text.Contains("ERR_FAILED"))
+                    return;
+                
+                consoleErrors.Add(text);
             }
         };
 
