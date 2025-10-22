@@ -20,7 +20,6 @@ public static class MauiProgram
 #endif
 
         builder.Services.AddSingleton<MainPage>();
-        builder.Services.AddSingleton<CookieService>();
 
         return builder.Build();
     }
