@@ -34,6 +34,13 @@
                     BackgroundColor="#512BD4"
                     TextColor="White"
                     WidthRequest="200" />
+            <Button x:Name="CopyJsonButton"
+                    Text="Copy JSON"
+                    Clicked="OnCopyJsonClicked"
+                    BackgroundColor="#0078D4"
+                    TextColor="White"
+                    WidthRequest="120"
+                    IsEnabled="False" />
             <Button Text="Reload"
                     Clicked="OnReloadClicked"
                     BackgroundColor="#666666"
