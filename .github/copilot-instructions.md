@@ -62,6 +62,20 @@ Test execution time: ~35-40 seconds for unit tests. Integration tests (including
 
 **IMPORTANT**: All tests must always run. Tests are never disabled or excluded by default unless explicitly instructed for a specific reason. Running tests is the only way to ensure the project works correctly.
 
+**CRITICAL**: When running integration tests, you MUST set the environment variable `DCP_IP_VERSION_PREFERENCE=ipv4`. Without this environment variable, all integration tests will fail due to IPv6-related networking issues in .NET Aspire's Developer Control Plane (DCP). Run integration tests with:
+
+```bash
+DCP_IP_VERSION_PREFERENCE=ipv4 dotnet test tests/MyMarketManager.Integration.Tests/MyMarketManager.Integration.Tests.csproj
+```
+
+Or, if you want to run all the tests:
+
+```bash
+DCP_IP_VERSION_PREFERENCE=ipv4 dotnet test
+```
+
+This environment variable is essential for the Copilot agent and does not need to be applied to CI/CD pipelines.
+
 ### Run the Application
 
 **IMPORTANT**: Always run the application through the Aspire AppHost. Do NOT run `MyMarketManager.WebApp` directly.
@@ -203,7 +217,7 @@ From `.editorconfig`:
 
 GitHub Actions workflows:
 - **build.yml**: Builds solution on push/PR to main
-- **test.yml**: Runs tests with filter `Category!=LongRunning` on push/PR to main
+- **test.yml**: Runs tests on push/PR to main
 
 Both workflows:
 1. Checkout code
@@ -216,7 +230,6 @@ Both workflows:
 - **Docker is required**: SQL Server runs in a container; ensure Docker Desktop is running
 - **Migrations run automatically**: No need to manually run `dotnet ef database update`
 - **GraphQL client generation is manual**: Use `dotnet graphql generate` to regenerate client code after schema changes
-- **Test filter is critical**: Always use `--filter "Category!=LongRunning"` to exclude slow integration tests
 - **No authentication**: Current implementation has no auth; suitable for local development only
 - **.NET 10 is preview**: Using RC SDK version, expect preview warnings in build output
 
