@@ -1,10 +1,11 @@
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
 using MyMarketManager.Scrapers.Core;
+using MyMarketManager.Scrapers.Shein;
 using MyMarketManager.Tests.Shared;
 using NSubstitute;
 
-namespace MyMarketManager.Scrapers.Tests;
+namespace MyMarketManager.Scrapers.Tests.Shein;
 
 [Trait(TestCategories.Key, TestCategories.Values.Database)]
 public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTests<SheinWebScraper>(outputHelper)

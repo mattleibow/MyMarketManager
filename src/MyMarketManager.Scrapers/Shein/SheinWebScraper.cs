@@ -8,7 +8,7 @@ using MyMarketManager.Data;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
 
-namespace MyMarketManager.Scrapers;
+namespace MyMarketManager.Scrapers.Shein;
 
 /// <summary>
 /// Web scraper implementation for Shein.com orders.
