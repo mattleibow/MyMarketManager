@@ -12,7 +12,7 @@ namespace MyMarketManager.Scrapers.Tests;
 public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper)
     where TScraper : WebScraper
 {
-    protected ILogger<TScraper> ScraperLogger { get; } = CreateLogger();
+    protected ILogger<TScraper> ScraperLogger { get; } = Substitute.For<ILogger<TScraper>>();
 
     protected IOptions<ScraperConfiguration> ScraperConfig { get; } = CreateConfiguration();
 
@@ -36,37 +36,21 @@ public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteT
         return factory;
     }
 
-    protected static ILogger<TScraper> CreateLogger()
-    {
-        var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.SetMinimumLevel(LogLevel.Debug);
-        });
-        return loggerFactory.CreateLogger<TScraper>();
-    }
-
     protected static IOptions<ScraperConfiguration> CreateConfiguration()
     {
         var config = new ScraperConfiguration();
         return Options.Create(config);
     }
 
-    protected string LoadHtmlFixture(string fileName)
-    {
-        // Get the directory where the test assembly is located
-        var assemblyLocation = Assembly.GetExecutingAssembly().Location;
-        var assemblyDir = Path.GetDirectoryName(assemblyLocation) ?? throw new InvalidOperationException("Could not determine assembly directory");
+    protected static string FixturesRootPath =>
+        Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "Fixtures");
 
-        // Construct path to fixtures directory
-        var fixturePath = Path.Combine(assemblyDir, "Fixtures", "Html", fileName);
+    protected static bool FixtureFileExists(string fixturePath) =>
+        File.Exists(Path.Combine(FixturesRootPath, fixturePath));
 
-        if (!File.Exists(fixturePath))
-        {
-            throw new FileNotFoundException($"HTML fixture '{fileName}' not found at: {fixturePath}");
-        }
+    protected static string LoadFixture(string fileName) =>
+        File.ReadAllText(Path.Combine(FixturesRootPath, fileName));
 
-        return File.ReadAllText(fixturePath);
-    }
-
-
+    protected static string LoadHtmlFixture(string fileName) =>
+        LoadFixture(Path.Combine("Html", fileName));
 }

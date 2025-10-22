@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
 using MyMarketManager.Scrapers.Core;
@@ -84,12 +85,48 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         // Verify orders were scraped
         var orders = Context.StagingPurchaseOrders.ToList();
         Assert.Single(orders); // Should have scraped TEST001ORDER001
-        
+
         // Order should be completed successfully now
         var order = orders[0];
         Assert.Equal(ProcessingStatus.Completed, order.Status);
         Assert.Equal("TEST001ORDER001", order.SupplierReference);
         Assert.NotNull(order.RawData);
         Assert.NotEmpty(order.Items);
+    }
+
+    public static bool HasIntegrationCookies =>
+        FixtureFileExists("cookies.shein.json");
+
+    [Fact(Skip = "This requires real cookies stored at Fixtures/cookies.shein.json", SkipUnless = nameof(HasIntegrationCookies))]
+    public async Task Integration()
+    {
+        // Arrange
+        var supplier = new Supplier
+        {
+            Id = Guid.NewGuid(),
+            Name = "Shein"
+        };
+        Context.Suppliers.Add(supplier);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var scraper = new SheinWebScraper(
+            Context,
+            ScraperLogger,
+            ScraperConfig,
+            new WebScraperSessionFactory(Substitute.For<ILogger<WebScraperSessionFactory>>(), ScraperConfig));
+
+        // Act
+        var cookies = CookieFile.FromJson(LoadFixture("cookies.shein.json"));
+        await scraper.StartScrapingAsync(supplier.Id, cookies, TestContext.Current.CancellationToken);
+
+        // Assert
+
+        // Verify batch was created
+        var batches = Context.StagingBatches.ToList();
+        Assert.NotEmpty(batches);
+
+        // Verify orders were scraped
+        var orders = Context.StagingPurchaseOrders.ToList();
+        Assert.NotEmpty(orders);
     }
 }

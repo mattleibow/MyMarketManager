@@ -120,7 +120,7 @@ public abstract class WebScraper(
     public async Task ScrapeBatchAsync(StagingBatch batch, CancellationToken cancellationToken)
     {
         // Step 0: Create scraping session with cookies
-        var cookies = JsonSerializer.Deserialize<CookieFile>(batch.FileContents ?? "{}", JsonSerializerOptions.Web) ?? new CookieFile();
+        var cookies = CookieFile.FromJson(batch.FileContents);
         using var session = SessionFactory.CreateSession(cookies);
 
         // Step 1: Scrape orders list page

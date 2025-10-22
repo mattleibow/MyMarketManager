@@ -227,13 +227,7 @@ public partial class MainPage : ContentPage
             }
         };
 
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-
-        return JsonSerializer.Serialize(cookieFile, options);
+        return cookieFile.ToJson();
     }
 
     private async Task<string> FetchOrdersWithCookies(List<CookieData> cookies)
