@@ -86,11 +86,7 @@ public class CookieFileTests
         };
 
         // Act
-        var json = JsonSerializer.Serialize(cookieFile, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        });
+        var json = cookieFile.ToJson();
 
         // Assert
         Assert.NotEmpty(json);
@@ -125,10 +121,7 @@ public class CookieFileTests
         }";
 
         // Act
-        var cookieFile = JsonSerializer.Deserialize<CookieFile>(json, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
+        var cookieFile = CookieFile.FromJson(json);
 
         // Assert
         Assert.NotNull(cookieFile);
