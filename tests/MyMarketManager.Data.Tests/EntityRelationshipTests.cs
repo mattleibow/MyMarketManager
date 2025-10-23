@@ -25,14 +25,14 @@ public class EntityRelationshipTests(ITestOutputHelper outputHelper) : SqliteTes
             Id = Guid.NewGuid(),
             SupplierId = supplier.Id,
             OrderDate = DateTimeOffset.UtcNow,
-            Status = ProcessingStatus.Pending
+            Status = ProcessingStatus.Queued
         };
         var order2 = new PurchaseOrder
         {
             Id = Guid.NewGuid(),
             SupplierId = supplier.Id,
             OrderDate = DateTimeOffset.UtcNow,
-            Status = ProcessingStatus.Complete
+            Status = ProcessingStatus.Completed
         };
 
         Context.PurchaseOrders.AddRange(order1, order2);
@@ -71,7 +71,7 @@ public class EntityRelationshipTests(ITestOutputHelper outputHelper) : SqliteTes
             Id = Guid.NewGuid(),
             SupplierId = supplier.Id,
             OrderDate = DateTimeOffset.UtcNow,
-            Status = ProcessingStatus.Pending
+            Status = ProcessingStatus.Queued
         };
         Context.PurchaseOrders.Add(order);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);

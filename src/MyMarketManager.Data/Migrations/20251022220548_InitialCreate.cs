@@ -152,11 +152,15 @@ namespace MyMarketManager.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SupplierId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UploadDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    BatchType = table.Column<int>(type: "int", nullable: false),
+                    SupplierId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    StartedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    CompletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     FileHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     Notes = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ErrorMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FileContents = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
@@ -168,8 +172,7 @@ namespace MyMarketManager.Data.Migrations
                         name: "FK_StagingBatches_Suppliers_SupplierId",
                         column: x => x.SupplierId,
                         principalTable: "Suppliers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -243,6 +246,8 @@ namespace MyMarketManager.Data.Migrations
                     OrderDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     RawData = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsImported = table.Column<bool>(type: "bit", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    ErrorMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)

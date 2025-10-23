@@ -361,11 +361,23 @@ namespace MyMarketManager.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("BatchType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileContents")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FileHash")
                         .IsRequired()
@@ -374,16 +386,16 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("SupplierId")
+                    b.Property<Guid?>("SupplierId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset>("UploadDate")
                         .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
@@ -405,6 +417,9 @@ namespace MyMarketManager.Data.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsImported")
                         .HasColumnType("bit");
 
@@ -420,6 +435,9 @@ namespace MyMarketManager.Data.Migrations
 
                     b.Property<Guid>("StagingBatchId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("SupplierReference")
                         .HasColumnType("nvarchar(max)");
@@ -722,9 +740,7 @@ namespace MyMarketManager.Data.Migrations
                 {
                     b.HasOne("MyMarketManager.Data.Entities.Supplier", "Supplier")
                         .WithMany("StagingBatches")
-                        .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("SupplierId");
 
                     b.Navigation("Supplier");
                 });
