@@ -25,9 +25,10 @@ Resources for developers working on MyMarketManager:
 
 Detailed technical documentation:
 
+- **[Project Status Summary](STATUS_SUMMARY.md)** - Quick visual summary of project completion (start here!)
+- **[Project Status Report](project-status.md)** - Detailed analysis comparing implementation to PRD
 - **[Data Model](data-model.md)** - Complete database schema with entity definitions and relationships
 - **[Product Requirements](product-requirements.md)** - Feature requirements and user stories
-- **[Project Status](project-status.md)** - Current implementation status compared to PRD requirements
 
 ## Quick Links by Role
 
