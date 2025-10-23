@@ -332,6 +332,7 @@ These are integral parts of the system design and requirements, not "extra" feat
 **Status**: ✅ 100% Complete (Web scraping infrastructure implemented)
 
 **Implemented**:
+
 1. ✅ **Web Scraping Framework** (PRD 5.1, 5.7)
    - ✅ Cookie-based authentication
    - ✅ Rate limiting and session management
@@ -343,6 +344,7 @@ These are integral parts of the system design and requirements, not "extra" feat
    - ✅ Smart linking by supplier reference
 
 **Remaining**:
+
 2. **Background Job Integration** (PRD 5.8 Phase 1) - **HIGH**
    - [ ] GraphQL API for cookie submission
    - [ ] Background service for scheduled scraping
