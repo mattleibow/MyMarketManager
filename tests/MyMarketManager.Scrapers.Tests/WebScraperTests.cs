@@ -38,7 +38,7 @@ public class WebScraperTests<TScraper>(ITestOutputHelper outputHelper) : SqliteT
 
     protected static IOptions<ScraperConfiguration> CreateConfiguration()
     {
-        var config = new ScraperConfiguration();
+        var config = ScraperConfiguration.Defaults;
         return Options.Create(config);
     }
 
