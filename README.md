@@ -55,6 +55,7 @@ Navigate to `/graphql` to open the Nitro IDE and explore the API interactively.
 - **[Testing Guide](docs/testing.md)** - Testing infrastructure and platform-specific database provisioning
 - **[Data Model](docs/data-model.md)** - Database schema and entities
 - **[Product Requirements](docs/product-requirements.md)** - Feature requirements and user stories
+- **[Project Status](docs/project-status.md)** - Current implementation status compared to PRD
 
 ### API Documentation
 

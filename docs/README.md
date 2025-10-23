@@ -27,6 +27,7 @@ Detailed technical documentation:
 
 - **[Data Model](data-model.md)** - Complete database schema with entity definitions and relationships
 - **[Product Requirements](product-requirements.md)** - Feature requirements and user stories
+- **[Project Status](project-status.md)** - Current implementation status compared to PRD requirements
 
 ## Quick Links by Role
 
