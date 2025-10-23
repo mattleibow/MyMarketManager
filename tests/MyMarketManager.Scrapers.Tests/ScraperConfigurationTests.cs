@@ -26,7 +26,7 @@ public class ScraperConfigurationTests
         var config = ScraperConfiguration.Defaults;
 
         // Assert
-        Assert.Equal(TimeSpan.FromSeconds(1), config.RequestDelay);
+        Assert.Equal(TimeSpan.FromSeconds(2), config.RequestDelay);
         Assert.Equal(1, config.MaxConcurrentRequests);
         Assert.Equal(TimeSpan.FromSeconds(30), config.RequestTimeout);
         Assert.NotEmpty(config.UserAgent);
