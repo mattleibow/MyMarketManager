@@ -23,14 +23,12 @@
 |-----------|----------|--------|
 | **Infrastructure** | 100% | ✅ Complete - .NET 10, Aspire, EF Core, GraphQL, Tests |
 | **Data Model** | 100% | ✅ Complete - All 14 entities with relationships |
-| **Web Scraping (Primary)** | 100% | ✅ Complete - Framework + Shein (~1,900 LOC) |
-| **Sales Import (Primary)** | 0% | ❌ Missing - Automated CSV/API import not implemented |
-| **Auto-Reconciliation (Primary)** | 0% | ❌ Missing - Fuzzy matching and auto-linking not implemented |
-| **Validation Dashboard (Primary)** | 0% | ❌ Missing - Candidate review UI not implemented |
-| **GraphQL API** | 14% | 🟡 Partial - 1 of 7 entity types (Products only) |
-| **UI Components** | 14% | 🟡 Partial - 1 section (Products); missing validation dashboard |
-| **Manual Entry (Secondary)** | 5% | 🟡 Partial - Product CRUD only; PO/Delivery forms missing |
-| **Reporting** | 0% | ❌ Missing - No automated reports |
+| **Phase 1: PO Automation** | 100% | ✅ Complete - Web scraping framework + Shein (~1,900 LOC) |
+| **Phase 2: Sales Automation** | 0% | ❌ Missing - Import, validation dashboard not implemented |
+| **Phase 3: Reconciliation** | 0% | ❌ Missing - Fuzzy matching, auto-linking not implemented |
+| **Phase 4: API Completion** | 14% | 🟡 Partial - 1 of 7 entity types (Products only) |
+| **Phase 5: Manual Workflows** | 5% | 🟡 Partial - Product CRUD only; PO/Delivery forms missing |
+| **Phase 6: Production Ready** | 0% | ❌ Missing - Auth, mobile optimization not implemented |
 
 ---
 
@@ -311,94 +309,107 @@
 
 ---
 
-## Extra Features (Not in PRD)
+## Implementation Notes
 
-Features implemented beyond PRD scope:
+**Completed Infrastructure & Tools**:
+All infrastructure components that were initially implemented are now documented in the PRD (Section 6 - Integration Requirements):
+- Web scraping framework with cookie-based authentication (~1,900 LOC)
+- SheinCollector MAUI app for cookie capture
+- Type-safe GraphQL client library (StrawberryShake) for cross-platform applications
+- Comprehensive test infrastructure (35/36 tests passing - 97%)
+- Extensive documentation (15+ guides)
 
-1. **Web Scraping Framework** (~1,900 LOC)
-   - Cookie-based authentication
-   - Rate limiting and configuration
-   - Pluggable scraper architecture
-   - PRD specified ZIP upload; this provides live scraping
-
-2. **MAUI SheinCollector App**
-   - Browser cookie capture tool
-   - Not specified in PRD
-
-3. **Standalone GraphQL Client Library**
-   - Type-safe StrawberryShake client
-   - Reusable for MAUI/Blazor WASM
-
-4. **Advanced Test Infrastructure**
-   - Cross-platform database provisioning
-   - 35/36 tests passing (97%)
-
-5. **Comprehensive Documentation**
-   - 15+ detailed guides
-   - Architecture, development, testing docs
+These are integral parts of the system design and requirements, not "extra" features.
 
 ---
 
 ## Development Roadmap
 
-### Phase 1: Core Automation (CRITICAL - Make it an automation platform)
+### Phase 1: Purchase Order Automation (CRITICAL)
 
-**Goal**: Implement the missing automation features to achieve the system's primary purpose
+**Goal**: Automate purchase order ingestion from suppliers
 
-**Priority**: These features must be completed first - without them, the system is just a manual data entry app
+**Status**: ✅ 100% Complete (Web scraping infrastructure implemented)
 
-1. **Automated Sales Import** (PRD 5.5) - **CRITICAL**
+**Implemented**:
+1. ✅ **Web Scraping Framework** (PRD 5.1, 5.7)
+   - ✅ Cookie-based authentication
+   - ✅ Rate limiting and session management
+   - ✅ Pluggable scraper architecture
+   - ✅ Shein scraper implementation (~1,900 LOC)
+   - ✅ SheinCollector MAUI app for cookie capture
+   - ✅ Scheduled scraping capability
+   - ✅ Deduplication logic
+   - ✅ Smart linking by supplier reference
+
+**Remaining**:
+2. **Background Job Integration** (PRD 5.8 Phase 1) - **HIGH**
+   - [ ] GraphQL API for cookie submission
+   - [ ] Background service for scheduled scraping
+   - [ ] Scraping status tracking
+   - [ ] Error notifications and monitoring
+   - [ ] Manual trigger endpoints
+
+### Phase 2: Sales Data Automation (CRITICAL)
+
+**Goal**: Automate sales data import and staging
+
+**Status**: ❌ 0% Complete
+
+**Priority**: These features are CRITICAL - without them, sales data requires manual entry
+
+3. **Automated Sales Import** (PRD 5.5) - **CRITICAL**
    - [ ] CSV/Excel parser for payment provider exports
    - [ ] Field mapping configuration system
    - [ ] Scheduled import jobs (background service)
+   - [ ] API integrations for payment providers (Yoco, Square)
    - [ ] Import history and error tracking
    - [ ] GraphQL mutations and queries for import management
 
-2. **Auto-Reconciliation Engine** (PRD 5.6) - **CRITICAL**
+4. **Staging & Validation Dashboard** (PRD 5.8 Phase 2) - **CRITICAL**
+   - [ ] Pending candidates queue UI
+   - [ ] Similarity search for product suggestions
+   - [ ] Bulk linking operations
+   - [ ] Link/confirm/ignore workflows
+   - [ ] Confidence-based prioritization
+   - [ ] Promotion to production logic
+
+### Phase 3: Reconciliation Automation (CRITICAL)
+
+**Goal**: Automatically reconcile sales to products and inventory
+
+**Status**: ❌ 0% Complete
+
+**Priority**: CRITICAL - This is the core value proposition of the system
+
+5. **Auto-Reconciliation Engine** (PRD 5.6) - **CRITICAL**
    - [ ] Fuzzy matching algorithm implementation
    - [ ] Confidence scoring system (0-100%)
    - [ ] Auto-linking for high-confidence matches (>95%)
    - [ ] Automatic inventory adjustments
    - [ ] Batch reconciliation processing
+   - [ ] Variance detection and reporting
 
-3. **Validation Dashboard** (PRD 5.8 Phase 2) - **CRITICAL**
-   - [ ] Pending candidates queue UI
-   - [ ] Similarity search and suggestions
-   - [ ] Bulk linking operations
-   - [ ] Link/confirm/ignore workflows
-   - [ ] Promotion to production logic
-
-4. **Two-Phase Background Jobs** (PRD 5.8 Phase 1) - **HIGH**
-   - [ ] Overnight web scraping scheduler
-   - [ ] Sales import scheduler
-   - [ ] Auto-reconciliation job
-   - [ ] Deduplication logic
-   - [ ] Error notifications and monitoring
-
-5. **Automated Reporting** (PRD Section 7) - **HIGH**
+6. **Automated Reporting** (PRD Section 7) - **HIGH**
    - [ ] Product performance dashboard (auto-generated)
    - [ ] Ingestion summary reports
    - [ ] Reconciliation statistics
-   - [ ] Profitability analysis
+   - [ ] Profitability analysis by product and event
    - [ ] Reorder recommendations
 
-### Phase 2: API Completion (Support automation workflows)
+### Phase 4: API Completion (Support automation workflows)
 
 **Goal**: Expose remaining entity types to support automation features
 
-6. **GraphQL API Expansion**
+7. **GraphQL API Expansion**
    - [ ] Supplier CRUD operations
    - [ ] Staging entity queries and mutations
    - [ ] Market Event operations
    - [ ] Reconciled Sales queries
    - [ ] Reporting queries
+   - [ ] Filtering, sorting, pagination
 
-7. **Web Scraping Integration**
-   - [ ] Cookie submission API
-   - [ ] Scraping status tracking
-   - [ ] Manual trigger endpoints
-
-### Phase 3: Manual Workflows (Secondary - Exception handling only)
+### Phase 5: Manual Workflows (Secondary - Exception handling only)
 
 **Goal**: Add manual entry forms for cases where automation isn't available
 
@@ -422,7 +433,7 @@ Features implemented beyond PRD scope:
     - [ ] Pricing rule setup
     - [ ] Quality-based markup
 
-### Phase 4: Production Readiness (Polish)
+### Phase 6: Production Readiness (Polish)
 
 **Goal**: Security and operational features
 
@@ -476,30 +487,35 @@ Different perspectives on project completion:
 - ✅ Solid foundation with clean architecture
 - ✅ Modern tech stack (.NET 10, EF Core 9, HotChocolate 15, Aspire)
 - ✅ Complete data model with all entities
-- ✅ **Web scraping infrastructure for automated PO ingestion (~1,900 LOC)**
+- ✅ **Phase 1 Complete: Purchase Order Automation via web scraping (~1,900 LOC)**
 - ✅ 97% test pass rate (35/36)
 - ✅ Comprehensive documentation
 
 **Critical Gaps** (Missing Core Automation):
-- ❌ **Automated sales import** - No CSV/API integration (CRITICAL)
-- ❌ **Auto-reconciliation engine** - No fuzzy matching or auto-linking (CRITICAL)
-- ❌ **Validation dashboard** - Cannot review unresolved items (CRITICAL)
-- ❌ **Two-phase background jobs** - No automated ingestion scheduling (HIGH)
-- ❌ **Automated reporting** - No profit/performance dashboards (HIGH)
+- ❌ **Phase 2: Sales Data Automation** - No CSV/API import or validation dashboard (CRITICAL)
+- ❌ **Phase 3: Reconciliation Automation** - No fuzzy matching or auto-linking (CRITICAL)
+- ❌ **Phase 2-3 Background Jobs** - No automated scheduling (HIGH)
+- ❌ **Phase 3 Reporting** - No profit/performance dashboards (HIGH)
 
 **Secondary Gaps** (Manual Workflows):
-- ❌ Manual PO entry forms (low priority - exception handling)
-- ❌ Manual delivery recording (low priority - exception handling)
-- ❌ Manual stocktake UI (low priority - exception handling)
+- ❌ Manual PO entry forms (Phase 5 - low priority, exception handling)
+- ❌ Manual delivery recording (Phase 5 - low priority, exception handling)
+- ❌ Manual stocktake UI (Phase 5 - low priority, exception handling)
 
 **Current State Assessment**:
-The system has **excellent infrastructure** (100% complete) but is missing **all 5 critical automation features**. This makes it currently function as a **manual data entry system** rather than the intended **automated aggregation platform**.
+The system has **excellent infrastructure** (100% complete) and **Phase 1 complete** (purchase order automation via web scraping). However, **Phases 2 and 3 are missing entirely**, making the system currently function as a **manual data entry system** for sales rather than the intended **automated aggregation platform**.
 
 **Next Steps**:
-Focus exclusively on **Phase 1 (Core Automation)**. Do not implement manual workflows (Phase 3) until automation is complete. The value proposition is automation, not manual entry forms.
+1. **Complete Phase 2** (Sales Data Automation) - Import and validation
+2. **Complete Phase 3** (Reconciliation Automation) - Matching and reporting
+3. **Complete Phase 4** (API Completion) - Support automation workflows
+4. **Phase 5** (Manual Workflows) can wait until automation is proven
+
+Do not implement manual workflows (Phase 5) until Phases 2 and 3 automation is complete. The value proposition is automation, not manual entry forms.
 
 **Bottom Line**:
 - **Infrastructure**: Production-ready ✅
-- **Automation (Primary Purpose)**: 20% complete (web scraping only) 🟡
-- **Manual Workflows (Secondary)**: 5% complete (product CRUD only) 🟡
-- **Priority**: Implement the 5 missing automation features in Phase 1 before anything else
+- **Phase 1 (PO Automation)**: 100% complete ✅
+- **Phase 2 (Sales Automation)**: 0% complete ❌
+- **Phase 3 (Reconciliation)**: 0% complete ❌
+- **Priority**: Complete Phases 2 and 3 (automation) before Phase 5 (manual workflows)

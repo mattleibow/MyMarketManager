@@ -151,6 +151,10 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 
 **Primary Integrations (Automated)**:
 - **Web Scraping APIs**: Automated extraction from supplier websites (Shein, others)
+  - Cookie-based authentication framework
+  - Rate limiting and session management
+  - Pluggable scraper architecture for multiple suppliers
+  - MAUI SheinCollector app for cookie capture
 - **Payment Provider APIs**: Automatic sales data import from Yoco, Square, etc.
 - **File Processing**: Automated parsing of uploaded CSV/Excel/ZIP files
 - **Background Jobs**: Scheduled ingestion, reconciliation, and reporting tasks
@@ -165,7 +169,12 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 - Configurable parsers per supplier with field mapping
 - Configurable scraping schedules and authentication
 - Configurable fuzzy matching rules and confidence thresholds
-- Manual override capabilities for ambiguous matches  
+- Manual override capabilities for ambiguous matches
+
+**Client Libraries and Tools**:
+- Type-safe GraphQL client library (StrawberryShake) for cross-platform apps
+- Reusable client for MAUI, Blazor WASM, and other .NET applications
+- Cookie capture utility (SheinCollector MAUI app) for web scraping authentication  
 
 
 ## 7. Reporting Requirements
