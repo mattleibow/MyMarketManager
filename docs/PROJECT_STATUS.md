@@ -5,53 +5,70 @@
 
 ---
 
+## System Overview
+
+**My Market Manager is a data aggregation and automation platform**, not a manual data entry system. The primary purpose is to **automatically consolidate external data** from web-scraped supplier orders and imported sales reports, with manual workflows serving as exception handling.
+
+**Core Focus**:
+- ✅ **Automated purchase order ingestion** via web scraping (Shein implemented)
+- 🟡 **Automated sales data import** from payment providers (planned)
+- 🟡 **Automated reconciliation** with intelligent matching (planned)
+- ❌ **Manual data entry** is secondary for exceptions only
+
+---
+
 ## Quick Status Overview
 
 | Component | Progress | Status |
 |-----------|----------|--------|
 | **Infrastructure** | 100% | ✅ Complete - .NET 10, Aspire, EF Core, GraphQL, Tests |
 | **Data Model** | 100% | ✅ Complete - All 14 entities with relationships |
-| **Web Scraping** | 100% | ✅ Complete - Framework + Shein (~1,900 LOC) *Extra* |
+| **Web Scraping (Primary)** | 100% | ✅ Complete - Framework + Shein (~1,900 LOC) |
+| **Sales Import (Primary)** | 0% | ❌ Missing - Automated CSV/API import not implemented |
+| **Auto-Reconciliation (Primary)** | 0% | ❌ Missing - Fuzzy matching and auto-linking not implemented |
+| **Validation Dashboard (Primary)** | 0% | ❌ Missing - Candidate review UI not implemented |
 | **GraphQL API** | 14% | 🟡 Partial - 1 of 7 entity types (Products only) |
-| **UI Components** | 14% | 🟡 Partial - 1 of 7 sections (Products only) |
-| **Business Logic** | 0% | ❌ Missing - No workflows implemented |
-| **Reporting** | 0% | ❌ Missing - No reports implemented |
+| **UI Components** | 14% | 🟡 Partial - 1 section (Products); missing validation dashboard |
+| **Manual Entry (Secondary)** | 5% | 🟡 Partial - Product CRUD only; PO/Delivery forms missing |
+| **Reporting** | 0% | ❌ Missing - No automated reports |
 
 ---
 
 ## PRD Requirements Tracking
 
-### ✅ Complete (4 requirements)
+### ✅ Complete (4 requirements - Foundation & Automation Infrastructure)
 
 | # | Requirement | PRD Section | Status | Notes |
 |---|-------------|-------------|--------|-------|
 | 1 | Data Model | All | ✅ | All 14 entities implemented |
 | 2 | Infrastructure | - | ✅ | .NET 10, Aspire, EF Core, GraphQL |
-| 3 | Web Scraping | 5.7 | ✅ | ~1,900 LOC framework (enhancement) |
-| 4 | Product CRUD | - | ✅ | UI + API complete |
+| 3 | **Web Scraping (Primary)** | 5.7 | ✅ | ~1,900 LOC framework, Shein implementation |
+| 4 | Product CRUD (Manual/Secondary) | - | ✅ | UI + API complete |
 
-### 🟡 Partial (2 requirements)
+### 🟡 Partial (2 requirements - APIs)
 
 | # | Requirement | PRD Section | Progress | What's Missing |
 |---|-------------|-------------|----------|----------------|
 | 5 | GraphQL API | - | 14% | 6 more entity types, ~45+ operations |
-| 6 | User Interface | - | 14% | 6 more major sections |
+| 6 | User Interface | - | 14% | Validation dashboard, reporting UI |
 
-### ❌ Not Started (11 requirements)
+### ❌ Not Started (11 requirements - **Automation Core Missing**)
 
-| # | Requirement | PRD Section | Priority | Estimated Effort |
-|---|-------------|-------------|----------|------------------|
-| 7 | Purchase Order Management | 5.1, 5.3 | High | Large - UI + API + Logic |
-| 8 | Delivery Recording | 5.2 | High | Large - UI + API + Logic |
-| 9 | Pricing Process | 5.4 | High | Medium - Logic + UI |
-| 10 | Sales Import | 5.5 | High | Large - Parser + UI + API |
-| 11 | Stocktake & Reconciliation | 5.6 | High | Large - UI + API + Logic |
-| 12 | Supplier Data Ingestion UI | 5.7 | Medium | Medium - UI + Integration |
-| 13 | Two-Phase Validation | 5.8 | Medium | Medium - UI + Logic |
-| 14 | Ingestion Reports | 7 | Medium | Medium - Queries + UI |
-| 15 | Product Performance Reports | 7 | Medium | Medium - Queries + UI |
-| 16 | Reorder Recommendations | 7 | Low | Medium - Algorithm + UI |
-| 17 | Role-Based Access Control | 8 | Low | Large - Auth + Authorization |
+| # | Requirement | PRD Section | Priority | Estimated Effort | Type |
+|---|-------------|-------------|----------|------------------|------|
+| 7 | **Automated Sales Import** | 5.5 | **Critical** | Large - Parser + API | **Primary** |
+| 8 | **Auto-Reconciliation** | 5.6 | **Critical** | Large - Fuzzy match + Logic | **Primary** |
+| 9 | **Validation Dashboard** | 5.8 Phase 2 | **Critical** | Medium - UI + Logic | **Primary** |
+| 10 | **Two-Phase Sync** | 5.8 | **High** | Large - Background jobs + UI | **Primary** |
+| 11 | **Automated Reports** | 7 | **High** | Medium - Queries + UI | **Primary** |
+| 12 | Supplier Data UI Integration | 5.7 | Medium | Small - UI hooks | Primary |
+| 13 | Purchase Order Management (Manual) | 5.1.1, 5.3 | Low | Large - UI + API | Secondary |
+| 14 | Delivery Recording (Manual) | 5.2 | Low | Large - UI + API | Secondary |
+| 15 | Pricing Process | 5.4 | Low | Medium - Logic + UI | Secondary |
+| 16 | Stocktake (Manual) | 5.6 | Low | Medium - UI | Secondary |
+| 17 | Role-Based Access Control | 8 | Low | Large - Auth | Secondary |
+
+**Key Insight**: The **5 critical automation features** (items 7-11) are missing, making this currently a 95% manual system instead of the intended automation platform.
 
 ---
 
@@ -114,9 +131,9 @@
 
 ---
 
-### Web Scraping Infrastructure ✅
+### Web Scraping Infrastructure ✅ (PRIMARY AUTOMATION)
 
-**Status**: Complete - Shein implementation ready (*Extra feature beyond PRD*)
+**Status**: Complete - Shein implementation ready
 
 **Scope**: ~1,900 lines of code
 
@@ -133,7 +150,64 @@
 - ✅ Usage guide
 - ✅ API integration patterns
 
-**Note**: PRD specified "ZIP file upload"; implementation provides web scraping as enhancement.
+**Purpose**: **Primary method** for purchase order ingestion. Eliminates manual PO entry for automated suppliers.
+
+---
+
+### Automated Sales Import ❌ (PRIMARY AUTOMATION - MISSING)
+
+**Status**: 0% - Not implemented
+
+**Priority**: **CRITICAL** - Core automation feature
+
+**Required Components**:
+- ❌ CSV/Excel parser for payment provider exports
+- ❌ API integrations for payment providers (Yoco, Square, etc.)
+- ❌ Scheduled import jobs (background service)
+- ❌ Field mapping configuration system
+- ❌ Import history and error tracking
+
+**Purpose**: **Primary method** for sales data capture. Eliminates manual sales entry.
+
+**Impact**: Without this, the system requires manual sales entry, defeating the automation purpose.
+
+---
+
+### Auto-Reconciliation Engine ❌ (PRIMARY AUTOMATION - MISSING)
+
+**Status**: 0% - Not implemented
+
+**Priority**: **CRITICAL** - Core automation feature
+
+**Required Components**:
+- ❌ Fuzzy matching algorithm for product matching
+- ❌ Confidence scoring system
+- ❌ Auto-linking logic for high-confidence matches
+- ❌ Automatic inventory adjustments
+- ❌ Batch reconciliation processing
+
+**Purpose**: **Automatically** link imported sales to products without manual intervention.
+
+**Impact**: Without this, every sale requires manual product linking - not scalable.
+
+---
+
+### Validation Dashboard ❌ (PRIMARY AUTOMATION - MISSING)
+
+**Status**: 0% - Not implemented
+
+**Priority**: **CRITICAL** - Required for Phase 2 of automation
+
+**Required Components**:
+- ❌ Pending candidates queue UI
+- ❌ Similarity search for product suggestions
+- ❌ Bulk linking operations
+- ❌ Confidence-based prioritization
+- ❌ Promotion workflow to production
+
+**Purpose**: **Exception handling** for automation - review low-confidence matches and unresolved items.
+
+**Impact**: Without this, cannot complete the two-phase automation workflow.
 
 ---
 
@@ -267,77 +341,103 @@ Features implemented beyond PRD scope:
 
 ## Development Roadmap
 
-### Phase 1: Core Workflows (High Priority)
+### Phase 1: Core Automation (CRITICAL - Make it an automation platform)
 
-**Goal**: Implement essential business operations
+**Goal**: Implement the missing automation features to achieve the system's primary purpose
 
-1. **Purchase Order Management** (PRD 5.1, 5.3)
-   - [ ] GraphQL mutations and queries
-   - [ ] PO creation and editing UI
-   - [ ] Overhead cost allocation logic
-   - [ ] PO status management
+**Priority**: These features must be completed first - without them, the system is just a manual data entry app
 
-2. **Delivery Recording** (PRD 5.2)
-   - [ ] Delivery creation (linked to PO or standalone)
-   - [ ] Quality inspection UI
-   - [ ] Auto-generate PO from delivery
-   - [ ] Partial delivery support
+1. **Automated Sales Import** (PRD 5.5) - **CRITICAL**
+   - [ ] CSV/Excel parser for payment provider exports
+   - [ ] Field mapping configuration system
+   - [ ] Scheduled import jobs (background service)
+   - [ ] Import history and error tracking
+   - [ ] GraphQL mutations and queries for import management
 
-3. **Sales Import** (PRD 5.5)
-   - [ ] CSV/Excel parser
-   - [ ] Field mapping interface
-   - [ ] Fuzzy matching algorithm
-   - [ ] Import workflow UI
+2. **Auto-Reconciliation Engine** (PRD 5.6) - **CRITICAL**
+   - [ ] Fuzzy matching algorithm implementation
+   - [ ] Confidence scoring system (0-100%)
+   - [ ] Auto-linking for high-confidence matches (>95%)
+   - [ ] Automatic inventory adjustments
+   - [ ] Batch reconciliation processing
 
-4. **Stocktake & Reconciliation** (PRD 5.6)
-   - [ ] Stocktake session management
-   - [ ] Product linking interface
-   - [ ] Reconciliation finalization
-   - [ ] Inventory adjustment logic
-
-### Phase 2: Validation & Reporting (Medium Priority)
-
-**Goal**: Complete data ingestion and analytics
-
-5. **Staging Validation** (PRD 5.8)
-   - [ ] Validation workflow UI
-   - [ ] Candidate review dashboard
-   - [ ] Link/confirm/ignore actions
+3. **Validation Dashboard** (PRD 5.8 Phase 2) - **CRITICAL**
+   - [ ] Pending candidates queue UI
+   - [ ] Similarity search and suggestions
+   - [ ] Bulk linking operations
+   - [ ] Link/confirm/ignore workflows
    - [ ] Promotion to production logic
 
-6. **Basic Reporting** (PRD Section 7)
-   - [ ] Product performance dashboard
+4. **Two-Phase Background Jobs** (PRD 5.8 Phase 1) - **HIGH**
+   - [ ] Overnight web scraping scheduler
+   - [ ] Sales import scheduler
+   - [ ] Auto-reconciliation job
+   - [ ] Deduplication logic
+   - [ ] Error notifications and monitoring
+
+5. **Automated Reporting** (PRD Section 7) - **HIGH**
+   - [ ] Product performance dashboard (auto-generated)
    - [ ] Ingestion summary reports
-   - [ ] Time & event analysis
+   - [ ] Reconciliation statistics
+   - [ ] Profitability analysis
+   - [ ] Reorder recommendations
+
+### Phase 2: API Completion (Support automation workflows)
+
+**Goal**: Expose remaining entity types to support automation features
+
+6. **GraphQL API Expansion**
+   - [ ] Supplier CRUD operations
+   - [ ] Staging entity queries and mutations
+   - [ ] Market Event operations
+   - [ ] Reconciled Sales queries
+   - [ ] Reporting queries
 
 7. **Web Scraping Integration**
-   - [ ] GraphQL mutation for cookie submission
-   - [ ] Background service for processing
-   - [ ] Status tracking UI
+   - [ ] Cookie submission API
+   - [ ] Scraping status tracking
+   - [ ] Manual trigger endpoints
 
-### Phase 3: Polish & Features (Low Priority)
+### Phase 3: Manual Workflows (Secondary - Exception handling only)
 
-**Goal**: Production readiness and advanced features
+**Goal**: Add manual entry forms for cases where automation isn't available
 
-8. **Role-Based Access Control** (PRD Section 8)
-   - [ ] Authentication system
-   - [ ] Authorization policies
-   - [ ] User management
+**Note**: These are low priority since they're exception handlers, not primary workflows
 
-9. **Mobile-Responsive UI**
-   - [ ] Mobile-first design (PRD requirement)
-   - [ ] Touch-optimized interactions
+8. **Manual Purchase Order Entry** (PRD 5.1.1, 5.3)
+   - [ ] PO creation form
+   - [ ] PO editing and management UI
+   - [ ] Overhead allocation interface
 
-10. **Offline Support** (PRD Section 8)
-    - [ ] Offline delivery entry
-    - [ ] Offline stocktake
-    - [ ] Sync on connectivity
+9. **Manual Delivery Recording** (PRD 5.2)
+   - [ ] Delivery entry form
+   - [ ] Quality inspection interface
+   - [ ] Photo capture
 
-11. **Advanced Features**
-    - [ ] Pricing rule configuration
-    - [ ] Reorder recommendations
-    - [ ] Photo search/matching
+10. **Manual Stocktake** (PRD 5.6 - Secondary)
+    - [ ] Physical count entry UI
+    - [ ] Variance reporting
+
+11. **Pricing Configuration**
+    - [ ] Pricing rule setup
+    - [ ] Quality-based markup
+
+### Phase 4: Production Readiness (Polish)
+
+**Goal**: Security and operational features
+
+12. **Authentication & Authorization** (PRD Section 8)
+    - [ ] User authentication
+    - [ ] Role-based access control
     - [ ] Audit logging
+
+13. **Mobile Optimization**
+    - [ ] Responsive design
+    - [ ] Touch-optimized validation dashboard
+
+14. **Offline Support** (if needed)
+    - [ ] Offline validation queue
+    - [ ] Sync on connectivity
 
 ---
 
@@ -370,23 +470,36 @@ Different perspectives on project completion:
 
 ## Summary
 
+**System Purpose**: Data aggregation and automation platform - **NOT a manual data entry system**
+
 **Strengths**:
 - ✅ Solid foundation with clean architecture
 - ✅ Modern tech stack (.NET 10, EF Core 9, HotChocolate 15, Aspire)
 - ✅ Complete data model with all entities
-- ✅ Innovative web scraping infrastructure (~1,900 LOC)
+- ✅ **Web scraping infrastructure for automated PO ingestion (~1,900 LOC)**
 - ✅ 97% test pass rate (35/36)
 - ✅ Comprehensive documentation
 
-**Gaps**:
-- ❌ No business logic workflows implemented (0%)
-- ❌ Only 14% of entity types exposed in API
-- ❌ Only 14% of UI sections implemented
-- ❌ No reporting functionality
-- ❌ No authentication/authorization
+**Critical Gaps** (Missing Core Automation):
+- ❌ **Automated sales import** - No CSV/API integration (CRITICAL)
+- ❌ **Auto-reconciliation engine** - No fuzzy matching or auto-linking (CRITICAL)
+- ❌ **Validation dashboard** - Cannot review unresolved items (CRITICAL)
+- ❌ **Two-phase background jobs** - No automated ingestion scheduling (HIGH)
+- ❌ **Automated reporting** - No profit/performance dashboards (HIGH)
+
+**Secondary Gaps** (Manual Workflows):
+- ❌ Manual PO entry forms (low priority - exception handling)
+- ❌ Manual delivery recording (low priority - exception handling)
+- ❌ Manual stocktake UI (low priority - exception handling)
+
+**Current State Assessment**:
+The system has **excellent infrastructure** (100% complete) but is missing **all 5 critical automation features**. This makes it currently function as a **manual data entry system** rather than the intended **automated aggregation platform**.
 
 **Next Steps**:
-Focus on Phase 1 (Core Workflows) - Purchase Orders, Delivery Recording, Sales Import, and Stocktake. These are the essential business operations needed to make the application functional for end users.
+Focus exclusively on **Phase 1 (Core Automation)**. Do not implement manual workflows (Phase 3) until automation is complete. The value proposition is automation, not manual entry forms.
 
 **Bottom Line**:
-The project has an excellent technical foundation. All architectural decisions are made, the database schema is complete, and infrastructure is production-ready. The remaining work (75-80%) is primarily feature implementation following established patterns, which should proceed quickly now that the foundation is solid.
+- **Infrastructure**: Production-ready ✅
+- **Automation (Primary Purpose)**: 20% complete (web scraping only) 🟡
+- **Manual Workflows (Secondary)**: 5% complete (product CRUD only) 🟡
+- **Priority**: Implement the 5 missing automation features in Phase 1 before anything else
