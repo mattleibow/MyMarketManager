@@ -49,8 +49,7 @@ Navigate to `/graphql` to open the Nitro IDE and explore the API interactively.
 
 ## Documentation
 
-- **[Project Status Summary](docs/STATUS_SUMMARY.md)** - Quick overview of what's done vs what's needed (start here!)
-- **[Project Status Report](docs/project-status.md)** - Detailed analysis comparing implementation to PRD
+- **[Project Status](docs/PROJECT_STATUS.md)** - Current implementation status and completion tracking (start here!)
 - **[Getting Started](docs/getting-started.md)** - Setup and first steps
 - **[Architecture](docs/architecture.md)** - System design and technology choices
 - **[Development Guide](docs/development-guide.md)** - Development workflows and best practices
