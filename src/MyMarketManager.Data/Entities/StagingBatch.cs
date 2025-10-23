@@ -4,19 +4,47 @@ using MyMarketManager.Data.Enums;
 namespace MyMarketManager.Data.Entities;
 
 /// <summary>
-/// Represents a single supplier data upload (e.g. Shein ZIP) or sales data upload (e.g. Yoco API load), grouping all parsed orders, sales and items.
+/// Represents a single data upload (e.g. Shein ZIP, sales data upload, web scrape), grouping all parsed orders, sales and items.
 /// </summary>
 public class StagingBatch : EntityBase
 {
-    public Guid SupplierId { get; set; }
-    public Supplier Supplier { get; set; } = null!;
+    /// <summary>
+    /// The type of staging batch (web scrape, blob upload, etc.).
+    /// </summary>
+    public StagingBatchType BatchType { get; set; }
 
-    public DateTimeOffset UploadDate { get; set; }
+    /// <summary>
+    /// The supplier this batch is for (for web scrapes).
+    /// </summary>
+    public Guid? SupplierId { get; set; }
+    public Supplier? Supplier { get; set; }
+
+    /// <summary>
+    /// When this batch started processing.
+    /// </summary>
+    public DateTimeOffset StartedAt { get; set; }
+
+    /// <summary>
+    /// When this batch completed processing (if successful).
+    /// </summary>
+    public DateTimeOffset? CompletedAt { get; set; }
 
     [Required]
     public string FileHash { get; set; } = string.Empty;
+    
     public ProcessingStatus Status { get; set; }
+    
     public string? Notes { get; set; }
+
+    /// <summary>
+    /// Error message if the batch processing failed.
+    /// </summary>
+    public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// File contents (e.g. serialized cookie JSON for web scrapes).
+    /// </summary>
+    public string? FileContents { get; set; }
 
     // Navigation properties
     public ICollection<StagingPurchaseOrder> StagingPurchaseOrders { get; set; } = new List<StagingPurchaseOrder>();
