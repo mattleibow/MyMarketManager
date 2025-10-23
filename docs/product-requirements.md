@@ -43,6 +43,7 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 ## 4. User Stories
 
 **Primary User Stories (Automation)**:
+
 1. As a Manager, I want to **configure web scraping** for my supplier accounts so purchase orders are automatically ingested overnight.
 2. As a Manager, I want the system to **automatically import sales data** from payment provider exports so I do not manually enter sales.
 3. As a Manager, I want the system to **auto-link products** across suppliers and sales using reference numbers and fuzzy matching so I minimize manual matching.
@@ -51,6 +52,7 @@ The system also supports ingestion of supplier data files (e.g. Shein “Request
 6. As a Manager, I want to **upload supplier data files** (Shein ZIP) so the system can parse and stage orders automatically.
 
 **Secondary User Stories (Manual Workflows)**:
+
 7. As an Operator, I want to **manually create a purchase order** for a non-automated supplier so I can track exceptional purchases.
 8. As an Operator, I want to **manually record a delivery** with quality notes when web scraping data is unavailable.
 9. As an Operator, I want to **manually adjust stocktake results** when automated reconciliation produces incorrect matches.
