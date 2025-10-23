@@ -25,6 +25,7 @@ Resources for developers working on MyMarketManager:
 
 Detailed technical documentation:
 
+- **[Project Status](PROJECT_STATUS.md)** - Complete status tracking and roadmap (start here!)
 - **[Data Model](data-model.md)** - Complete database schema with entity definitions and relationships
 - **[Product Requirements](product-requirements.md)** - Feature requirements and user stories
 
