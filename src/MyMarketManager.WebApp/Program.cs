@@ -22,6 +22,10 @@ builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 builder.Services.AddScoped<DbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
+// Add PO ingestion processing services
+builder.Services.AddScoped<PoIngestionProcessor>();
+builder.Services.AddHostedService<PoIngestionService>();
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Add GraphQL server with HotChocolate first
