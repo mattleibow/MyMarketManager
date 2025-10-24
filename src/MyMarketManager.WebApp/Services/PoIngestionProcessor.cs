@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MyMarketManager.Data;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
+using MyMarketManager.Scrapers;
+using MyMarketManager.Scrapers.Core;
 
-namespace MyMarketManager.Data.Services;
+namespace MyMarketManager.WebApp.Services;
 
 /// <summary>
 /// Service responsible for processing pending PO ingestion batches via web scraping.
@@ -108,21 +112,34 @@ public class PoIngestionProcessor
         batch.StartedAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
 
-        // TODO: Add scraper factory/registry to dynamically select scraper based on supplier
-        // For now, we'll assume Shein for all suppliers
-        // In future: if (supplier.Name.Contains("Shein", StringComparison.OrdinalIgnoreCase)) { ... }
+        // Get the scraper name from batch notes (stored during creation)
+        // Extract scraper name from notes like "Scraper: Shein, Cookie submission on..."
+        var scraperName = ExtractScraperName(batch.Notes);
+        if (string.IsNullOrEmpty(scraperName))
+        {
+            _logger.LogWarning("No scraper name found in batch {BatchId}", batch.Id);
+            batch.Status = ProcessingStatus.Failed;
+            batch.ErrorMessage = "No scraper name specified";
+            await _context.SaveChangesAsync(cancellationToken);
+            return;
+        }
 
         try
         {
-            // Create scraper instance using DI
-            // Note: Scrapers are registered in WebApp's Program.cs
-            // This is a placeholder - actual implementation will depend on scraper registry
-            _logger.LogInformation("Scraper processing for batch {BatchId} will be implemented", batch.Id);
+            // Create scraper instance using factory
+            using var scope = _serviceProvider.CreateScope();
+            var scraperFactory = scope.ServiceProvider.GetRequiredService<IWebScraperFactory>();
+            var scraper = scraperFactory.CreateScraper(scraperName);
 
-            // For now, mark as complete - actual scraping will be added in next iteration
+            _logger.LogInformation("Running {ScraperName} scraper for batch {BatchId}", scraperName, batch.Id);
+
+            // Run the scraper with the existing batch
+            await scraper.ScrapeBatchAsync(batch, cancellationToken);
+
+            // Mark as complete
             batch.Status = ProcessingStatus.Completed;
             batch.CompletedAt = DateTimeOffset.UtcNow;
-            batch.Notes = $"Processed on {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}";
+            batch.Notes = $"Scraper: {scraperName}, Processed on {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}";
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("Completed processing batch {BatchId}", batch.Id);
@@ -135,5 +152,24 @@ public class PoIngestionProcessor
             await _context.SaveChangesAsync(cancellationToken);
             throw;
         }
+    }
+
+    private static string? ExtractScraperName(string? notes)
+    {
+        if (string.IsNullOrEmpty(notes))
+            return null;
+
+        // Extract scraper name from format "Scraper: ScraperName, ..."
+        var scraperPrefix = "Scraper: ";
+        var index = notes.IndexOf(scraperPrefix, StringComparison.OrdinalIgnoreCase);
+        if (index < 0)
+            return null;
+
+        var startIndex = index + scraperPrefix.Length;
+        var commaIndex = notes.IndexOf(',', startIndex);
+        if (commaIndex < 0)
+            commaIndex = notes.Length;
+
+        return notes.Substring(startIndex, commaIndex - startIndex).Trim();
     }
 }

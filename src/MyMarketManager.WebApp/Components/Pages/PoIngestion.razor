@@ -3,10 +3,12 @@
 @using MyMarketManager.Data
 @using MyMarketManager.Data.Entities
 @using MyMarketManager.Data.Enums
+@using MyMarketManager.Scrapers
 @using Microsoft.EntityFrameworkCore
 @using System.Text.Json
 @using System.Security.Cryptography
 @inject MyMarketManagerDbContext DbContext
+@inject IWebScraperFactory ScraperFactory
 @inject NavigationManager Navigation
 @inject ILogger<PoIngestion> Logger
 
@@ -46,6 +48,18 @@
                             <option value="@supplier.Id">@supplier.Name</option>
                         }
                     </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="scraperSelect" class="form-label">Scraper</label>
+                    <select id="scraperSelect" class="form-select" @bind="selectedScraper" disabled="@submitting">
+                        <option value="">-- Select a scraper --</option>
+                        @foreach (var scraper in availableScrapers)
+                        {
+                            <option value="@scraper">@scraper</option>
+                        }
+                    </select>
+                    <div class="form-text">Choose the web scraper to use for this supplier</div>
                 </div>
 
                 <div class="mb-3">
@@ -137,7 +151,9 @@
 
 @code {
     private List<Supplier> suppliers = new();
+    private List<string> availableScrapers = new();
     private Guid? selectedSupplierId;
+    private string? selectedScraper;
     private string cookieJson = string.Empty;
     private bool submitting;
     private bool isCheckingDuplicate;
@@ -149,6 +165,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadSuppliers();
+        LoadAvailableScrapers();
     }
 
     private async Task LoadSuppliers()
@@ -156,6 +173,11 @@
         suppliers = await DbContext.Suppliers
             .OrderBy(s => s.Name)
             .ToListAsync();
+    }
+
+    private void LoadAvailableScrapers()
+    {
+        availableScrapers = ScraperFactory.GetAvailableScrapers().ToList();
     }
 
     private async Task OnCookieJsonChanged()
@@ -224,6 +246,7 @@
     {
         return !string.IsNullOrWhiteSpace(cookieJson)
             && selectedSupplierId.HasValue
+            && !string.IsNullOrWhiteSpace(selectedScraper)
             && !submitting
             && !isCheckingDuplicate
             && !isDuplicate
@@ -257,7 +280,7 @@
                 FileHash = cookieHash,
                 FileContents = cookieJson,
                 Status = ProcessingStatus.Queued,
-                Notes = $"Cookie submission on {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}"
+                Notes = $"Scraper: {selectedScraper}, Cookie submission on {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}"
             };
 
             DbContext.StagingBatches.Add(batch);
@@ -272,6 +295,7 @@
             // Reset form
             cookieJson = string.Empty;
             selectedSupplierId = null;
+            selectedScraper = null;
             cookieHash = null;
             isDuplicate = false;
         }

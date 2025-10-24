@@ -4,6 +4,8 @@ using MyMarketManager.WebApp.Components;
 using MyMarketManager.WebApp.GraphQL;
 using MyMarketManager.WebApp.Services;
 using MyMarketManager.GraphQL.Client;
+using MyMarketManager.Scrapers;
+using MyMarketManager.Scrapers.Shein;
 using HotChocolate.Execution;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +23,12 @@ builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 // Add database migration as a hosted service (runs in all environments)
 builder.Services.AddScoped<DbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
+
+// Add web scraper services
+builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
+builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
+builder.Services.AddScoped<SheinWebScraper>();
+builder.Services.AddSingleton<IWebScraperFactory, WebScraperFactory>();
 
 // Add PO ingestion processing services
 builder.Services.AddScoped<PoIngestionProcessor>();
