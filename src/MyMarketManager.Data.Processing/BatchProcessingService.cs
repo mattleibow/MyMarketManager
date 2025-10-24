@@ -15,8 +15,10 @@ public class BatchProcessingService(MyMarketManagerDbContext context, IBatchProc
         var queuedBatches = await context.StagingBatches
             .Where(b => b.Status == ProcessingStatus.Queued)
             .Include(b => b.Supplier)
-            .OrderBy(b => b.StartedAt)
             .ToListAsync(cancellationToken);
+
+        // Order by StartedAt in memory since SQLite doesn't support DateTimeOffset ordering
+        queuedBatches = queuedBatches.OrderBy(b => b.StartedAt).ToList();
 
         logger.LogInformation("Found {Count} queued batches to process", queuedBatches.Count);
 

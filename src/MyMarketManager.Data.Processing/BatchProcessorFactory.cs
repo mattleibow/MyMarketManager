@@ -15,6 +15,11 @@ internal class BatchProcessorFactory(IServiceProvider serviceProvider, IOptions<
     /// </summary>
     public IBatchProcessor? GetProcessor(string processorName)
     {
+        if (string.IsNullOrWhiteSpace(processorName))
+        {
+            return null;
+        }
+
         var processors = options.Value.Processors;
         if (!processors.TryGetValue(processorName, out var processorInfo))
         {
