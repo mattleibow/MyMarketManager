@@ -6,7 +6,6 @@ using MyMarketManager.WebApp.Services;
 using MyMarketManager.GraphQL.Client;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Shein;
-using MyMarketManager.Ingestion;
 using HotChocolate.Execution;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,11 +27,14 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 // Add web scraper services
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
-builder.Services.AddScoped<SheinWebScraper>();
-builder.Services.AddSingleton<IWebScraperFactory, WebScraperFactory>();
+builder.Services.AddSingleton<IScraperRegistry, ScraperRegistry>();
 
-// Add ingestion processing services
-builder.Services.AddScoped<IIngestionProcessor, PurchaseOrderIngestionProcessor>();
+// Register web scrapers as keyed services using their processor names
+builder.Services.AddKeyedScoped<WebScraper, SheinWebScraper>("Shein");
+// Future scrapers can be registered here:
+// builder.Services.AddKeyedScoped<WebScraper, AnotherWebScraper>("AnotherSupplier");
+
+// Add ingestion background service
 builder.Services.AddHostedService<IngestionService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
