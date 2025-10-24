@@ -18,7 +18,7 @@ public abstract class WebScraper(
     MyMarketManagerDbContext context,
     ILogger logger,
     IOptions<ScraperConfiguration> configuration,
-    IWebScraperSessionFactory sessionFactory)
+    IWebScraperSessionFactory sessionFactory) : IBatchProcessor
 {
     protected MyMarketManagerDbContext Context { get; } = context;
 

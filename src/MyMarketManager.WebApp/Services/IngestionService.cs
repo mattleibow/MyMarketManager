@@ -52,7 +52,7 @@ public class IngestionService : BackgroundService
     {
         using var scope = _serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MyMarketManagerDbContext>();
-        var factory = scope.ServiceProvider.GetRequiredService<IBatchProcessorFactory>();
+        var factory = scope.ServiceProvider.GetRequiredService<BatchProcessorFactory>();
         
         // Get all queued batches
         var queuedBatches = await context.StagingBatches
@@ -99,7 +99,7 @@ public class IngestionService : BackgroundService
                     batch.BatchType,
                     batch.BatchProcessorName);
 
-                await ((dynamic)processor).ScrapeBatchAsync(batch, cancellationToken);
+                await processor.ScrapeBatchAsync(batch, cancellationToken);
             }
             catch (Exception ex)
             {

@@ -35,7 +35,7 @@ builder.Services.AddScoped<SheinWebScraper>();
 // builder.Services.AddScoped<AnotherWebScraper>();
 
 // Register batch processor factory and configure it
-builder.Services.AddSingleton<IBatchProcessorFactory>(sp =>
+builder.Services.AddSingleton<BatchProcessorFactory>(sp =>
 {
     var factory = new BatchProcessorFactory(sp);
     

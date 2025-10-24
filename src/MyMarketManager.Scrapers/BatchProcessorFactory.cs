@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using MyMarketManager.Data.Enums;
-using MyMarketManager.Scrapers.Core;
 
 namespace MyMarketManager.Scrapers;
 
@@ -8,7 +7,7 @@ namespace MyMarketManager.Scrapers;
 /// Factory that creates batch processors based on batch type and processor name.
 /// Centralizes processor registration in one place.
 /// </summary>
-public class BatchProcessorFactory : IBatchProcessorFactory
+public class BatchProcessorFactory
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly Dictionary<(StagingBatchType, string), Type> _processors = new();
@@ -22,7 +21,7 @@ public class BatchProcessorFactory : IBatchProcessorFactory
     /// Registers a processor type for a specific batch type and name.
     /// </summary>
     public void Register<TProcessor>(StagingBatchType batchType, string processorName)
-        where TProcessor : class
+        where TProcessor : class, IBatchProcessor
     {
         _processors[(batchType, processorName)] = typeof(TProcessor);
     }
@@ -30,7 +29,7 @@ public class BatchProcessorFactory : IBatchProcessorFactory
     /// <summary>
     /// Gets a processor for the given batch type and processor name.
     /// </summary>
-    public object? GetProcessor(StagingBatchType batchType, string processorName)
+    public IBatchProcessor? GetProcessor(StagingBatchType batchType, string processorName)
     {
         var key = (batchType, processorName);
         if (!_processors.TryGetValue(key, out var processorType))
@@ -38,7 +37,7 @@ public class BatchProcessorFactory : IBatchProcessorFactory
             return null;
         }
 
-        return _serviceProvider.GetRequiredService(processorType);
+        return _serviceProvider.GetRequiredService(processorType) as IBatchProcessor;
     }
 
     /// <summary>
