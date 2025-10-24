@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using MyMarketManager.Data;
 using MyMarketManager.Data.Enums;
 using MyMarketManager.Ingestion;
@@ -7,7 +8,7 @@ namespace MyMarketManager.WebApp.Services;
 
 /// <summary>
 /// Generic background service that processes staging batches using registered ingestion processors.
-/// Uses a factory to get the right processor for each batch and processes one batch at a time per processor.
+/// Gets processors directly from DI and processes one batch at a time per processor.
 /// </summary>
 public class IngestionService : BackgroundService
 {
@@ -51,8 +52,7 @@ public class IngestionService : BackgroundService
     {
         using var scope = _serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MyMarketManagerDbContext>();
-        var processorFactory = scope.ServiceProvider.GetRequiredService<IIngestionProcessorFactory>();
-
+        
         // Get all queued batches
         var queuedBatches = await context.StagingBatches
             .Where(b => b.Status == ProcessingStatus.Queued)
@@ -67,8 +67,8 @@ public class IngestionService : BackgroundService
 
         _logger.LogInformation("Found {Count} queued batches to process", queuedBatches.Count);
 
-        // Get all available processors
-        var processors = processorFactory.GetProcessors().ToList();
+        // Get all available processors directly from DI
+        var processors = scope.ServiceProvider.GetServices<IIngestionProcessor>().ToList();
 
         if (processors.Count == 0)
         {

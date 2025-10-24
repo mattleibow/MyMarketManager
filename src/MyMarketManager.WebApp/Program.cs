@@ -33,7 +33,6 @@ builder.Services.AddSingleton<IWebScraperFactory, WebScraperFactory>();
 
 // Add ingestion processing services
 builder.Services.AddScoped<IIngestionProcessor, PurchaseOrderIngestionProcessor>();
-builder.Services.AddSingleton<IIngestionProcessorFactory, IngestionProcessorFactory>();
 builder.Services.AddHostedService<IngestionService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
