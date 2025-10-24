@@ -1,13 +1,12 @@
 using MyMarketManager.Data;
 using MyMarketManager.Data.Services;
-using MyMarketManager.Data.Enums;
 using MyMarketManager.WebApp.Components;
 using MyMarketManager.WebApp.GraphQL;
 using MyMarketManager.WebApp.Services;
 using MyMarketManager.GraphQL.Client;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Shein;
-using HotChocolate.Execution;
+using MyMarketManager.Data.Processing;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,33 +24,16 @@ builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 builder.Services.AddScoped<DbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
-// Add web scraper services
+// Add scraper services
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
 
-// Register web scrapers
-builder.Services.AddScoped<SheinWebScraper>();
-// Future scrapers can be registered here:
-// builder.Services.AddScoped<AnotherWebScraper>();
-
-// Register batch processor factory and configure it
-builder.Services.AddSingleton<BatchProcessorFactory>(sp =>
-{
-    var factory = new BatchProcessorFactory(sp);
-    
-    // Register web scrapers
-    factory.Register<SheinWebScraper>(MyMarketManager.Data.Enums.StagingBatchType.WebScrape, "Shein");
-    // Future scrapers:
-    // factory.Register<AnotherWebScraper>(StagingBatchType.WebScrape, "AnotherSupplier");
-    
-    // Future batch types can be registered here:
-    // factory.Register<SalesDataProcessor>(StagingBatchType.SalesData, "YocoApi");
-    
-    return factory;
-});
-
-// Add ingestion background service
+// Add ingestion services
+builder.Services.Configure<IngestionServiceOptions>(builder.Configuration.GetSection("IngestionService"));
+builder.Services.AddScoped<BatchProcessingService>();
 builder.Services.AddHostedService<IngestionService>();
+builder.Services.AddBatchProcessorFactory()
+    .AddWebScraper<SheinWebScraper>("Shein");
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

@@ -1,6 +1,6 @@
 using MyMarketManager.Data.Entities;
 
-namespace MyMarketManager.Scrapers;
+namespace MyMarketManager.Data.Processing;
 
 /// <summary>
 /// Interface for batch processors that handle staging batches.

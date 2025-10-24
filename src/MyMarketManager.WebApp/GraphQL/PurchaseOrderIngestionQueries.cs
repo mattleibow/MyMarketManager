@@ -1,9 +1,5 @@
-using HotChocolate;
-using Microsoft.EntityFrameworkCore;
-using MyMarketManager.Data;
-using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
-using MyMarketManager.Scrapers;
+using MyMarketManager.Data.Processing;
 
 namespace MyMarketManager.WebApp.GraphQL;
 
@@ -18,9 +14,8 @@ public class PurchaseOrderIngestionQueries
     /// </summary>
     public IEnumerable<string> GetAvailableScrapers(
         StagingBatchType batchType,
-        [Service] BatchProcessorFactory factory)
+        [Service] IBatchProcessorFactory factory)
     {
         return factory.GetAvailableProcessors(batchType);
     }
-
 }

@@ -23,7 +23,7 @@ public class ScraperConfigurationTests
     public void HasDefaultValues()
     {
         // Arrange & Act
-        var config = ScraperConfiguration.Defaults;
+        var config = new ScraperConfiguration();
 
         // Assert
         Assert.Equal(TimeSpan.FromSeconds(2), config.RequestDelay);
