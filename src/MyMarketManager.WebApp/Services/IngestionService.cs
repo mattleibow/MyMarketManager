@@ -173,8 +173,9 @@ public class IngestionService : BackgroundService
         batch.StartedAt = DateTimeOffset.UtcNow;
         await context.SaveChangesAsync(cancellationToken);
 
-        // Get the web scraper using keyed service
-        var scraper = serviceProvider.GetKeyedService<WebScraper>(batch.BatchProcessorName);
+        // Get the web scraper using the factory
+        var factory = serviceProvider.GetRequiredService<IBatchProcessorFactory>();
+        var scraper = factory.GetProcessor(batch.BatchType, batch.BatchProcessorName) as WebScraper;
         
         if (scraper == null)
         {

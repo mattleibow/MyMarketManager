@@ -1,5 +1,6 @@
 using MyMarketManager.Data;
 using MyMarketManager.Data.Services;
+using MyMarketManager.Data.Enums;
 using MyMarketManager.WebApp.Components;
 using MyMarketManager.WebApp.GraphQL;
 using MyMarketManager.WebApp.Services;
@@ -27,12 +28,27 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 // Add web scraper services
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
-builder.Services.AddSingleton<IScraperRegistry, ScraperRegistry>();
 
-// Register web scrapers as keyed services using their processor names
-builder.Services.AddKeyedScoped<WebScraper, SheinWebScraper>("Shein");
+// Register web scrapers
+builder.Services.AddScoped<SheinWebScraper>();
 // Future scrapers can be registered here:
-// builder.Services.AddKeyedScoped<WebScraper, AnotherWebScraper>("AnotherSupplier");
+// builder.Services.AddScoped<AnotherWebScraper>();
+
+// Register batch processor factory and configure it
+builder.Services.AddSingleton<IBatchProcessorFactory>(sp =>
+{
+    var factory = new BatchProcessorFactory(sp);
+    
+    // Register web scrapers
+    factory.Register<SheinWebScraper>(StagingBatchType.WebScrape, "Shein");
+    // Future scrapers:
+    // factory.Register<AnotherWebScraper>(StagingBatchType.WebScrape, "AnotherSupplier");
+    
+    // Future batch types can be registered here:
+    // factory.Register<SalesDataProcessor>(StagingBatchType.SalesData, "YocoApi");
+    
+    return factory;
+});
 
 // Add ingestion background service
 builder.Services.AddHostedService<IngestionService>();
