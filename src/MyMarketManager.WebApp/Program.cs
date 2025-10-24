@@ -31,9 +31,10 @@ builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>(
 builder.Services.AddScoped<SheinWebScraper>();
 builder.Services.AddSingleton<IWebScraperFactory, WebScraperFactory>();
 
-// Add PO ingestion processing services
-builder.Services.AddScoped<PoIngestionProcessor>();
-builder.Services.AddHostedService<PoIngestionService>();
+// Add ingestion processing services
+builder.Services.AddScoped<IIngestionProcessor, PurchaseOrderIngestionProcessor>();
+builder.Services.AddSingleton<IIngestionProcessorFactory, IngestionProcessorFactory>();
+builder.Services.AddHostedService<IngestionService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

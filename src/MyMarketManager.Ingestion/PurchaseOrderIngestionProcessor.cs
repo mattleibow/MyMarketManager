@@ -10,18 +10,18 @@ using MyMarketManager.Scrapers.Core;
 namespace MyMarketManager.Ingestion;
 
 /// <summary>
-/// Service responsible for processing pending PO ingestion batches via web scraping.
-/// Contains testable business logic separated from the background service.
+/// Processor responsible for purchase order ingestion batches via web scraping.
+/// Processes a single batch at a time to avoid consuming all processing time.
 /// </summary>
-public class PoIngestionProcessor
+public class PurchaseOrderIngestionProcessor : IIngestionProcessor
 {
     private readonly MyMarketManagerDbContext _context;
-    private readonly ILogger<PoIngestionProcessor> _logger;
+    private readonly ILogger<PurchaseOrderIngestionProcessor> _logger;
     private readonly IServiceProvider _serviceProvider;
 
-    public PoIngestionProcessor(
+    public PurchaseOrderIngestionProcessor(
         MyMarketManagerDbContext context,
-        ILogger<PoIngestionProcessor> logger,
+        ILogger<PurchaseOrderIngestionProcessor> logger,
         IServiceProvider serviceProvider)
     {
         _context = context;
@@ -30,42 +30,13 @@ public class PoIngestionProcessor
     }
 
     /// <summary>
-    /// Processes all pending web scrape batches.
+    /// Determines if this processor can handle the given batch.
+    /// This processor handles WebScrape batches.
     /// </summary>
-    public async Task<int> ProcessPendingBatchesAsync(CancellationToken cancellationToken = default)
+    public bool CanProcess(StagingBatch batch)
     {
-        // Find all Queued WebScrape batches
-        var pendingBatches = await _context.StagingBatches
-            .Where(b => b.BatchType == StagingBatchType.WebScrape && b.Status == ProcessingStatus.Queued)
-            .Include(b => b.Supplier)
-            .ToListAsync(cancellationToken);
-
-        _logger.LogInformation("Found {Count} pending web scrape batches to process", pendingBatches.Count);
-
-        var processedCount = 0;
-
-        foreach (var batch in pendingBatches)
-        {
-            try
-            {
-                _logger.LogInformation("Processing batch {BatchId} for supplier {SupplierName}", 
-                    batch.Id, batch.Supplier?.Name ?? "unknown");
-                
-                await ProcessBatchAsync(batch, cancellationToken);
-                processedCount++;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing batch {BatchId}", batch.Id);
-                
-                // Update batch status to indicate error
-                batch.Status = ProcessingStatus.Failed;
-                batch.ErrorMessage = $"Processing error: {ex.Message}";
-                await _context.SaveChangesAsync(cancellationToken);
-            }
-        }
-
-        return processedCount;
+        return batch.BatchType == StagingBatchType.WebScrape 
+            && batch.Status == ProcessingStatus.Queued;
     }
 
     /// <summary>

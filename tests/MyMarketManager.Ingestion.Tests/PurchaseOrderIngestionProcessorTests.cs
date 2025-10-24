@@ -12,76 +12,71 @@ using NSubstitute;
 namespace MyMarketManager.Ingestion.Tests;
 
 [Trait(TestCategories.Key, TestCategories.Values.Database)]
-public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
+public class PurchaseOrderIngestionProcessorTests(ITestOutputHelper outputHelper)
 {
-    private readonly ILogger<PoIngestionProcessor> _logger = outputHelper.ToLogger<PoIngestionProcessor>();
+    private readonly ILogger<PurchaseOrderIngestionProcessor> _logger = outputHelper.ToLogger<PurchaseOrderIngestionProcessor>();
 
     [Fact]
-    public async Task ProcessPendingBatchesAsync_WithNoQueuedBatches_ReturnsZero()
+    public async Task CanProcess_WithQueuedWebScrapeBatch_ReturnsTrue()
     {
         // Arrange
         await using var context = CreateInMemoryContext();
         var serviceProvider = CreateServiceProvider();
-        var processor = new PoIngestionProcessor(context, _logger, serviceProvider);
+        var processor = new PurchaseOrderIngestionProcessor(context, _logger, serviceProvider);
+
+        var batch = new StagingBatch
+        {
+            BatchType = StagingBatchType.WebScrape,
+            Status = ProcessingStatus.Queued
+        };
 
         // Act
-        var result = await processor.ProcessPendingBatchesAsync(CancellationToken.None);
+        var canProcess = processor.CanProcess(batch);
 
         // Assert
-        Assert.Equal(0, result);
+        Assert.True(canProcess);
     }
 
     [Fact]
-    public async Task ProcessPendingBatchesAsync_SkipsCompletedBatches()
+    public async Task CanProcess_WithCompletedWebScrapeBatch_ReturnsFalse()
     {
         // Arrange
         await using var context = CreateInMemoryContext();
-        var supplier = await CreateSupplierAsync(context, "Test Supplier");
-        var queuedBatch = await CreateBatchAsync(context, supplier.Id, ProcessingStatus.Queued, "Shein", withCookies: true);
-        var completedBatch = await CreateBatchAsync(context, supplier.Id, ProcessingStatus.Completed, "Shein", withCookies: true);
-        
         var serviceProvider = CreateServiceProvider();
-        var processor = new PoIngestionProcessor(context, _logger, serviceProvider);
+        var processor = new PurchaseOrderIngestionProcessor(context, _logger, serviceProvider);
 
-        // Act
-        var result = await processor.ProcessPendingBatchesAsync(CancellationToken.None);
-
-        // Assert - Only queued batch should be counted
-        Assert.Equal(1, result);
-    }
-
-    [Fact]
-    public async Task ProcessPendingBatchesAsync_SkipsBlobUploadBatches()
-    {
-        // Arrange
-        await using var context = CreateInMemoryContext();
-        var supplier = await CreateSupplierAsync(context, "Test Supplier");
-        var webScrapeBatch = await CreateBatchAsync(context, supplier.Id, ProcessingStatus.Queued, "Shein", withCookies: true);
-        
-        // Create a BlobUpload batch (should be skipped)
-        var blobBatch = new StagingBatch
+        var batch = new StagingBatch
         {
-            Id = Guid.NewGuid(),
-            BatchType = StagingBatchType.BlobUpload,
-            BatchProcessorName = "Shein",
-            SupplierId = supplier.Id,
-            StartedAt = DateTimeOffset.UtcNow,
-            FileHash = Guid.NewGuid().ToString("N"),
-            FileContents = "{}",
-            Status = ProcessingStatus.Queued,
-            Notes = "Blob upload batch"
+            BatchType = StagingBatchType.WebScrape,
+            Status = ProcessingStatus.Completed
         };
-        context.StagingBatches.Add(blobBatch);
-        await context.SaveChangesAsync();
-        
-        var serviceProvider = CreateServiceProvider();
-        var processor = new PoIngestionProcessor(context, _logger, serviceProvider);
 
         // Act
-        var result = await processor.ProcessPendingBatchesAsync(CancellationToken.None);
+        var canProcess = processor.CanProcess(batch);
 
-        // Assert - Only WebScrape batch should be processed
-        Assert.Equal(1, result);
+        // Assert
+        Assert.False(canProcess);
+    }
+
+    [Fact]
+    public async Task CanProcess_WithBlobUploadBatch_ReturnsFalse()
+    {
+        // Arrange
+        await using var context = CreateInMemoryContext();
+        var serviceProvider = CreateServiceProvider();
+        var processor = new PurchaseOrderIngestionProcessor(context, _logger, serviceProvider);
+
+        var batch = new StagingBatch
+        {
+            BatchType = StagingBatchType.BlobUpload,
+            Status = ProcessingStatus.Queued
+        };
+
+        // Act
+        var canProcess = processor.CanProcess(batch);
+
+        // Assert
+        Assert.False(canProcess);
     }
 
     [Fact]
@@ -105,7 +100,7 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         await context.SaveChangesAsync();
         
         var serviceProvider = CreateServiceProvider();
-        var processor = new PoIngestionProcessor(context, _logger, serviceProvider);
+        var processor = new PurchaseOrderIngestionProcessor(context, _logger, serviceProvider);
 
         // Act
         await processor.ProcessBatchAsync(batch, CancellationToken.None);
@@ -126,7 +121,7 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         var batch = await CreateBatchAsync(context, supplier.Id, ProcessingStatus.Queued, "Shein", withCookies: false);
         
         var serviceProvider = CreateServiceProvider();
-        var processor = new PoIngestionProcessor(context, _logger, serviceProvider);
+        var processor = new PurchaseOrderIngestionProcessor(context, _logger, serviceProvider);
 
         // Act
         await processor.ProcessBatchAsync(batch, CancellationToken.None);
@@ -160,7 +155,7 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         await context.SaveChangesAsync();
         
         var serviceProvider = CreateServiceProvider();
-        var processor = new PoIngestionProcessor(context, _logger, serviceProvider);
+        var processor = new PurchaseOrderIngestionProcessor(context, _logger, serviceProvider);
 
         // Act
         await processor.ProcessBatchAsync(batch, CancellationToken.None);
@@ -194,7 +189,7 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         await context.SaveChangesAsync();
         
         var serviceProvider = CreateServiceProvider();
-        var processor = new PoIngestionProcessor(context, _logger, serviceProvider);
+        var processor = new PurchaseOrderIngestionProcessor(context, _logger, serviceProvider);
 
         // Act
         await processor.ProcessBatchAsync(batch, CancellationToken.None);
@@ -216,7 +211,7 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         var beforeProcessing = DateTimeOffset.UtcNow;
         
         var serviceProvider = CreateServiceProviderWithMockFactory();
-        var processor = new PoIngestionProcessor(context, _logger, serviceProvider);
+        var processor = new PurchaseOrderIngestionProcessor(context, _logger, serviceProvider);
 
         // Act
         await processor.ProcessBatchAsync(batch, CancellationToken.None);
@@ -262,7 +257,7 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         await context.SaveChangesAsync();
 
         var serviceProvider = CreateServiceProviderWithMockFactory();
-        var processor = new PoIngestionProcessor(context, _logger, serviceProvider);
+        var processor = new PurchaseOrderIngestionProcessor(context, _logger, serviceProvider);
 
         // Act & Assert - verify it processes without error
         foreach (var processorName in testCases)
