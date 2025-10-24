@@ -60,10 +60,11 @@ builder.Services
     .AddGraphQLServer()
     .AddQueryType(d => d.Name("Query"))
         .AddTypeExtension<ProductQueries>()
-        .AddTypeExtension<PoIngestionQueries>()
+        .AddTypeExtension<PurchaseOrderIngestionQueries>()
+        .AddTypeExtension<SupplierQueries>()
     .AddMutationType(d => d.Name("Mutation"))
         .AddTypeExtension<ProductMutations>()
-        .AddTypeExtension<PoIngestionMutations>();
+        .AddTypeExtension<PurchaseOrderIngestionMutations>();
 
 // Add GraphQL client using InMemory transport for server-side execution
 // This avoids HTTP overhead and URL configuration issues

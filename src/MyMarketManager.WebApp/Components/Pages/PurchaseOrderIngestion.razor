@@ -1,11 +1,9 @@
-@page "/po-ingestion"
+@page "/purchase-orders/ingestion"
 @rendermode InteractiveServer
 @using MyMarketManager.GraphQL.Client
-@using System.Security.Cryptography
-@using System.Text
 @inject IMyMarketManagerClient GraphQLClient
 @inject NavigationManager Navigation
-@inject ILogger<PoIngestion> Logger
+@inject ILogger<PurchaseOrderIngestion> Logger
 
 <PageTitle>PO Ingestion</PageTitle>
 
@@ -80,26 +78,6 @@
                     <div class="form-text">Paste the cookie JSON exported from your browser extension</div>
                 </div>
 
-                @if (!string.IsNullOrEmpty(cookieJson))
-                {
-                    @if (isCheckingDuplicate)
-                    {
-                        <div class="mb-3">
-                            <div class="spinner-border spinner-border-sm me-2" role="status">
-                                <span class="visually-hidden">Checking...</span>
-                            </div>
-                            <span>Checking for duplicates...</span>
-                        </div>
-                    }
-                    else if (isDuplicate)
-                    {
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            These cookies have already been submitted. A batch with this cookie hash already exists.
-                        </div>
-                    }
-                }
-
                 <div class="d-flex gap-2">
                     <button class="btn btn-primary" @onclick="SubmitCookies" disabled="@(!CanSubmit())">
                         @if (submitting)
@@ -152,16 +130,15 @@
     private string? selectedScraper;
     private string cookieJson = string.Empty;
     private bool submitting;
-    private bool isCheckingDuplicate;
-    private bool isDuplicate;
-    private string? cookieHash;
     private string? errorMessage;
     private string? successMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadSuppliers();
-        await LoadAvailableScrapers();
+        var suppliersTask = LoadSuppliers();
+        var scrapersTask = LoadAvailableScrapers();
+
+        await Task.WhenAll(suppliersTask, scrapersTask);
     }
 
     private async Task LoadSuppliers()
@@ -170,9 +147,9 @@
         {
             var result = await GraphQLClient.GetSuppliers.ExecuteAsync();
             
-            if (result.Data?.GetSuppliers != null)
+            if (result.Data?.Suppliers != null)
             {
-                suppliers = result.Data.GetSuppliers
+                suppliers = result.Data.Suppliers
                     .Select(s => new SupplierOption(s.Id, s.Name))
                     .ToList();
             }
@@ -190,9 +167,9 @@
         {
             var result = await GraphQLClient.GetAvailableScrapers.ExecuteAsync(MyMarketManager.GraphQL.Client.StagingBatchType.WebScrape);
             
-            if (result.Data?.GetAvailableScrapers != null)
+            if (result.Data?.AvailableScrapers != null)
             {
-                availableScrapers = result.Data.GetAvailableScrapers.ToList();
+                availableScrapers = result.Data.AvailableScrapers.ToList();
             }
         }
         catch (Exception ex)
@@ -204,8 +181,6 @@
 
     private async Task OnCookieJsonChanged()
     {
-        isDuplicate = false;
-        cookieHash = null;
         errorMessage = null;
         successMessage = null;
 
@@ -217,43 +192,10 @@
                 errorMessage = "Invalid JSON format. Please check your cookie data.";
                 return;
             }
-
-            // Check for duplicates
-            await CheckForDuplicates();
         }
     }
 
-    private async Task CheckForDuplicates()
-    {
-        if (string.IsNullOrWhiteSpace(cookieJson)) return;
 
-        try
-        {
-            isCheckingDuplicate = true;
-            StateHasChanged();
-
-            // Compute hash
-            cookieHash = ComputeHash(cookieJson);
-
-            // Check if hash exists via GraphQL
-            var result = await GraphQLClient.CheckCookieDuplicate.ExecuteAsync(cookieHash);
-            
-            if (result.Data != null)
-            {
-                isDuplicate = result.Data.CheckCookieDuplicate;
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error checking for duplicates");
-            errorMessage = "Error checking for duplicates. Please try again.";
-        }
-        finally
-        {
-            isCheckingDuplicate = false;
-            StateHasChanged();
-        }
-    }
 
     private bool IsValidJson(string json)
     {
@@ -270,12 +212,9 @@
 
     private bool CanSubmit()
     {
-        return !string.IsNullOrWhiteSpace(cookieJson)
-            && selectedSupplierId.HasValue
+        return selectedSupplierId.HasValue
             && !string.IsNullOrWhiteSpace(selectedScraper)
             && !submitting
-            && !isCheckingDuplicate
-            && !isDuplicate
             && IsValidJson(cookieJson);
     }
 
@@ -311,8 +250,6 @@
                     cookieJson = string.Empty;
                     selectedSupplierId = null;
                     selectedScraper = null;
-                    cookieHash = null;
-                    isDuplicate = false;
                 }
                 else
                 {
@@ -343,13 +280,6 @@
     private void Cancel()
     {
         Navigation.NavigateTo("/");
-    }
-
-    private static string ComputeHash(string content)
-    {
-        var bytes = Encoding.UTF8.GetBytes(content);
-        var hash = SHA256.HashData(bytes);
-        return Convert.ToBase64String(hash);
     }
 
     // Local DTO for supplier options

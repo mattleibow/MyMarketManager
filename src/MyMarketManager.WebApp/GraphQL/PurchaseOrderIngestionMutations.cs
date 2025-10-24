@@ -14,7 +14,7 @@ namespace MyMarketManager.WebApp.GraphQL;
 /// GraphQL mutations for PO ingestion
 /// </summary>
 [ExtendObjectType("Mutation")]
-public class PoIngestionMutations
+public class PurchaseOrderIngestionMutations
 {
     /// <summary>
     /// Submit cookies for PO scraping
@@ -22,7 +22,7 @@ public class PoIngestionMutations
     public async Task<SubmitCookiesPayload> SubmitCookies(
         SubmitCookiesInput input,
         MyMarketManagerDbContext context,
-        ILogger<PoIngestionMutations> logger,
+        ILogger<PurchaseOrderIngestionMutations> logger,
         CancellationToken cancellationToken)
     {
         // Validate input
@@ -75,19 +75,6 @@ public class PoIngestionMutations
         {
             // Compute hash
             var cookieHash = ComputeHash(input.CookieJson);
-
-            // Check for duplicates
-            var isDuplicate = await context.StagingBatches
-                .AnyAsync(b => b.FileHash == cookieHash, cancellationToken);
-
-            if (isDuplicate)
-            {
-                return new SubmitCookiesPayload
-                {
-                    Success = false,
-                    Error = "These cookies have already been submitted"
-                };
-            }
 
             // Create staging batch
             var batch = new StagingBatch

@@ -1,3 +1,0 @@
-query CheckCookieDuplicate($cookieHash: String!) {
-  checkCookieDuplicate(cookieHash: $cookieHash)
-}
