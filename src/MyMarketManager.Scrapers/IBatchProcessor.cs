@@ -13,5 +13,5 @@ public interface IBatchProcessor
     /// <param name="batch">The batch to process.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task ScrapeBatchAsync(StagingBatch batch, CancellationToken cancellationToken);
+    Task ProcessBatchAsync(StagingBatch batch, CancellationToken cancellationToken);
 }

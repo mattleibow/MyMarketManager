@@ -1,6 +1,6 @@
 schema {
-  query: ProductQueries
-  mutation: ProductMutations
+  query: Query
+  mutation: Mutation
 }
 
 type Delivery {
@@ -66,10 +66,11 @@ type Product {
   isDeleted: Boolean!
 }
 
-type ProductMutations {
+type Mutation {
   createProduct(input: CreateProductInput!): Product! @cost(weight: "10")
   updateProduct(id: UUID! input: UpdateProductInput!): Product! @cost(weight: "10")
   deleteProduct(id: UUID!): Boolean! @cost(weight: "10")
+  submitCookies(input: SubmitCookiesInput!): SubmitCookiesPayload! @cost(weight: "10")
 }
 
 type ProductPhoto {
@@ -84,9 +85,12 @@ type ProductPhoto {
   isDeleted: Boolean!
 }
 
-type ProductQueries {
+type Query {
   products: [Product!]! @cost(weight: "10")
   productById(id: UUID!): Product @cost(weight: "10")
+  getAvailableScrapers(batchType: StagingBatchType!): [String!]! @cost(weight: "10")
+  checkCookieDuplicate(cookieHash: String!): Boolean! @cost(weight: "10")
+  getSuppliers: [SupplierOption!]! @cost(weight: "10")
 }
 
 type PurchaseOrder {
@@ -267,6 +271,30 @@ input UpdateProductInput {
   quality: ProductQuality!
   notes: String
   stockOnHand: Int!
+}
+
+input SubmitCookiesInput {
+  supplierId: UUID!
+  processorName: String!
+  cookieJson: String!
+}
+
+type SubmitCookiesPayload {
+  success: Boolean!
+  batchId: UUID
+  message: String
+  error: String
+}
+
+type SupplierOption {
+  id: UUID!
+  name: String!
+}
+
+enum StagingBatchType {
+  BLOB_UPLOAD
+  WEB_SCRAPE
+  SALES_DATA
 }
 
 enum CandidateStatus {

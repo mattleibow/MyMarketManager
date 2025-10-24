@@ -40,7 +40,7 @@ builder.Services.AddSingleton<BatchProcessorFactory>(sp =>
     var factory = new BatchProcessorFactory(sp);
     
     // Register web scrapers
-    factory.Register<SheinWebScraper>(StagingBatchType.WebScrape, "Shein");
+    factory.Register<SheinWebScraper>(MyMarketManager.Data.Enums.StagingBatchType.WebScrape, "Shein");
     // Future scrapers:
     // factory.Register<AnotherWebScraper>(StagingBatchType.WebScrape, "AnotherSupplier");
     
@@ -58,8 +58,12 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // Add GraphQL server with HotChocolate first
 builder.Services
     .AddGraphQLServer()
-    .AddQueryType<ProductQueries>()
-    .AddMutationType<ProductMutations>();
+    .AddQueryType(d => d.Name("Query"))
+        .AddTypeExtension<ProductQueries>()
+        .AddTypeExtension<PoIngestionQueries>()
+    .AddMutationType(d => d.Name("Mutation"))
+        .AddTypeExtension<ProductMutations>()
+        .AddTypeExtension<PoIngestionMutations>();
 
 // Add GraphQL client using InMemory transport for server-side execution
 // This avoids HTTP overhead and URL configuration issues

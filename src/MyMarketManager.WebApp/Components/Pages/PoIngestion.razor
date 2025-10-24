@@ -1,14 +1,9 @@
 @page "/po-ingestion"
 @rendermode InteractiveServer
-@using MyMarketManager.Data
-@using MyMarketManager.Data.Entities
-@using MyMarketManager.Data.Enums
-@using MyMarketManager.Scrapers
-@using Microsoft.EntityFrameworkCore
-@using System.Text.Json
+@using MyMarketManager.GraphQL.Client
 @using System.Security.Cryptography
-@inject MyMarketManagerDbContext DbContext
-@inject BatchProcessorFactory ProcessorFactory
+@using System.Text
+@inject IMyMarketManagerClient GraphQLClient
 @inject NavigationManager Navigation
 @inject ILogger<PoIngestion> Logger
 
@@ -68,6 +63,7 @@
                               class="form-control font-monospace" 
                               rows="10" 
                               @bind="cookieJson" 
+                              @bind:after="OnCookieJsonChanged"
                               disabled="@submitting"
                               placeholder='Paste cookie JSON here, e.g.:
 {
@@ -150,7 +146,7 @@
 </div>
 
 @code {
-    private List<Supplier> suppliers = new();
+    private List<SupplierOption> suppliers = new();
     private List<string> availableScrapers = new();
     private Guid? selectedSupplierId;
     private string? selectedScraper;
@@ -165,19 +161,45 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadSuppliers();
-        LoadAvailableScrapers();
+        await LoadAvailableScrapers();
     }
 
     private async Task LoadSuppliers()
     {
-        suppliers = await DbContext.Suppliers
-            .OrderBy(s => s.Name)
-            .ToListAsync();
+        try
+        {
+            var result = await GraphQLClient.GetSuppliers.ExecuteAsync();
+            
+            if (result.Data?.GetSuppliers != null)
+            {
+                suppliers = result.Data.GetSuppliers
+                    .Select(s => new SupplierOption(s.Id, s.Name))
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading suppliers");
+            errorMessage = "Error loading suppliers. Please refresh the page.";
+        }
     }
 
-    private void LoadAvailableScrapers()
+    private async Task LoadAvailableScrapers()
     {
-        availableScrapers = ProcessorFactory.GetAvailableProcessors(StagingBatchType.WebScrape).ToList();
+        try
+        {
+            var result = await GraphQLClient.GetAvailableScrapers.ExecuteAsync(MyMarketManager.GraphQL.Client.StagingBatchType.WebScrape);
+            
+            if (result.Data?.GetAvailableScrapers != null)
+            {
+                availableScrapers = result.Data.GetAvailableScrapers.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading scrapers");
+            errorMessage = "Error loading scrapers. Please refresh the page.";
+        }
     }
 
     private async Task OnCookieJsonChanged()
@@ -213,9 +235,13 @@
             // Compute hash
             cookieHash = ComputeHash(cookieJson);
 
-            // Check if hash exists in database
-            isDuplicate = await DbContext.StagingBatches
-                .AnyAsync(b => b.FileHash == cookieHash);
+            // Check if hash exists via GraphQL
+            var result = await GraphQLClient.CheckCookieDuplicate.ExecuteAsync(cookieHash);
+            
+            if (result.Data != null)
+            {
+                isDuplicate = result.Data.CheckCookieDuplicate;
+            }
         }
         catch (Exception ex)
         {
@@ -233,7 +259,7 @@
     {
         try
         {
-            JsonDocument.Parse(json);
+            System.Text.Json.JsonDocument.Parse(json);
             return true;
         }
         catch
@@ -264,41 +290,43 @@
             successMessage = null;
             StateHasChanged();
 
-            // Compute hash if not already done
-            if (string.IsNullOrEmpty(cookieHash))
+            // Submit via GraphQL mutation
+            var result = await GraphQLClient.SubmitCookies.ExecuteAsync(
+                selectedSupplierId!.Value,
+                selectedScraper!,
+                cookieJson);
+
+            if (result.Data?.SubmitCookies != null)
             {
-                cookieHash = ComputeHash(cookieJson);
+                var payload = result.Data.SubmitCookies;
+                
+                if (payload.Success)
+                {
+                    Logger.LogInformation("Created staging batch {BatchId} for supplier {SupplierId}",
+                        payload.BatchId, selectedSupplierId);
+
+                    successMessage = payload.Message ?? "Cookies submitted successfully!";
+
+                    // Reset form
+                    cookieJson = string.Empty;
+                    selectedSupplierId = null;
+                    selectedScraper = null;
+                    cookieHash = null;
+                    isDuplicate = false;
+                }
+                else
+                {
+                    errorMessage = payload.Error ?? "Error submitting cookies";
+                }
             }
-
-            // Create staging batch
-            var batch = new StagingBatch
+            else if (result.Errors != null && result.Errors.Any())
             {
-                Id = Guid.NewGuid(),
-                BatchType = StagingBatchType.WebScrape,
-                BatchProcessorName = selectedScraper,
-                SupplierId = selectedSupplierId!.Value,
-                StartedAt = DateTimeOffset.UtcNow,
-                FileHash = cookieHash,
-                FileContents = cookieJson,
-                Status = ProcessingStatus.Queued,
-                Notes = $"Cookie submission on {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}"
-            };
-
-            DbContext.StagingBatches.Add(batch);
-            await DbContext.SaveChangesAsync();
-
-            Logger.LogInformation("Created staging batch {BatchId} for supplier {SupplierId}", 
-                batch.Id, selectedSupplierId);
-
-            successMessage = $"Cookies submitted successfully! Batch ID: {batch.Id}. " +
-                           "Scraping will begin within 5 minutes.";
-
-            // Reset form
-            cookieJson = string.Empty;
-            selectedSupplierId = null;
-            selectedScraper = null;
-            cookieHash = null;
-            isDuplicate = false;
+                errorMessage = string.Join(", ", result.Errors.Select(e => e.Message));
+            }
+            else
+            {
+                errorMessage = "Unknown error submitting cookies";
+            }
         }
         catch (Exception ex)
         {
@@ -319,8 +347,11 @@
 
     private static string ComputeHash(string content)
     {
-        using var sha256 = SHA256.Create();
-        var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(content));
-        return Convert.ToBase64String(hashBytes);
+        var bytes = Encoding.UTF8.GetBytes(content);
+        var hash = SHA256.HashData(bytes);
+        return Convert.ToBase64String(hash);
     }
+
+    // Local DTO for supplier options
+    private record SupplierOption(Guid Id, string Name);
 }

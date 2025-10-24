@@ -88,7 +88,7 @@ public abstract class WebScraper(
         try
         {
             // Execute the scraping logic
-            await ScrapeBatchAsync(batch, cancellationToken);
+            await ProcessBatchAsync(batch, cancellationToken);
 
             // Mark as complete
             batch.Status = ProcessingStatus.Completed;
@@ -117,7 +117,7 @@ public abstract class WebScraper(
     /// 2. Parse order links<br/>
     /// 3. Loop through each order link and scrape details
     /// </summary>
-    public async Task ScrapeBatchAsync(StagingBatch batch, CancellationToken cancellationToken)
+    public async Task ProcessBatchAsync(StagingBatch batch, CancellationToken cancellationToken)
     {
         // Step 0: Create scraping session with cookies
         var cookies = CookieFile.FromJson(batch.FileContents);

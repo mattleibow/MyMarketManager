@@ -99,7 +99,7 @@ public class IngestionService : BackgroundService
                     batch.BatchType,
                     batch.BatchProcessorName);
 
-                await processor.ScrapeBatchAsync(batch, cancellationToken);
+                await processor.ProcessBatchAsync(batch, cancellationToken);
             }
             catch (Exception ex)
             {
