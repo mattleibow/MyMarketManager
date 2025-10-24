@@ -112,14 +112,13 @@ public class PoIngestionProcessor
         batch.StartedAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Get the scraper name from batch notes (stored during creation)
-        // Extract scraper name from notes like "Scraper: Shein, Cookie submission on..."
-        var scraperName = ExtractScraperName(batch.Notes);
-        if (string.IsNullOrEmpty(scraperName))
+        // Get the processor name from batch
+        var processorName = batch.BatchProcessorName;
+        if (string.IsNullOrEmpty(processorName))
         {
-            _logger.LogWarning("No scraper name found in batch {BatchId}", batch.Id);
+            _logger.LogWarning("No processor name found in batch {BatchId}", batch.Id);
             batch.Status = ProcessingStatus.Failed;
-            batch.ErrorMessage = "No scraper name specified";
+            batch.ErrorMessage = "No processor name specified";
             await _context.SaveChangesAsync(cancellationToken);
             return;
         }
@@ -129,9 +128,9 @@ public class PoIngestionProcessor
             // Create scraper instance using factory
             using var scope = _serviceProvider.CreateScope();
             var scraperFactory = scope.ServiceProvider.GetRequiredService<IWebScraperFactory>();
-            var scraper = scraperFactory.CreateScraper(scraperName);
+            var scraper = scraperFactory.CreateScraper(processorName);
 
-            _logger.LogInformation("Running {ScraperName} scraper for batch {BatchId}", scraperName, batch.Id);
+            _logger.LogInformation("Running {ProcessorName} scraper for batch {BatchId}", processorName, batch.Id);
 
             // Run the scraper with the existing batch
             await scraper.ScrapeBatchAsync(batch, cancellationToken);
@@ -139,7 +138,6 @@ public class PoIngestionProcessor
             // Mark as complete
             batch.Status = ProcessingStatus.Completed;
             batch.CompletedAt = DateTimeOffset.UtcNow;
-            batch.Notes = $"Scraper: {scraperName}, Processed on {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}";
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("Completed processing batch {BatchId}", batch.Id);
@@ -152,24 +150,5 @@ public class PoIngestionProcessor
             await _context.SaveChangesAsync(cancellationToken);
             throw;
         }
-    }
-
-    private static string? ExtractScraperName(string? notes)
-    {
-        if (string.IsNullOrEmpty(notes))
-            return null;
-
-        // Extract scraper name from format "Scraper: ScraperName, ..."
-        var scraperPrefix = "Scraper: ";
-        var index = notes.IndexOf(scraperPrefix, StringComparison.OrdinalIgnoreCase);
-        if (index < 0)
-            return null;
-
-        var startIndex = index + scraperPrefix.Length;
-        var commaIndex = notes.IndexOf(',', startIndex);
-        if (commaIndex < 0)
-            commaIndex = notes.Length;
-
-        return notes.Substring(startIndex, commaIndex - startIndex).Trim();
     }
 }

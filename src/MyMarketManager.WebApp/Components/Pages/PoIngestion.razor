@@ -275,12 +275,13 @@
             {
                 Id = Guid.NewGuid(),
                 BatchType = StagingBatchType.WebScrape,
+                BatchProcessorName = selectedScraper,
                 SupplierId = selectedSupplierId!.Value,
                 StartedAt = DateTimeOffset.UtcNow,
                 FileHash = cookieHash,
                 FileContents = cookieJson,
                 Status = ProcessingStatus.Queued,
-                Notes = $"Scraper: {selectedScraper}, Cookie submission on {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}"
+                Notes = $"Cookie submission on {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}"
             };
 
             DbContext.StagingBatches.Add(batch);

@@ -63,12 +63,13 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         {
             Id = Guid.NewGuid(),
             BatchType = StagingBatchType.BlobUpload,
+            BatchProcessorName = "Shein",
             SupplierId = supplier.Id,
             StartedAt = DateTimeOffset.UtcNow,
             FileHash = Guid.NewGuid().ToString("N"),
             FileContents = "{}",
             Status = ProcessingStatus.Queued,
-            Notes = "Scraper: Shein, Blob upload batch"
+            Notes = "Blob upload batch"
         };
         context.StagingBatches.Add(blobBatch);
         await context.SaveChangesAsync();
@@ -92,12 +93,13 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         {
             Id = Guid.NewGuid(),
             BatchType = StagingBatchType.WebScrape,
+            BatchProcessorName = null, // No processor name
             SupplierId = null, // No supplier
             StartedAt = DateTimeOffset.UtcNow,
             FileHash = Guid.NewGuid().ToString("N"),
             FileContents = "{\"domain\": \"test.com\", \"cookies\": []}",
             Status = ProcessingStatus.Queued,
-            Notes = "Scraper: Shein, Test batch"
+            Notes = "Test batch"
         };
         context.StagingBatches.Add(batch);
         await context.SaveChangesAsync();
@@ -146,12 +148,13 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         {
             Id = Guid.NewGuid(),
             BatchType = StagingBatchType.WebScrape,
+            BatchProcessorName = "Shein",
             SupplierId = nonExistentSupplierId,
             StartedAt = DateTimeOffset.UtcNow,
             FileHash = Guid.NewGuid().ToString("N"),
             FileContents = "{\"domain\": \"test.com\", \"cookies\": []}",
             Status = ProcessingStatus.Queued,
-            Notes = "Scraper: Shein, Test batch"
+            Notes = "Test batch"
         };
         context.StagingBatches.Add(batch);
         await context.SaveChangesAsync();
@@ -170,7 +173,7 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
     }
 
     [Fact]
-    public async Task ProcessBatchAsync_WithNoScraperName_MarksAsFailed()
+    public async Task ProcessBatchAsync_WithNoProcessorName_MarksAsFailed()
     {
         // Arrange
         await using var context = CreateInMemoryContext();
@@ -179,12 +182,13 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         {
             Id = Guid.NewGuid(),
             BatchType = StagingBatchType.WebScrape,
+            BatchProcessorName = null, // No processor name
             SupplierId = supplier.Id,
             StartedAt = DateTimeOffset.UtcNow,
             FileHash = Guid.NewGuid().ToString("N"),
             FileContents = "{\"domain\": \"test.com\", \"cookies\": []}",
             Status = ProcessingStatus.Queued,
-            Notes = "No scraper name here" // Missing "Scraper: " prefix
+            Notes = "Test batch"
         };
         context.StagingBatches.Add(batch);
         await context.SaveChangesAsync();
@@ -199,7 +203,7 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         var updatedBatch = await context.StagingBatches.FindAsync(batch.Id);
         Assert.NotNull(updatedBatch);
         Assert.Equal(ProcessingStatus.Failed, updatedBatch.Status);
-        Assert.Equal("No scraper name specified", updatedBatch.ErrorMessage);
+        Assert.Equal("No processor name specified", updatedBatch.ErrorMessage);
     }
 
     [Fact]
@@ -225,32 +229,33 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
     }
 
     [Fact]
-    public async Task ProcessBatchAsync_ExtractsScraperNameFromNotes()
+    public async Task ProcessBatchAsync_UsesProcessorNameFromProperty()
     {
         // Arrange
         await using var context = CreateInMemoryContext();
         var supplier = await CreateSupplierAsync(context, "Test Supplier");
         
-        // Test various note formats
+        // Test various processor names
         var testCases = new[]
         {
-            ("Scraper: Shein, Cookie submission on 2025-10-24", "Shein"),
-            ("Scraper: AnotherScraper, Some other text", "AnotherScraper"),
-            ("Scraper: TestScraper", "TestScraper")
+            "Shein",
+            "AnotherScraper",
+            "TestScraper"
         };
 
-        foreach (var (notes, expectedScraperName) in testCases)
+        foreach (var processorName in testCases)
         {
             var batch = new StagingBatch
             {
                 Id = Guid.NewGuid(),
                 BatchType = StagingBatchType.WebScrape,
+                BatchProcessorName = processorName,
                 SupplierId = supplier.Id,
                 StartedAt = DateTimeOffset.UtcNow,
                 FileHash = Guid.NewGuid().ToString("N"),
                 FileContents = "{\"domain\": \"test.com\", \"cookies\": []}",
                 Status = ProcessingStatus.Queued,
-                Notes = notes
+                Notes = "Test batch"
             };
             context.StagingBatches.Add(batch);
         }
@@ -260,10 +265,10 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         var processor = new PoIngestionProcessor(context, _logger, serviceProvider);
 
         // Act & Assert - verify it processes without error
-        foreach (var (notes, _) in testCases)
+        foreach (var processorName in testCases)
         {
             var batch = await context.StagingBatches
-                .FirstAsync(b => b.Notes == notes);
+                .FirstAsync(b => b.BatchProcessorName == processorName);
             
             await processor.ProcessBatchAsync(batch, CancellationToken.None);
             
@@ -302,19 +307,20 @@ public class PoIngestionProcessorTests(ITestOutputHelper outputHelper)
         MyMarketManagerDbContext context,
         Guid supplierId,
         ProcessingStatus status,
-        string scraperName,
+        string processorName,
         bool withCookies)
     {
         var batch = new StagingBatch
         {
             Id = Guid.NewGuid(),
             BatchType = StagingBatchType.WebScrape,
+            BatchProcessorName = processorName,
             SupplierId = supplierId,
             StartedAt = DateTimeOffset.UtcNow,
             FileHash = Guid.NewGuid().ToString("N"),
             FileContents = withCookies ? "{\"domain\": \"test.com\", \"cookies\": []}" : null,
             Status = status,
-            Notes = $"Scraper: {scraperName}, Test batch"
+            Notes = "Test batch"
         };
         context.StagingBatches.Add(batch);
         await context.SaveChangesAsync();
