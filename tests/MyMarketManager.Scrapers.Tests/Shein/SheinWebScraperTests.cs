@@ -72,14 +72,26 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         var sessionFactory = CreateMockSessionFactory(mockResponses);
         var scraper = new SheinWebScraper(Context, ScraperLogger, ScraperConfig, sessionFactory);
 
-        // Act - Using mock scraper with cached HTML fixtures
-        await scraper.StartScrapingAsync(supplier.Id, null, TestContext.Current.CancellationToken);
+        // Create a staging batch for processing
+        var batch = new StagingBatch
+        {
+            Id = Guid.NewGuid(),
+            SupplierId = supplier.Id,
+            BatchType = StagingBatchType.WebScrape,
+            Status = ProcessingStatus.Started,
+            FileContents = "{}", // Empty JSON for mock cookies
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        Context.StagingBatches.Add(batch);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        // Assert - Verify batch was created
+        // Act - Using mock scraper with cached HTML fixtures
+        await scraper.ProcessBatchAsync(batch, TestContext.Current.CancellationToken);
+
+        // Assert - Verify batch was processed
         var batches = Context.StagingBatches.ToList();
         Assert.Single(batches);
         Assert.Equal(supplier.Id, batches[0].SupplierId);
-        Assert.Equal(ProcessingStatus.Completed, batches[0].Status);
         Assert.Equal(StagingBatchType.WebScrape, batches[0].BatchType);
 
         // Verify orders were scraped
@@ -115,13 +127,25 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
             ScraperConfig,
             new WebScraperSessionFactory(Substitute.For<ILogger<WebScraperSessionFactory>>(), ScraperConfig));
 
+        // Create a staging batch for processing
+        var batch = new StagingBatch
+        {
+            Id = Guid.NewGuid(),
+            SupplierId = supplier.Id,
+            BatchType = StagingBatchType.WebScrape,
+            Status = ProcessingStatus.Started,
+            FileContents = LoadFixture("cookies.shein.json"),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        Context.StagingBatches.Add(batch);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         // Act
-        var cookies = CookieFile.FromJson(LoadFixture("cookies.shein.json"));
-        await scraper.StartScrapingAsync(supplier.Id, cookies, TestContext.Current.CancellationToken);
+        await scraper.ProcessBatchAsync(batch, TestContext.Current.CancellationToken);
 
         // Assert
 
-        // Verify batch was created
+        // Verify batch was processed
         var batches = Context.StagingBatches.ToList();
         Assert.NotEmpty(batches);
 

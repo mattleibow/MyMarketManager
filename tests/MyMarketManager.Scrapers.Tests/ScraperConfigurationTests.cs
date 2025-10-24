@@ -16,7 +16,8 @@ public class ScraperConfigurationTests
         // Assert
         Assert.Equal("Mozilla/5.0", config.UserAgent);
         Assert.Equal(TimeSpan.FromSeconds(2), config.RequestDelay);
-        Assert.Empty(config.AdditionalHeaders);
+        Assert.NotEmpty(config.AdditionalHeaders); // Has default headers
+        Assert.Equal(4, config.AdditionalHeaders.Count); // Default header count
     }
 
     [Fact]
@@ -38,12 +39,13 @@ public class ScraperConfigurationTests
         // Arrange
         var config = new ScraperConfiguration();
 
-        // Act
-        config.AdditionalHeaders["accept"] = "text/html";
-        config.AdditionalHeaders["accept-language"] = "en-US";
+        // Act - Add new headers that don't exist in defaults
+        config.AdditionalHeaders["Custom-Header"] = "custom-value";
+        config.AdditionalHeaders["Another-Header"] = "another-value";
 
         // Assert
-        Assert.Equal(2, config.AdditionalHeaders.Count);
-        Assert.Equal("text/html", config.AdditionalHeaders["accept"]);
+        Assert.Equal(6, config.AdditionalHeaders.Count); // 4 defaults + 2 new
+        Assert.Equal("custom-value", config.AdditionalHeaders["Custom-Header"]);
+        Assert.Equal("another-value", config.AdditionalHeaders["Another-Header"]);
     }
 }
