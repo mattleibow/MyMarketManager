@@ -20,6 +20,7 @@
     <ProjectReference Include="..\MyMarketManager.Data\MyMarketManager.Data.csproj" />
     <ProjectReference Include="..\MyMarketManager.GraphQL.Client\MyMarketManager.GraphQL.Client.csproj" />
     <ProjectReference Include="..\MyMarketManager.Scrapers\MyMarketManager.Scrapers.csproj" />
+    <ProjectReference Include="..\MyMarketManager.Ingestion\MyMarketManager.Ingestion.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-using MyMarketManager.Data.Services;
+using MyMarketManager.Ingestion;
 
 namespace MyMarketManager.WebApp.Services;
 

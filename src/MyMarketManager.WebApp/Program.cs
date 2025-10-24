@@ -6,6 +6,7 @@ using MyMarketManager.WebApp.Services;
 using MyMarketManager.GraphQL.Client;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Shein;
+using MyMarketManager.Ingestion;
 using HotChocolate.Execution;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -7,7 +7,7 @@ using MyMarketManager.Data.Enums;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Core;
 
-namespace MyMarketManager.WebApp.Services;
+namespace MyMarketManager.Ingestion;
 
 /// <summary>
 /// Service responsible for processing pending PO ingestion batches via web scraping.
