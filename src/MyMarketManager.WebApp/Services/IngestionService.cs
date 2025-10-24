@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MyMarketManager.Data;
-using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
 using MyMarketManager.Scrapers;
 
@@ -9,7 +8,7 @@ namespace MyMarketManager.WebApp.Services;
 
 /// <summary>
 /// Background service that processes queued staging batches.
-/// Routes batches to appropriate processors based on BatchType and BatchProcessorName.
+/// Simply gets batches and delegates to appropriate processors.
 /// </summary>
 public class IngestionService : BackgroundService
 {
@@ -53,6 +52,7 @@ public class IngestionService : BackgroundService
     {
         using var scope = _serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MyMarketManagerDbContext>();
+        var factory = scope.ServiceProvider.GetRequiredService<IBatchProcessorFactory>();
         
         // Get all queued batches
         var queuedBatches = await context.StagingBatches
@@ -72,130 +72,39 @@ public class IngestionService : BackgroundService
         {
             try
             {
-                await ProcessBatchAsync(scope.ServiceProvider, batch, cancellationToken);
+                // Skip batches without processor name
+                if (string.IsNullOrEmpty(batch.BatchProcessorName))
+                {
+                    _logger.LogWarning("Batch {BatchId} has no processor name", batch.Id);
+                    continue;
+                }
+
+                // Get the processor
+                var processor = factory.GetProcessor(batch.BatchType, batch.BatchProcessorName);
+                
+                if (processor == null)
+                {
+                    _logger.LogWarning(
+                        "No processor found for batch {BatchId} - Type: {BatchType}, Name: {ProcessorName}",
+                        batch.Id,
+                        batch.BatchType,
+                        batch.BatchProcessorName);
+                    continue;
+                }
+
+                // Let the processor handle everything
+                _logger.LogInformation(
+                    "Starting processor for batch {BatchId} - Type: {BatchType}, Name: {ProcessorName}",
+                    batch.Id,
+                    batch.BatchType,
+                    batch.BatchProcessorName);
+
+                await ((dynamic)processor).ScrapeBatchAsync(batch, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing batch {BatchId}", batch.Id);
-                
-                // Update batch status to indicate error
-                batch.Status = ProcessingStatus.Failed;
-                batch.ErrorMessage = $"Processing error: {ex.Message}";
-                await context.SaveChangesAsync(cancellationToken);
             }
         }
-    }
-
-    private async Task ProcessBatchAsync(
-        IServiceProvider serviceProvider,
-        StagingBatch batch,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogInformation(
-            "Processing batch {BatchId} - Type: {BatchType}, Processor: {ProcessorName}",
-            batch.Id,
-            batch.BatchType,
-            batch.BatchProcessorName ?? "none");
-
-        // Route based on batch type
-        switch (batch.BatchType)
-        {
-            case StagingBatchType.WebScrape:
-                await ProcessWebScrapeBatchAsync(serviceProvider, batch, cancellationToken);
-                break;
-
-            // Future batch types can be added here:
-            // case StagingBatchType.BlobUpload:
-            //     await ProcessBlobUploadBatchAsync(serviceProvider, batch, cancellationToken);
-            //     break;
-
-            default:
-                _logger.LogWarning("Unknown batch type {BatchType} for batch {BatchId}", batch.BatchType, batch.Id);
-                batch.Status = ProcessingStatus.Failed;
-                batch.ErrorMessage = $"Unknown batch type: {batch.BatchType}";
-                var context = serviceProvider.GetRequiredService<MyMarketManagerDbContext>();
-                await context.SaveChangesAsync(cancellationToken);
-                break;
-        }
-    }
-
-    private async Task ProcessWebScrapeBatchAsync(
-        IServiceProvider serviceProvider,
-        StagingBatch batch,
-        CancellationToken cancellationToken)
-    {
-        var context = serviceProvider.GetRequiredService<MyMarketManagerDbContext>();
-
-        // Validate batch data
-        if (batch.SupplierId == null)
-        {
-            _logger.LogWarning("Batch {BatchId} has no supplier ID", batch.Id);
-            batch.Status = ProcessingStatus.Failed;
-            batch.ErrorMessage = "No supplier ID provided";
-            await context.SaveChangesAsync(cancellationToken);
-            return;
-        }
-
-        if (string.IsNullOrEmpty(batch.FileContents))
-        {
-            _logger.LogWarning("Batch {BatchId} has no cookie data", batch.Id);
-            batch.Status = ProcessingStatus.Failed;
-            batch.ErrorMessage = "No cookie data provided";
-            await context.SaveChangesAsync(cancellationToken);
-            return;
-        }
-
-        if (string.IsNullOrEmpty(batch.BatchProcessorName))
-        {
-            _logger.LogWarning("No processor name found in batch {BatchId}", batch.Id);
-            batch.Status = ProcessingStatus.Failed;
-            batch.ErrorMessage = "No processor name specified";
-            await context.SaveChangesAsync(cancellationToken);
-            return;
-        }
-
-        // Get the supplier
-        var supplier = await context.Suppliers
-            .FirstOrDefaultAsync(s => s.Id == batch.SupplierId, cancellationToken);
-
-        if (supplier == null)
-        {
-            _logger.LogWarning("Supplier {SupplierId} not found for batch {BatchId}", 
-                batch.SupplierId, batch.Id);
-            batch.Status = ProcessingStatus.Failed;
-            batch.ErrorMessage = "Supplier not found";
-            await context.SaveChangesAsync(cancellationToken);
-            return;
-        }
-
-        // Update status to Started
-        batch.Status = ProcessingStatus.Started;
-        batch.StartedAt = DateTimeOffset.UtcNow;
-        await context.SaveChangesAsync(cancellationToken);
-
-        // Get the web scraper using the factory
-        var factory = serviceProvider.GetRequiredService<IBatchProcessorFactory>();
-        var scraper = factory.GetProcessor(batch.BatchType, batch.BatchProcessorName) as WebScraper;
-        
-        if (scraper == null)
-        {
-            _logger.LogWarning("No scraper found for processor name {ProcessorName}", batch.BatchProcessorName);
-            batch.Status = ProcessingStatus.Failed;
-            batch.ErrorMessage = $"No scraper registered for: {batch.BatchProcessorName}";
-            await context.SaveChangesAsync(cancellationToken);
-            return;
-        }
-
-        _logger.LogInformation("Running {ProcessorName} scraper for batch {BatchId}", batch.BatchProcessorName, batch.Id);
-
-        // Run the scraper with the existing batch
-        await scraper.ScrapeBatchAsync(batch, cancellationToken);
-
-        // Mark as complete
-        batch.Status = ProcessingStatus.Completed;
-        batch.CompletedAt = DateTimeOffset.UtcNow;
-        await context.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation("Completed processing batch {BatchId}", batch.Id);
     }
 }
