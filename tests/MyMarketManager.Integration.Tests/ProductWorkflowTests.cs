@@ -40,7 +40,7 @@ public class ProductWorkflowTests(ITestOutputHelper outputHelper) : PlaywrightTe
         await Page.GetByRole(AriaRole.Button, new() { Name = "Create Product" }).ClickAsync();
         
         // Wait for navigation back to products page
-        await Page.WaitForURLAsync("**/products", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await WaitForNavigationAsync("**/products");
         
         // Assert - Verify we're back on products page
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Products" })).ToBeVisibleAsync();
@@ -85,7 +85,7 @@ public class ProductWorkflowTests(ITestOutputHelper outputHelper) : PlaywrightTe
         await Page.GetByRole(AriaRole.Button, new() { Name = "Update Product" }).ClickAsync();
         
         // Wait for navigation back to products page
-        await Page.WaitForURLAsync("**/products", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await WaitForNavigationAsync("**/products");
         
         // Assert - Verify we're back on products page
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Products" })).ToBeVisibleAsync();

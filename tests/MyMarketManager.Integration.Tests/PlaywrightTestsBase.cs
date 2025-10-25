@@ -131,6 +131,26 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
         }
     }
     
+    /// <summary>
+    /// Wait for navigation to complete after an action (like form submission or link click) and capture a screenshot
+    /// </summary>
+    protected async Task WaitForNavigationAsync(string urlPattern, PageWaitForURLOptions? options = null)
+    {
+        var defaultOptions = new PageWaitForURLOptions { WaitUntil = WaitUntilState.NetworkIdle };
+        await Page!.WaitForURLAsync(urlPattern, options ?? defaultOptions);
+        
+        // Capture screenshot after navigation completes
+        // Don't let screenshot failures affect navigation success
+        try
+        {
+            await CaptureScreenshotAsync();
+        }
+        catch (Exception ex)
+        {
+            outputHelper.WriteLine($"Warning: Screenshot capture failed after navigation: {ex.Message}");
+        }
+    }
+    
     protected async Task CaptureScreenshotAsync(string? name = null)
     {
         if (Page is null)
