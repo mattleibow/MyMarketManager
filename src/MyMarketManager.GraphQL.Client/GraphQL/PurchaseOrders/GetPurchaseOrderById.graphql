@@ -1,0 +1,28 @@
+query GetPurchaseOrderById($id: UUID!) {
+  purchaseOrderById(id: $id) {
+    id
+    supplierId
+    supplierName
+    orderDate
+    status
+    shippingFees
+    importFees
+    insuranceFees
+    additionalFees
+    notes
+    items {
+      id
+      productId
+      productName
+      supplierReference
+      supplierProductUrl
+      name
+      description
+      quantity
+      listedUnitPrice
+      actualUnitPrice
+      allocatedUnitOverhead
+      totalUnitCost
+    }
+  }
+}

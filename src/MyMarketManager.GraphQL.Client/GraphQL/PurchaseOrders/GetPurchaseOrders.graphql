@@ -1,0 +1,15 @@
+query GetPurchaseOrders {
+  purchaseOrders {
+    id
+    supplierId
+    supplierName
+    orderDate
+    status
+    itemCount
+    shippingFees
+    importFees
+    insuranceFees
+    additionalFees
+    notes
+  }
+}

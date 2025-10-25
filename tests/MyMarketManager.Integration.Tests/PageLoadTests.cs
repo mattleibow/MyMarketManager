@@ -69,6 +69,59 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
     }
 
     [Fact]
+    public async Task PurchaseOrdersPage_LoadsWithoutErrors()
+    {
+        // Arrange & Act
+        await NavigateToAppAsync("/purchase-orders");
+
+        // Assert - Verify page loaded with main heading (h1)
+        await Expect(Page!.Locator("h1").Filter(new() { HasText = "Purchase Orders" })).ToBeVisibleAsync();
+        
+        // Verify View Staging button is present
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "View Staging" })).ToBeVisibleAsync();
+        
+        // Verify no error alerts on page
+        await ExpectNoErrorsAsync();
+    }
+
+    [Fact]
+    public async Task PurchaseOrdersStagingPage_LoadsWithoutErrors()
+    {
+        // Arrange & Act
+        await NavigateToAppAsync("/purchase-orders/staging");
+
+        // Assert - Verify page loaded with main heading (h1)
+        await Expect(Page!.Locator("h1").Filter(new() { HasText = "Staging Batches" })).ToBeVisibleAsync();
+        
+        // Verify View Purchase Orders button is present
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "View Purchase Orders" })).ToBeVisibleAsync();
+        
+        // Verify Start Ingestion button is present (using first occurrence in the header)
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Start Ingestion" }).First).ToBeVisibleAsync();
+        
+        // Verify no error alerts on page
+        await ExpectNoErrorsAsync();
+    }
+
+    [Fact]
+    public async Task PurchaseOrderIngestionPage_LoadsWithoutErrors()
+    {
+        // Arrange & Act
+        await NavigateToAppAsync("/purchase-orders/ingestion");
+
+        // Assert - Verify page loaded with heading
+        await Expect(Page!.GetByRole(AriaRole.Heading, new() { Name = "Purchase Order Ingestion" })).ToBeVisibleAsync();
+        
+        // Verify form elements are present
+        await Expect(Page.Locator("#supplierSelect")).ToBeVisibleAsync();
+        await Expect(Page.Locator("#scraperSelect")).ToBeVisibleAsync();
+        await Expect(Page.Locator("#cookiesInput")).ToBeVisibleAsync();
+        
+        // Verify no error alerts on page (initially)
+        await ExpectNoErrorsAsync();
+    }
+
+    [Fact]
     public async Task NotFoundPage_LoadsWithoutErrors()
     {
         // Arrange & Act

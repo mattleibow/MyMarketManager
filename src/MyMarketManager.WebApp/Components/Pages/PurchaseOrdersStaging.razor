@@ -1,0 +1,345 @@
+@page "/purchase-orders/staging"
+@rendermode InteractiveServer
+@using MyMarketManager.GraphQL.Client
+@inject IMyMarketManagerClient GraphQLClient
+@inject NavigationManager Navigation
+@inject ILogger<PurchaseOrdersStaging> Logger
+
+<PageTitle>Staging Batches</PageTitle>
+
+<h1>Staging Batches</h1>
+
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <p class="text-muted mb-0">Track purchase order ingestion progress and view staging data</p>
+    <div>
+        <a href="/purchase-orders" class="btn btn-secondary me-2">
+            <i class="bi bi-box-seam me-2"></i>
+            View Purchase Orders
+        </a>
+        <a href="/purchase-orders/ingestion" class="btn btn-primary">
+            <i class="bi bi-cloud-arrow-down me-2"></i>
+            Start Ingestion
+        </a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+    </div>
+}
+
+@if (loading)
+{
+    <div class="text-center my-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading staging batches...</p>
+    </div>
+}
+else if (stagingBatches.Count == 0)
+{
+    <div class="alert alert-info">
+        <h5 class="alert-heading">No staging batches found</h5>
+        <p class="mb-0">There are no staging batches in the system yet. Start by ingesting purchase orders from suppliers.</p>
+        <hr />
+        <a href="/purchase-orders/ingestion" class="btn btn-primary mt-2">
+            <i class="bi bi-cloud-arrow-down me-2"></i>
+            Start Ingestion
+        </a>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Started</th>
+                            <th>Batch Type</th>
+                            <th>Processor</th>
+                            <th>Supplier</th>
+                            <th>Status</th>
+                            <th class="text-end">Orders</th>
+                            <th class="text-end">Items</th>
+                            <th>Completed</th>
+                            <th>Notes</th>
+                            <th>Error</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var batch in stagingBatches)
+                        {
+                            <tr style="cursor: pointer;" @onclick="() => ViewBatch(batch.Id)">
+                                <td>@batch.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        @batch.BatchType
+                                    </span>
+                                </td>
+                                <td>@(batch.BatchProcessorName ?? "-")</td>
+                                <td>@(batch.SupplierName ?? "-")</td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(batch.Status)">
+                                        @batch.Status
+                                    </span>
+                                </td>
+                                <td class="text-end">@batch.OrderCount</td>
+                                <td class="text-end">@batch.ItemCount</td>
+                                <td>
+                                    @if (batch.CompletedAt.HasValue)
+                                    {
+                                        @batch.CompletedAt.Value.ToString("yyyy-MM-dd HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>@(batch.Notes ?? "-")</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(batch.ErrorMessage))
+                                    {
+                                        <span class="text-danger" title="@batch.ErrorMessage">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3 d-flex justify-content-between align-items-center">
+        <div class="text-muted">
+            Showing @stagingBatches.Count staging batch(es)
+        </div>
+        <button class="btn btn-sm btn-outline-primary" @onclick="LoadStagingBatches">
+            <i class="bi bi-arrow-clockwise me-2"></i>
+            Refresh
+        </button>
+    </div>
+
+    @if (selectedBatch != null)
+    {
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Batch Details: @selectedBatch.Id</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Batch Type:</dt>
+                            <dd class="col-sm-8">@selectedBatch.BatchType</dd>
+
+                            <dt class="col-sm-4">Processor:</dt>
+                            <dd class="col-sm-8">@(selectedBatch.BatchProcessorName ?? "-")</dd>
+
+                            <dt class="col-sm-4">Supplier:</dt>
+                            <dd class="col-sm-8">@(selectedBatch.SupplierName ?? "-")</dd>
+
+                            <dt class="col-sm-4">Status:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge @GetStatusBadgeClass(selectedBatch.Status)">
+                                    @selectedBatch.Status
+                                </span>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Started:</dt>
+                            <dd class="col-sm-8">@selectedBatch.StartedAt.ToString("yyyy-MM-dd HH:mm:ss")</dd>
+
+                            <dt class="col-sm-4">Completed:</dt>
+                            <dd class="col-sm-8">
+                                @if (selectedBatch.CompletedAt.HasValue)
+                                {
+                                    @selectedBatch.CompletedAt.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-4">Orders:</dt>
+                            <dd class="col-sm-8">@selectedBatch.StagingPurchaseOrders.Count</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(selectedBatch.Notes))
+                {
+                    <div class="mt-3">
+                        <strong>Notes:</strong>
+                        <p>@selectedBatch.Notes</p>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(selectedBatch.ErrorMessage))
+                {
+                    <div class="alert alert-danger mt-3">
+                        <strong>Error:</strong>
+                        <p class="mb-0">@selectedBatch.ErrorMessage</p>
+                    </div>
+                }
+
+                @if (selectedBatch.StagingPurchaseOrders.Count > 0)
+                {
+                    <h6 class="mt-4">Staging Purchase Orders (@selectedBatch.StagingPurchaseOrders.Count)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Supplier Ref</th>
+                                    <th>Order Date</th>
+                                    <th>Status</th>
+                                    <th>Imported</th>
+                                    <th class="text-end">Items</th>
+                                    <th>Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var order in selectedBatch.StagingPurchaseOrders)
+                                {
+                                    <tr>
+                                        <td>@(order.SupplierReference ?? "-")</td>
+                                        <td>@order.OrderDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>
+                                            <span class="badge @GetStatusBadgeClass(order.Status)">
+                                                @order.Status
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if (order.IsImported)
+                                            {
+                                                <i class="bi bi-check-circle text-success"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-circle text-muted"></i>
+                                            }
+                                        </td>
+                                        <td class="text-end">@order.ItemCount</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(order.ErrorMessage))
+                                            {
+                                                <span class="text-danger small" title="@order.ErrorMessage">
+                                                    @order.ErrorMessage
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                <div class="mt-3">
+                    <button class="btn btn-secondary" @onclick="() => selectedBatch = null">
+                        Close Details
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private List<IGetStagingBatches_StagingBatches> stagingBatches = new();
+    private IGetStagingBatchById_StagingBatchById? selectedBatch;
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStagingBatches();
+    }
+
+    private async Task LoadStagingBatches()
+    {
+        try
+        {
+            loading = true;
+            errorMessage = null;
+            StateHasChanged();
+
+            var result = await GraphQLClient.GetStagingBatches.ExecuteAsync();
+            
+            if (result.Data?.StagingBatches != null)
+            {
+                stagingBatches = result.Data.StagingBatches.ToList();
+            }
+            else if (result.Errors != null && result.Errors.Any())
+            {
+                errorMessage = string.Join(", ", result.Errors.Select(e => e.Message));
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading staging batches");
+            errorMessage = $"Error loading staging batches: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ViewBatch(Guid batchId)
+    {
+        try
+        {
+            var result = await GraphQLClient.GetStagingBatchById.ExecuteAsync(batchId);
+            
+            if (result.Data?.StagingBatchById != null)
+            {
+                selectedBatch = result.Data.StagingBatchById;
+            }
+            else if (result.Errors != null && result.Errors.Any())
+            {
+                errorMessage = string.Join(", ", result.Errors.Select(e => e.Message));
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading batch details");
+            errorMessage = $"Error loading batch details: {ex.Message}";
+        }
+        
+        StateHasChanged();
+    }
+
+    private string GetStatusBadgeClass(MyMarketManager.GraphQL.Client.ProcessingStatus status)
+    {
+        return status switch
+        {
+            MyMarketManager.GraphQL.Client.ProcessingStatus.Queued => "bg-secondary",
+            MyMarketManager.GraphQL.Client.ProcessingStatus.Started => "bg-primary",
+            MyMarketManager.GraphQL.Client.ProcessingStatus.Completed => "bg-success",
+            MyMarketManager.GraphQL.Client.ProcessingStatus.Failed => "bg-danger",
+            MyMarketManager.GraphQL.Client.ProcessingStatus.Cancelled => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}
