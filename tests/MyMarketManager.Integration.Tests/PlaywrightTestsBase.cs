@@ -107,7 +107,15 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
                 });
                 
                 // Capture screenshot after successful navigation
-                await CaptureScreenshotAsync();
+                // Don't let screenshot failures affect navigation success
+                try
+                {
+                    await CaptureScreenshotAsync();
+                }
+                catch (Exception ex)
+                {
+                    outputHelper.WriteLine($"Warning: Screenshot capture failed after navigation: {ex.Message}");
+                }
                 
                 return; // Success
             }
