@@ -1,0 +1,16 @@
+query GetStagingBatches {
+  stagingBatches {
+    id
+    batchType
+    batchProcessorName
+    supplierId
+    supplierName
+    startedAt
+    completedAt
+    status
+    notes
+    errorMessage
+    orderCount
+    itemCount
+  }
+}

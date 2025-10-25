@@ -6,6 +6,10 @@ schema {
 type Query {
   products: [Product!]!
   productById(id: UUID!): Product
+  purchaseOrders: [PurchaseOrderDto!]!
+  purchaseOrderById(id: UUID!): PurchaseOrderDetailDto
+  stagingBatches: [StagingBatchDto!]!
+  stagingBatchById(id: UUID!): StagingBatchDetailDto
   availableScrapers(batchType: StagingBatchType!): [String!]!
   suppliers: [SupplierOption!]!
 }
@@ -323,6 +327,88 @@ type StagingBatch {
   updatedAt: DateTime!
   deletedAt: DateTime
   isDeleted: Boolean!
+}
+
+type PurchaseOrderDto {
+  id: UUID!
+  supplierId: UUID!
+  supplierName: String!
+  orderDate: DateTime!
+  status: ProcessingStatus!
+  itemCount: Int!
+  shippingFees: Decimal!
+  importFees: Decimal!
+  insuranceFees: Decimal!
+  additionalFees: Decimal!
+  notes: String
+}
+
+type PurchaseOrderDetailDto {
+  id: UUID!
+  supplierId: UUID!
+  supplierName: String!
+  orderDate: DateTime!
+  status: ProcessingStatus!
+  shippingFees: Decimal!
+  importFees: Decimal!
+  insuranceFees: Decimal!
+  additionalFees: Decimal!
+  notes: String
+  items: [PurchaseOrderItemDto!]!
+}
+
+type PurchaseOrderItemDto {
+  id: UUID!
+  productId: UUID
+  productName: String
+  supplierReference: String
+  supplierProductUrl: String
+  name: String!
+  description: String
+  quantity: Int!
+  listedUnitPrice: Decimal!
+  actualUnitPrice: Decimal!
+  allocatedUnitOverhead: Decimal!
+  totalUnitCost: Decimal!
+}
+
+type StagingBatchDto {
+  id: UUID!
+  batchType: StagingBatchType!
+  batchProcessorName: String
+  supplierId: UUID
+  supplierName: String
+  startedAt: DateTime!
+  completedAt: DateTime
+  status: ProcessingStatus!
+  notes: String
+  errorMessage: String
+  orderCount: Int!
+  itemCount: Int!
+}
+
+type StagingBatchDetailDto {
+  id: UUID!
+  batchType: StagingBatchType!
+  batchProcessorName: String
+  supplierId: UUID
+  supplierName: String
+  startedAt: DateTime!
+  completedAt: DateTime
+  status: ProcessingStatus!
+  notes: String
+  errorMessage: String
+  stagingPurchaseOrders: [StagingPurchaseOrderDto!]!
+}
+
+type StagingPurchaseOrderDto {
+  id: UUID!
+  supplierReference: String
+  orderDate: DateTime!
+  status: ProcessingStatus!
+  isImported: Boolean!
+  errorMessage: String
+  itemCount: Int!
 }
 
 enum ProcessingStatus {
