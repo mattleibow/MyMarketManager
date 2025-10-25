@@ -4,7 +4,9 @@ using MyMarketManager.WebApp.Components;
 using MyMarketManager.WebApp.GraphQL;
 using MyMarketManager.WebApp.Services;
 using MyMarketManager.GraphQL.Client;
-using HotChocolate.Execution;
+using MyMarketManager.Scrapers;
+using MyMarketManager.Scrapers.Shein;
+using MyMarketManager.Data.Processing;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,13 +24,29 @@ builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 builder.Services.AddScoped<DbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
+// Add scraper services
+builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
+builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
+
+// Add ingestion services
+builder.Services.Configure<IngestionServiceOptions>(builder.Configuration.GetSection("IngestionService"));
+builder.Services.AddScoped<BatchProcessingService>();
+builder.Services.AddHostedService<IngestionService>();
+builder.Services.AddBatchProcessorFactory()
+    .AddWebScraper<SheinWebScraper>("Shein");
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Add GraphQL server with HotChocolate first
 builder.Services
     .AddGraphQLServer()
-    .AddQueryType<ProductQueries>()
-    .AddMutationType<ProductMutations>();
+    .AddQueryType(d => d.Name("Query"))
+        .AddTypeExtension<ProductQueries>()
+        .AddTypeExtension<PurchaseOrderIngestionQueries>()
+        .AddTypeExtension<SupplierQueries>()
+    .AddMutationType(d => d.Name("Mutation"))
+        .AddTypeExtension<ProductMutations>()
+        .AddTypeExtension<PurchaseOrderIngestionMutations>();
 
 // Add GraphQL client using InMemory transport for server-side execution
 // This avoids HTTP overhead and URL configuration issues

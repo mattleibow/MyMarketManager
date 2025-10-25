@@ -195,7 +195,7 @@ cd src/MyMarketManager.GraphQL.Client
 
 # 2. (Optional) Update schema if server changed
 #    Requires the app to be running first
-dotnet graphql update
+dotnet graphql download https://localhost:7075/graphql
 
 # 3. Generate the client code
 dotnet graphql generate
@@ -341,7 +341,7 @@ dotnet run --project src/MyMarketManager.AppHost
 
 # 2. Download schema and generate client
 cd src/MyMarketManager.GraphQL.Client
-dotnet graphql update
+dotnet graphql download https://localhost:7075/graphql
 dotnet graphql generate
 ```
 
@@ -354,7 +354,7 @@ cd src/MyMarketManager.GraphQL.Client
 dotnet graphql generate
 ```
 
-If schema changes aren't reflected, update the schema first with `dotnet graphql update`.
+If schema changes aren't reflected, update the schema first with `dotnet graphql download https://localhost:7075/graphql`.
 
 ## Resources
 

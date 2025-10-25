@@ -1,0 +1,12 @@
+mutation SubmitCookies($supplierId: UUID!, $processorName: String!, $cookieJson: String!) {
+  submitCookies(input: {
+    supplierId: $supplierId
+    processorName: $processorName
+    cookieJson: $cookieJson
+  }) {
+    success
+    batchId
+    message
+    error
+  }
+}

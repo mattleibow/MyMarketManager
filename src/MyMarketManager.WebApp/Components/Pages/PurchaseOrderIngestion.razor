@@ -1,0 +1,287 @@
+@page "/purchase-orders/ingestion"
+@rendermode InteractiveServer
+@using MyMarketManager.GraphQL.Client
+@inject IMyMarketManagerClient GraphQLClient
+@inject NavigationManager Navigation
+@inject ILogger<PurchaseOrderIngestion> Logger
+
+<PageTitle>PO Ingestion</PageTitle>
+
+<h1>Purchase Order Ingestion</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Submit Cookies for Scraping</h5>
+                <p class="text-muted">Paste cookies from your browser to scrape purchase orders from the supplier website</p>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @errorMessage
+                        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @successMessage
+                        <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label for="supplierSelect" class="form-label">Supplier</label>
+                    <select id="supplierSelect" class="form-select" @bind="selectedSupplierId" disabled="@submitting">
+                        <option value="">-- Select a supplier --</option>
+                        @foreach (var supplier in suppliers)
+                        {
+                            <option value="@supplier.Id">@supplier.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="scraperSelect" class="form-label">Scraper</label>
+                    <select id="scraperSelect" class="form-select" @bind="selectedScraper" disabled="@submitting">
+                        <option value="">-- Select a scraper --</option>
+                        @foreach (var scraper in availableScrapers)
+                        {
+                            <option value="@scraper">@scraper</option>
+                        }
+                    </select>
+                    <div class="form-text">Choose the web scraper to use for this supplier</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="cookiesInput" class="form-label">Cookie JSON</label>
+                    <textarea id="cookiesInput" 
+                              class="form-control font-monospace" 
+                              rows="10" 
+                              @bind="cookieJson" 
+                              @bind:after="OnCookieJsonChanged"
+                              disabled="@submitting"
+                              placeholder='Paste cookie JSON here, e.g.:
+{
+  "domain": "shein.com",
+  "capturedAt": "2025-10-24T00:00:00Z",
+  "cookies": [
+    {
+      "name": "session_id",
+      "value": "abc123",
+      "domain": ".shein.com"
+    }
+  ]
+}'></textarea>
+                    <div class="form-text">Paste the cookie JSON exported from your browser extension</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" @onclick="SubmitCookies" disabled="@(!CanSubmit())">
+                        @if (submitting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <span>Submitting...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-play-circle me-2"></i>
+                            <span>Submit & Start Scraping</span>
+                        }
+                    </button>
+                    <button class="btn btn-secondary" @onclick="Cancel" disabled="@submitting">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Instructions</h5>
+                <ol>
+                    <li>Open the supplier website in your browser</li>
+                    <li>Log in to your account</li>
+                    <li>Use a cookie export extension to capture cookies</li>
+                    <li>Copy the cookie JSON</li>
+                    <li>Select the supplier here</li>
+                    <li>Paste the cookie JSON</li>
+                    <li>Click Submit to start scraping</li>
+                </ol>
+                <hr />
+                <h6>What happens next?</h6>
+                <p class="small">
+                    After submission, a staging batch will be created with "Queued" status.
+                    A background service processes queued batches every 5 minutes.
+                    The scraper will fetch purchase orders from the supplier website using your cookies.
+                    You can view the scraped data in the staging batches list.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<SupplierOption> suppliers = new();
+    private List<string> availableScrapers = new();
+    private Guid? selectedSupplierId;
+    private string? selectedScraper;
+    private string cookieJson = string.Empty;
+    private bool submitting;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var suppliersTask = LoadSuppliers();
+        var scrapersTask = LoadAvailableScrapers();
+
+        await Task.WhenAll(suppliersTask, scrapersTask);
+    }
+
+    private async Task LoadSuppliers()
+    {
+        try
+        {
+            var result = await GraphQLClient.GetSuppliers.ExecuteAsync();
+            
+            if (result.Data?.Suppliers != null)
+            {
+                suppliers = result.Data.Suppliers
+                    .Select(s => new SupplierOption(s.Id, s.Name))
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading suppliers");
+            errorMessage = "Error loading suppliers. Please refresh the page.";
+        }
+    }
+
+    private async Task LoadAvailableScrapers()
+    {
+        try
+        {
+            var result = await GraphQLClient.GetAvailableScrapers.ExecuteAsync(MyMarketManager.GraphQL.Client.StagingBatchType.WebScrape);
+            
+            if (result.Data?.AvailableScrapers != null)
+            {
+                availableScrapers = result.Data.AvailableScrapers.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading scrapers");
+            errorMessage = "Error loading scrapers. Please refresh the page.";
+        }
+    }
+
+    private async Task OnCookieJsonChanged()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        if (!string.IsNullOrWhiteSpace(cookieJson))
+        {
+            // Validate JSON format
+            if (!IsValidJson(cookieJson))
+            {
+                errorMessage = "Invalid JSON format. Please check your cookie data.";
+                return;
+            }
+        }
+    }
+
+
+
+    private bool IsValidJson(string json)
+    {
+        try
+        {
+            System.Text.Json.JsonDocument.Parse(json);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private bool CanSubmit()
+    {
+        return selectedSupplierId.HasValue
+            && !string.IsNullOrWhiteSpace(selectedScraper)
+            && !submitting
+            && IsValidJson(cookieJson);
+    }
+
+    private async Task SubmitCookies()
+    {
+        if (!CanSubmit()) return;
+
+        try
+        {
+            submitting = true;
+            errorMessage = null;
+            successMessage = null;
+            StateHasChanged();
+
+            // Submit via GraphQL mutation
+            var result = await GraphQLClient.SubmitCookies.ExecuteAsync(
+                selectedSupplierId!.Value,
+                selectedScraper!,
+                cookieJson);
+
+            if (result.Data?.SubmitCookies != null)
+            {
+                var payload = result.Data.SubmitCookies;
+                
+                if (payload.Success)
+                {
+                    Logger.LogInformation("Created staging batch {BatchId} for supplier {SupplierId}",
+                        payload.BatchId, selectedSupplierId);
+
+                    successMessage = payload.Message ?? "Cookies submitted successfully!";
+
+                    // Reset form
+                    cookieJson = string.Empty;
+                    selectedSupplierId = null;
+                    selectedScraper = null;
+                }
+                else
+                {
+                    errorMessage = payload.Error ?? "Error submitting cookies";
+                }
+            }
+            else if (result.Errors != null && result.Errors.Any())
+            {
+                errorMessage = string.Join(", ", result.Errors.Select(e => e.Message));
+            }
+            else
+            {
+                errorMessage = "Unknown error submitting cookies";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error submitting cookies");
+            errorMessage = $"Error submitting cookies: {ex.Message}";
+        }
+        finally
+        {
+            submitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    // Local DTO for supplier options
+    private record SupplierOption(Guid Id, string Name);
+}

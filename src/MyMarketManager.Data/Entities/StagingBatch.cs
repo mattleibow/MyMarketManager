@@ -14,6 +14,12 @@ public class StagingBatch : EntityBase
     public StagingBatchType BatchType { get; set; }
 
     /// <summary>
+    /// The name of the processor to use for this batch (e.g., "Shein" for web scraper, "SheinZipParser" for zip processor, "YocoApi" for sales data).
+    /// Combined with BatchType to determine the exact processing logic.
+    /// </summary>
+    public string? BatchProcessorName { get; set; }
+
+    /// <summary>
     /// The supplier this batch is for (for web scrapes).
     /// </summary>
     public Guid? SupplierId { get; set; }

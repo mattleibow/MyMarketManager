@@ -3,6 +3,7 @@
     <Project Path="src/MyMarketManager.AppHost/MyMarketManager.AppHost.csproj" />
     <Project Path="src/MyMarketManager.GraphQL.Client/MyMarketManager.GraphQL.Client.csproj" />
     <Project Path="src/MyMarketManager.ServiceDefaults/MyMarketManager.ServiceDefaults.csproj" />
+    <Project Path="src/MyMarketManager.Data.Processing/MyMarketManager.Data.Processing.csproj" />
     <Project Path="src/MyMarketManager.Data/MyMarketManager.Data.csproj" />
     <Project Path="src/MyMarketManager.Scrapers.Core/MyMarketManager.Scrapers.Core.csproj" />
     <Project Path="src/MyMarketManager.Scrapers/MyMarketManager.Scrapers.csproj" />
@@ -11,6 +12,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MyMarketManager.Components.Tests/MyMarketManager.Components.Tests.csproj" />
+    <Project Path="tests/MyMarketManager.Data.Processing.Tests/MyMarketManager.Data.Processing.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Data.Tests/MyMarketManager.Data.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Integration.Tests/MyMarketManager.Integration.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Scrapers.Core.Tests/MyMarketManager.Scrapers.Core.Tests.csproj" />

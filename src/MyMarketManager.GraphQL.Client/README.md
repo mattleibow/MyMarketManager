@@ -59,7 +59,7 @@ Generate client code manually:
 cd src/MyMarketManager.GraphQL.Client
 
 # Update schema (only if server schema changed)
-dotnet graphql update
+dotnet graphql download https://localhost:7075/graphql
 
 # Generate client code
 dotnet graphql generate

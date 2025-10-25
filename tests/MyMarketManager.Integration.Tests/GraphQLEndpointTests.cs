@@ -31,7 +31,7 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
 
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
-        Assert.Contains("ProductQueries", result);
+        Assert.Contains("Query", result);
     }
 
     [Fact]
@@ -61,9 +61,9 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
 
-        // Verify schema contains our types
-        Assert.Contains("ProductQueries", result);
-        Assert.Contains("ProductMutations", result);
+        // Verify schema contains root Query and Mutation types
+        Assert.Contains("Query", result);
+        Assert.Contains("Mutation", result);
     }
 
     [Fact]

@@ -163,7 +163,7 @@ Query methods should return `IQueryable<T>` for efficient database queries. Muta
 2. Generate typed client code with `dotnet graphql generate`
 3. Use the generated operation through `IMyMarketManagerClient`
 
-**Note:** If the server schema has changed, download the updated schema first with `dotnet graphql update`.
+**Note:** If the server schema has changed, download the updated schema first with `dotnet graphql download https://localhost:7075/graphql`.
 
 See [GraphQL Client documentation](graphql-client.md) and the project's README for detailed instructions.
 
@@ -270,7 +270,7 @@ dotnet run --project src/MyMarketManager.AppHost
 
 # Terminal 2: Update schema and generate client
 cd src/MyMarketManager.GraphQL.Client
-dotnet graphql update
+dotnet graphql download https://localhost:7075/graphql
 dotnet graphql generate
 ```
 

@@ -9,6 +9,7 @@ namespace MyMarketManager.WebApp.GraphQL;
 /// <summary>
 /// GraphQL mutations for products
 /// </summary>
+[ExtendObjectType("Mutation")]
 public class ProductMutations
 {
     /// <summary>

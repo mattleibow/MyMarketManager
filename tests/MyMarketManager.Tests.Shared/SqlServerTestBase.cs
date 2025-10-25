@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using MyMarketManager.Tests.Shared;
+using MyMarketManager.Data;
 
-namespace MyMarketManager.Data.Tests;
+namespace MyMarketManager.Tests.Shared;
 
 /// <summary>
 /// Base class for integration tests using a real SQL Server instance in Docker.

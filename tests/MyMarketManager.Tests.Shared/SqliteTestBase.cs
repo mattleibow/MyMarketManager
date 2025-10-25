@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using MyMarketManager.Tests.Shared;
+using MyMarketManager.Data;
 
-namespace MyMarketManager.Data.Tests;
+namespace MyMarketManager.Tests.Shared;
 
 /// <summary>
 /// Base class for tests using SQLite in-memory database.
@@ -14,7 +14,7 @@ public abstract class SqliteTestBase(ITestOutputHelper outputHelper, bool create
 
     protected MyMarketManagerDbContext Context { get; private set; } = null!;
 
-    public async ValueTask InitializeAsync()
+    public virtual async ValueTask InitializeAsync()
     {
         var connection = await _sqlite.ConnectAsync();
 
@@ -31,7 +31,7 @@ public abstract class SqliteTestBase(ITestOutputHelper outputHelper, bool create
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public virtual async ValueTask DisposeAsync()
     {
         await Context.DisposeAsync();
 

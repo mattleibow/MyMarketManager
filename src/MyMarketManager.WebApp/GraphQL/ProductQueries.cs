@@ -7,6 +7,7 @@ namespace MyMarketManager.WebApp.GraphQL;
 /// <summary>
 /// GraphQL queries for products
 /// </summary>
+[ExtendObjectType("Query")]
 public class ProductQueries
 {
     /// <summary>

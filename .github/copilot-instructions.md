@@ -114,7 +114,7 @@ cd src/MyMarketManager.GraphQL.Client
 
 # 2. (Optional) Download the latest schema from the running app
 #    Only needed when the server schema has changed
-dotnet graphql update
+dotnet graphql download https://localhost:7075/graphql
 
 # 3. Generate the client code
 dotnet graphql generate
