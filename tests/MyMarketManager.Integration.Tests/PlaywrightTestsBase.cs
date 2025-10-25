@@ -11,6 +11,8 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
     protected IBrowser Browser { get; private set; } = null!;
     protected IBrowserContext Context { get; private set; } = null!;
     protected IPage Page { get; private set; } = null!;
+    
+    private int _screenshotCounter = 0;
 
     public override async ValueTask InitializeAsync()
     {
@@ -103,6 +105,18 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
                     WaitUntil = WaitUntilState.NetworkIdle,
                     Timeout = 30000 // 30 second timeout
                 });
+                
+                // Capture screenshot after successful navigation
+                // Don't let screenshot failures affect navigation success
+                try
+                {
+                    await CaptureScreenshotAsync();
+                }
+                catch (Exception ex)
+                {
+                    outputHelper.WriteLine($"Warning: Screenshot capture failed after navigation: {ex.Message}");
+                }
+                
                 return; // Success
             }
             catch (PlaywrightException ex) when (attempt < maxRetries && 
@@ -117,17 +131,40 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
         }
     }
     
+    /// <summary>
+    /// Wait for navigation to complete after an action (like form submission or link click) and capture a screenshot
+    /// </summary>
+    protected async Task WaitForNavigationAsync(string urlPattern, PageWaitForURLOptions? options = null)
+    {
+        var defaultOptions = new PageWaitForURLOptions { WaitUntil = WaitUntilState.NetworkIdle };
+        await Page!.WaitForURLAsync(urlPattern, options ?? defaultOptions);
+        
+        // Capture screenshot after navigation completes
+        // Don't let screenshot failures affect navigation success
+        try
+        {
+            await CaptureScreenshotAsync();
+        }
+        catch (Exception ex)
+        {
+            outputHelper.WriteLine($"Warning: Screenshot capture failed after navigation: {ex.Message}");
+        }
+    }
+    
     protected async Task CaptureScreenshotAsync(string? name = null)
     {
         if (Page is null)
             return;
 
+        // Use test display name if name not provided
         name ??= TestContext.Current.Test!.TestDisplayName;
+        
+        // Increment counter for this screenshot
+        var currentCounter = Interlocked.Increment(ref _screenshotCounter);
             
         try
         {
-            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss");
-            var fileName = $"{name}_{timestamp}.png";
+            var fileName = $"{name}_{currentCounter}.png";
             
             // Create test-results directory if it doesn't exist
             var testResultsDir = Path.Combine(Directory.GetCurrentDirectory(), "test-results", "screenshots");
@@ -143,7 +180,7 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
 
             var bytes = await File.ReadAllBytesAsync(screenshotPath);
 
-            TestContext.Current.AddAttachment(name, bytes, "image/png");
+            TestContext.Current.AddAttachment($"{name}_{currentCounter}", bytes, "image/png");
 
             outputHelper.WriteLine($"Screenshot captured: {screenshotPath}");
         }
