@@ -143,19 +143,25 @@ dotnet test tests/MyMarketManager.Integration.Tests --filter "Category=Flaky"
 
 ### CI/CD Integration
 
-**Regular Test Workflow (.github/workflows/test.yml):**
+**Test Workflow (.github/workflows/test.yml):**
+
+The test workflow uses a matrix to run 4 jobs: regular and flaky tests on both ubuntu-latest and windows-latest.
+
+**Matrix Configuration:**
+- **OS**: ubuntu-latest, windows-latest
+- **Test Type**: regular, flaky
+- **Total Jobs**: 4 (2 OS × 2 test types)
+
+**Regular Tests:**
 - Automatically excludes flaky tests using `--filter "Category!=Flaky"`
 - Runs on push and pull requests to main
 - Prevents flaky tests from blocking merges
 
-**Flaky Tests Workflow (.github/workflows/flaky-tests.yml):**
+**Flaky Tests:**
 - Runs only tests marked as flaky using `--filter "Category=Flaky"`
-- Triggers:
-  - On push and pull requests (for visibility)
-  - Manual workflow dispatch
-  - Scheduled daily at 2 AM UTC (for pattern detection)
+- Runs on same triggers as regular tests plus scheduled daily at 2 AM UTC
 - Generates separate test results and coverage reports
-- Runs on same matrix (ubuntu-latest, windows-latest)
+- Monitors flaky test behavior without blocking CI/CD
 
 ### When to Mark Tests as Flaky
 
@@ -637,13 +643,13 @@ public abstract class SqlServerTestBase(ITestOutputHelper outputHelper) : IAsync
 
 ## CI/CD Integration
 
-### GitHub Actions Workflows
+### GitHub Actions Workflow
 
-MyMarketManager has multiple test workflows to handle different scenarios:
+The test workflow runs both regular and flaky tests using a matrix strategy:
 
-#### Main Test Workflow (.github/workflows/test.yml)
+#### Test Workflow (.github/workflows/test.yml)
 
-Runs on push and pull requests to main, excluding flaky tests:
+Uses a matrix to create 4 jobs (2 OS × 2 test types):
 
 ```yaml
 jobs:
@@ -653,9 +659,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        test-type: [regular, flaky]
         include:
           - os: windows-latest
-            filter: --filter "Requires!=SSL"
+            ssl-filter: --filter "Requires!=SSL"
+          - test-type: regular
+            category-filter: --filter "Category!=Flaky"
+            test-name: Test
+          - test-type: flaky
+            category-filter: --filter "Category=Flaky"
+            test-name: Flaky Test
 
     steps:
       - name: Checkout code
@@ -671,46 +684,28 @@ jobs:
         run: dotnet dev-certs https --trust
 
       - name: Run tests
-        run: dotnet test --no-build --configuration Release --filter "Category!=Flaky" ${{ matrix.filter }}
+        run: dotnet test --no-build --configuration Release ${{ matrix.category-filter }} ${{ matrix.ssl-filter }}
 ```
+
+**Matrix Strategy:**
+- **4 total jobs**: ubuntu-latest (regular), ubuntu-latest (flaky), windows-latest (regular), windows-latest (flaky)
+- **Regular tests**: Exclude flaky tests with `Category!=Flaky` filter
+- **Flaky tests**: Run only flaky tests with `Category=Flaky` filter
 
 **Platform-Specific Behavior:**
-- **Ubuntu**: Trusts dev certificates, runs all non-flaky tests
-- **Windows**: Excludes SSL tests (certificate trust issues) and flaky tests, uses LocalDB
-
-#### Flaky Tests Workflow (.github/workflows/flaky-tests.yml)
-
-Runs only tests marked as flaky, on push, pull requests, manual trigger, and daily schedule:
-
-```yaml
-jobs:
-  flaky-test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        include:
-          - os: windows-latest
-            filter: --filter "Requires!=SSL"
-
-    steps:
-      # ... same setup steps ...
-
-      - name: Run flaky tests
-        run: dotnet test --no-build --configuration Release --filter "Category=Flaky" ${{ matrix.filter }}
-```
+- **Ubuntu**: Trusts dev certificates, runs all tests (regular or flaky depending on job)
+- **Windows**: Excludes SSL tests (certificate trust issues), uses LocalDB
 
 **Triggers:**
 - Push to main
 - Pull requests to main
 - Manual workflow dispatch
-- Scheduled: Daily at 2 AM UTC
+- Scheduled: Daily at 2 AM UTC (runs all 4 jobs including flaky tests)
 
 **Purpose:**
-- Monitors flaky test behavior without blocking CI/CD
-- Provides visibility into intermittent failures
-- Scheduled runs help identify patterns
+- Regular tests prevent flaky tests from blocking CI/CD
+- Flaky test jobs monitor intermittent failures
+- Scheduled runs help identify patterns in flaky behavior
 
 ## Troubleshooting
 
