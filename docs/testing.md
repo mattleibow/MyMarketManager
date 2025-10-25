@@ -65,8 +65,125 @@ Shared test infrastructure used by both test projects.
 **Key Components:**
 - `SqlServerHelper`: Platform-aware SQL Server provisioning
 - `SqliteHelper`: SQLite in-memory database management
-- `TestCategories`: Test categorization (GraphQL, Database)
+- `TestCategories`: Test categorization (GraphQL, Database, LongRunning, Flaky)
 - `TestRequirements`: Test requirements (SSL)
+
+## Flaky Tests
+
+MyMarketManager supports marking tests as "flaky" to handle tests that occasionally fail due to timing issues, external dependencies, or other non-deterministic factors.
+
+### Overview
+
+Flaky tests are isolated from regular test runs to prevent intermittent failures from blocking CI/CD pipelines, while still monitoring them separately to track their behavior.
+
+**Key Features:**
+- Tests marked as `Flaky` are excluded from normal test runs
+- Separate workflow runs only flaky tests
+- Scheduled daily runs help identify patterns
+- Easy to fix: remove the trait when stabilized
+
+### Marking Tests as Flaky
+
+**Mark an entire test class:**
+
+```csharp
+[Trait(TestCategories.Key, TestCategories.Values.Flaky)]
+public class MyFlakyTestClass
+{
+    [Fact]
+    public void TestMethod1()
+    {
+        // All tests in this class are marked as flaky
+    }
+    
+    [Fact]
+    public void TestMethod2()
+    {
+        // Also marked as flaky
+    }
+}
+```
+
+**Mark individual test methods:**
+
+```csharp
+public class MyTestClass
+{
+    [Fact]
+    [Trait(TestCategories.Key, TestCategories.Values.Flaky)]
+    public void MyFlaky_TestMethod()
+    {
+        // Only this test is marked as flaky
+    }
+    
+    [Fact]
+    public void MyStable_TestMethod()
+    {
+        // This test runs normally
+    }
+}
+```
+
+### Running Flaky Tests Locally
+
+**Run only flaky tests:**
+```bash
+dotnet test --filter "Category=Flaky"
+```
+
+**Run all tests except flaky ones (matches CI behavior):**
+```bash
+dotnet test --filter "Category!=Flaky"
+```
+
+**Run flaky tests in a specific project:**
+```bash
+dotnet test tests/MyMarketManager.Integration.Tests --filter "Category=Flaky"
+```
+
+### CI/CD Integration
+
+**Regular Test Workflow (.github/workflows/test.yml):**
+- Automatically excludes flaky tests using `--filter "Category!=Flaky"`
+- Runs on push and pull requests to main
+- Prevents flaky tests from blocking merges
+
+**Flaky Tests Workflow (.github/workflows/flaky-tests.yml):**
+- Runs only tests marked as flaky using `--filter "Category=Flaky"`
+- Triggers:
+  - On push and pull requests (for visibility)
+  - Manual workflow dispatch
+  - Scheduled daily at 2 AM UTC (for pattern detection)
+- Generates separate test results and coverage reports
+- Runs on same matrix (ubuntu-latest, windows-latest)
+
+### When to Mark Tests as Flaky
+
+Mark a test as flaky when it:
+- Occasionally fails due to timing issues (race conditions, timeouts)
+- Depends on external resources that are sometimes unavailable
+- Has non-deterministic behavior that's difficult to eliminate
+- Fails intermittently in CI but passes locally (or vice versa)
+
+**Important:** Flaky tests should be temporary. Always investigate and fix the root cause when possible, then remove the `Flaky` trait to move the test back to regular runs.
+
+### Example Flaky Test
+
+```csharp
+using MyMarketManager.Tests.Shared;
+
+[Trait(TestCategories.Key, TestCategories.Values.Flaky)]
+public class NetworkDependentTests(ITestOutputHelper outputHelper) : WebAppTestsBase(outputHelper)
+{
+    [Fact]
+    public async Task ExternalApi_ReturnsData()
+    {
+        // This test is marked as flaky because it depends on external API availability
+        var response = await WebAppHttpClient.GetAsync("/api/external-data");
+        response.EnsureSuccessStatusCode();
+    }
+}
+```
 
 ## Running Tests
 
@@ -94,6 +211,12 @@ dotnet test --filter "Category=GraphQL"
 
 # Run only database tests
 dotnet test --filter "Category=Database"
+
+# Run only flaky tests
+dotnet test --filter "Category=Flaky"
+
+# Run all tests except flaky ones (matches CI behavior)
+dotnet test --filter "Category!=Flaky"
 ```
 
 ### Run Tests Excluding Requirements
@@ -514,13 +637,17 @@ public abstract class SqlServerTestBase(ITestOutputHelper outputHelper) : IAsync
 
 ## CI/CD Integration
 
-### GitHub Actions Workflow
+### GitHub Actions Workflows
 
-The test workflow runs on multiple platforms:
+MyMarketManager has multiple test workflows to handle different scenarios:
+
+#### Main Test Workflow (.github/workflows/test.yml)
+
+Runs on push and pull requests to main, excluding flaky tests:
 
 ```yaml
 jobs:
-  build:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -544,12 +671,46 @@ jobs:
         run: dotnet dev-certs https --trust
 
       - name: Run tests
-        run: dotnet test --configuration Release ${{ matrix.filter }}
+        run: dotnet test --no-build --configuration Release --filter "Category!=Flaky" ${{ matrix.filter }}
 ```
 
 **Platform-Specific Behavior:**
-- **Ubuntu**: Trusts dev certificates, runs all tests
-- **Windows**: Excludes SSL tests (certificate trust issues), uses LocalDB
+- **Ubuntu**: Trusts dev certificates, runs all non-flaky tests
+- **Windows**: Excludes SSL tests (certificate trust issues) and flaky tests, uses LocalDB
+
+#### Flaky Tests Workflow (.github/workflows/flaky-tests.yml)
+
+Runs only tests marked as flaky, on push, pull requests, manual trigger, and daily schedule:
+
+```yaml
+jobs:
+  flaky-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: windows-latest
+            filter: --filter "Requires!=SSL"
+
+    steps:
+      # ... same setup steps ...
+
+      - name: Run flaky tests
+        run: dotnet test --no-build --configuration Release --filter "Category=Flaky" ${{ matrix.filter }}
+```
+
+**Triggers:**
+- Push to main
+- Pull requests to main
+- Manual workflow dispatch
+- Scheduled: Daily at 2 AM UTC
+
+**Purpose:**
+- Monitors flaky test behavior without blocking CI/CD
+- Provides visibility into intermittent failures
+- Scheduled runs help identify patterns
 
 ## Troubleshooting
 
@@ -716,6 +877,42 @@ public class MyTests : IAsyncLifetime
     }
 }
 ```
+
+### Managing Flaky Tests
+
+**When to mark as flaky:**
+- Test has intermittent failures that can't be immediately fixed
+- External dependency causes occasional failures
+- Timing issues that are difficult to resolve
+
+**Best practices:**
+1. **Always investigate first** - Don't mark a test as flaky without understanding why it fails
+2. **Document the reason** - Add comments explaining why the test is flaky
+3. **Create a tracking issue** - Link to a GitHub issue tracking the fix
+4. **Monitor regularly** - Review flaky test workflow results to identify patterns
+5. **Fix promptly** - Flaky tests should be temporary; remove the trait once fixed
+
+**Example with documentation:**
+
+```csharp
+/// <summary>
+/// Tests external API integration.
+/// Marked as flaky due to occasional network timeouts.
+/// Tracking issue: #123
+/// </summary>
+[Fact]
+[Trait(TestCategories.Key, TestCategories.Values.Flaky)]
+public async Task ExternalApi_Integration_Works()
+{
+    // Test implementation
+}
+```
+
+**Red flags (don't mark as flaky):**
+- Test reveals an actual bug in the code
+- Test fails consistently on certain platforms
+- Test failure indicates a real regression
+- Test has never passed
 
 ## Resources
 
