@@ -176,7 +176,7 @@ using MyMarketManager.Tests.Shared;
 public class NetworkDependentTests(ITestOutputHelper outputHelper) : WebAppTestsBase(outputHelper)
 {
     [Fact]
-    public async Task ExternalApi_ReturnsData()
+    public async Task ExternalApi_WhenCalled_ReturnsSuccessfulResponse()
     {
         // This test is marked as flaky because it depends on external API availability
         var response = await WebAppHttpClient.GetAsync("/api/external-data");
@@ -898,11 +898,11 @@ public class MyTests : IAsyncLifetime
 /// <summary>
 /// Tests external API integration.
 /// Marked as flaky due to occasional network timeouts.
-/// Tracking issue: #123
+/// Tracking issue: #[ISSUE_NUMBER]
 /// </summary>
 [Fact]
 [Trait(TestCategories.Key, TestCategories.Values.Flaky)]
-public async Task ExternalApi_Integration_Works()
+public async Task ExternalApi_WhenCalled_ReturnsSuccessfulResponse()
 {
     // Test implementation
 }
