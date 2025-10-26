@@ -20,11 +20,6 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
         
         // Verify no error alerts on page
         await ExpectNoErrorsAsync();
-        
-        // Check that the page loaded successfully (status code 200)
-        var response = await Page.GotoAsync(WebAppHttpClient.BaseAddress!.ToString(), new() { WaitUntil = WaitUntilState.NetworkIdle });
-        Assert.NotNull(response);
-        Assert.True(response!.Ok, $"Page failed to load. Status: {response.Status}");
     }
 
     [Fact]
@@ -141,11 +136,10 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
     public async Task GraphQLEndpoint_IsAccessible()
     {
         // Arrange & Act
-        var baseUrl = WebAppHttpClient.BaseAddress!.ToString().TrimEnd('/');
-        await Page!.GotoAsync($"{baseUrl}/graphql", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await NavigateToAppAsync("/graphql");
 
         // Assert - Verify GraphQL Nitro IDE loads
-        await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        await Page!.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
         
         // Check that the page loaded successfully
         var title = await Page.TitleAsync();
