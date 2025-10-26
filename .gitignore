@@ -423,3 +423,7 @@ FodyWeavers.xsd
 # Playwright browsers
 .playwright/
 **/bin/**/.playwright/
+
+# Test results and screenshots
+test-results/
+**/test-results/
