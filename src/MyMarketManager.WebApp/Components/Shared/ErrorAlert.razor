@@ -1,0 +1,39 @@
+@if (!string.IsNullOrEmpty(Message))
+{
+    <div class="alert alert-danger alert-dismissible fade show @CssClass" role="alert" data-testid="error-alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        @Message
+        @if (Dismissible)
+        {
+            <button type="button" class="btn-close" @onclick="OnDismiss"></button>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// The error message to display. If null or empty, the alert will not be rendered.
+    /// </summary>
+    [Parameter] public string? Message { get; set; }
+
+    /// <summary>
+    /// Whether the alert can be dismissed by the user. Default is true.
+    /// </summary>
+    [Parameter] public bool Dismissible { get; set; } = true;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the alert.
+    /// </summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    /// <summary>
+    /// Callback when the alert is dismissed.
+    /// </summary>
+    [Parameter] public EventCallback<string?> MessageChanged { get; set; }
+
+    private async Task OnDismiss()
+    {
+        Message = null;
+        await MessageChanged.InvokeAsync(Message);
+    }
+}

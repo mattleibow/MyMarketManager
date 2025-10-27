@@ -1,0 +1,95 @@
+@typeparam TItem
+
+@if (Loading || IsDataEmpty())
+{
+    <div class="text-center my-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading...</p>
+    </div>
+}
+else if (IsNoData())
+{
+    <div class="alert alert-info">
+        <h5 class="alert-heading">@NoItemsTitle</h5>
+        @if (!string.IsNullOrEmpty(NoItemsMessage))
+        {
+            <p class="mb-0">@NoItemsMessage</p>
+        }
+        @if (NoItemsAction != null)
+        {
+            <hr />
+            @NoItemsAction
+        }
+    </div>
+}
+else
+{
+    @if (Items != null && ChildContent != null)
+    {
+        @ChildContent(Items)
+        
+        <div class="mt-3 text-muted">
+            Showing @Items.Count @ItemCountLabel
+        </div>
+    }
+    else if (Item != null && Content != null)
+    {
+        @Content(Item)
+    }
+}
+
+@code {
+    /// <summary>
+    /// Whether data is currently loading
+    /// </summary>
+    [Parameter] public bool Loading { get; set; }
+
+    /// <summary>
+    /// The items to display (for collections)
+    /// </summary>
+    [Parameter] public IList<TItem>? Items { get; set; }
+
+    /// <summary>
+    /// The single item to display (for single item scenarios)
+    /// </summary>
+    [Parameter] public TItem? Item { get; set; }
+
+    /// <summary>
+    /// Title for no items alert (used with default no items template)
+    /// </summary>
+    [Parameter] public string NoItemsTitle { get; set; } = "No items found";
+
+    /// <summary>
+    /// Message for no items alert (used with default no items template)
+    /// </summary>
+    [Parameter] public string? NoItemsMessage { get; set; }
+
+    /// <summary>
+    /// Action buttons/links for no items alert (used with default no items template)
+    /// </summary>
+    [Parameter] public RenderFragment? NoItemsAction { get; set; }
+
+    /// <summary>
+    /// Data template using child content (for collections)
+    /// </summary>
+    [Parameter] public RenderFragment<IList<TItem>>? ChildContent { get; set; }
+
+    /// <summary>
+    /// Data template for single item content
+    /// </summary>
+    [Parameter] public RenderFragment<TItem>? Content { get; set; }
+
+    /// <summary>
+    /// Label for item count (e.g., "products", "orders")
+    /// </summary>
+    [Parameter] public string ItemCountLabel { get; set; } = "items";
+
+    private bool IsDataEmpty() =>
+        Items is null && Item is null;
+
+    private bool IsNoData() =>
+        (Items is not null && Items.Count == 0) ||
+        (Items is null && Item is null && !Loading);
+}

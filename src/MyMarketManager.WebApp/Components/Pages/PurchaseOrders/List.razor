@@ -1,0 +1,141 @@
+@page "/purchase-orders/list"
+@rendermode InteractiveServer
+@using MyMarketManager.GraphQL.Client
+@inject IMyMarketManagerClient GraphQLClient
+@inject NavigationManager Navigation
+@inject ILogger<List> Logger
+
+<PageTitle>Purchase Orders</PageTitle>
+
+<h1>Purchase Orders</h1>
+
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <p class="text-muted mb-0">View all purchase orders placed with suppliers</p>
+    <a href="/purchase-orders/staging" class="btn btn-secondary">
+        <i class="bi bi-inbox me-2"></i>
+        View Staging
+    </a>
+</div>
+
+<ErrorAlert @bind-Message="errorMessage" />
+
+<DataDisplay
+    TItem="IGetPurchaseOrders_PurchaseOrders" 
+    Loading="loading" 
+    Items="purchaseOrders" 
+    NoItemsTitle="No purchase orders found"
+    NoItemsMessage="There are no purchase orders in the system yet. Start by ingesting purchase orders from suppliers."
+    ItemCountLabel="purchase order(s)">
+
+    <NoItemsAction>
+        <a href="/purchase-orders/ingestion" class="btn btn-primary mt-2">
+            <i class="bi bi-cloud-arrow-down me-2"></i>
+            Start Ingestion
+        </a>
+    </NoItemsAction>
+    
+    <ChildContent Context="orderItems">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order Date</th>
+                                <th>Supplier</th>
+                                <th>Status</th>
+                                <th class="text-end">Items</th>
+                                <th class="text-end">Shipping</th>
+                                <th class="text-end">Import Fees</th>
+                                <th class="text-end">Insurance</th>
+                                <th class="text-end">Other Fees</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in orderItems)
+                            {
+                                <tr style="cursor: pointer;" @onclick="() => ViewOrder(order.Id)">
+                                    <td>@order.OrderDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@order.SupplierName</td>
+                                    <td>
+                                        <span class="badge @GetStatusBadgeClass(order.Status)">
+                                            @order.Status
+                                        </span>
+                                    </td>
+                                    <td class="text-end">@order.ItemCount</td>
+                                    <td class="text-end">@order.ShippingFees.ToString("C")</td>
+                                    <td class="text-end">@order.ImportFees.ToString("C")</td>
+                                    <td class="text-end">@order.InsuranceFees.ToString("C")</td>
+                                    <td class="text-end">@order.AdditionalFees.ToString("C")</td>
+                                    <td>@(order.Notes ?? "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </ChildContent>
+
+</DataDisplay>
+
+@code {
+    private List<IGetPurchaseOrders_PurchaseOrders> purchaseOrders = new();
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPurchaseOrders();
+    }
+
+    private async Task LoadPurchaseOrders()
+    {
+        try
+        {
+            loading = true;
+            errorMessage = null;
+            StateHasChanged();
+
+            var result = await GraphQLClient.GetPurchaseOrders.ExecuteAsync();
+            if (result.Data?.PurchaseOrders is not null)
+            {
+                purchaseOrders = result.Data.PurchaseOrders.ToList();
+            }
+            else if (result.Errors?.Count > 0)
+            {
+                errorMessage = string.Join(", ", result.Errors.Select(e => e.Message));
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading purchase orders");
+            errorMessage = $"Error loading purchase orders: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ViewOrder(Guid orderId)
+    {
+        // For now, just log it. In the future, this could navigate to a detail page
+        Logger.LogInformation("Viewing purchase order {OrderId}", orderId);
+    }
+
+    private string GetStatusBadgeClass(ProcessingStatus status)
+    {
+        return status switch
+        {
+            ProcessingStatus.Queued => "bg-secondary",
+            ProcessingStatus.Started => "bg-primary",
+            ProcessingStatus.Completed => "bg-success",
+            ProcessingStatus.Failed => "bg-danger",
+            ProcessingStatus.Cancelled => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}

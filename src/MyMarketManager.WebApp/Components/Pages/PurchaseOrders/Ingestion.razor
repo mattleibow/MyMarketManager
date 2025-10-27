@@ -3,7 +3,7 @@
 @using MyMarketManager.GraphQL.Client
 @inject IMyMarketManagerClient GraphQLClient
 @inject NavigationManager Navigation
-@inject ILogger<PurchaseOrderIngestion> Logger
+@inject ILogger<Ingestion> Logger
 
 <PageTitle>PO Ingestion</PageTitle>
 
@@ -16,13 +16,7 @@
                 <h5 class="card-title">Submit Cookies for Scraping</h5>
                 <p class="text-muted">Paste cookies from your browser to scrape purchase orders from the supplier website</p>
 
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        @errorMessage
-                        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
-                    </div>
-                }
+                <ErrorAlert @bind-Message="errorMessage" />
 
                 @if (!string.IsNullOrEmpty(successMessage))
                 {
@@ -194,8 +188,6 @@
             }
         }
     }
-
-
 
     private bool IsValidJson(string json)
     {
