@@ -1,5 +1,3 @@
-using System.Text;
-using System.Text.Json;
 using MyMarketManager.Tests.Shared;
 
 namespace MyMarketManager.Integration.Tests;
@@ -39,7 +37,7 @@ public class StagingOrderMigrationTests(ITestOutputHelper outputHelper) : WebApp
         };
 
         // Act
-        var response = await PostAsync(query);
+        var response = await PostGraphQLAsync(query);
 
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
@@ -69,7 +67,7 @@ public class StagingOrderMigrationTests(ITestOutputHelper outputHelper) : WebApp
                 """
         };
 
-        await PostAsync(createMutation);
+        await PostGraphQLAsync(createMutation);
 
         // Now search for it
         var searchQuery = new
@@ -91,7 +89,7 @@ public class StagingOrderMigrationTests(ITestOutputHelper outputHelper) : WebApp
         };
 
         // Act
-        var response = await PostAsync(searchQuery);
+        var response = await PostGraphQLAsync(searchQuery);
 
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
@@ -126,7 +124,7 @@ public class StagingOrderMigrationTests(ITestOutputHelper outputHelper) : WebApp
         };
 
         // Act
-        var response = await PostAsync(mutation);
+        var response = await PostGraphQLAsync(mutation);
 
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
@@ -158,7 +156,7 @@ public class StagingOrderMigrationTests(ITestOutputHelper outputHelper) : WebApp
         };
 
         // Act
-        var response = await PostAsync(mutation);
+        var response = await PostGraphQLAsync(mutation);
 
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
@@ -191,7 +189,7 @@ public class StagingOrderMigrationTests(ITestOutputHelper outputHelper) : WebApp
         };
 
         // Act
-        var response = await PostAsync(query);
+        var response = await PostGraphQLAsync(query);
 
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
@@ -199,19 +197,5 @@ public class StagingOrderMigrationTests(ITestOutputHelper outputHelper) : WebApp
         Assert.Contains("\"data\"", result);
         Assert.Contains("StagingPurchaseOrderDetailDto", result);
         Assert.Contains("items", result);
-    }
-
-    protected async Task<HttpResponseMessage> PostAsync<TValue>(TValue query, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
-    {
-        var content = new StringContent(
-            JsonSerializer.Serialize(query),
-            Encoding.UTF8,
-            "application/json");
-
-        var response = await WebAppHttpClient.PostAsync("/graphql", content, Cancel);
-
-        Assert.Equal(expectedStatusCode, response.StatusCode);
-
-        return response;
     }
 }
