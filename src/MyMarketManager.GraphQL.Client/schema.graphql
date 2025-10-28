@@ -11,6 +11,8 @@ type Query {
   availableScrapers(batchType: StagingBatchType!): [String!]!
   stagingBatches: [StagingBatchDto!]!
   stagingBatchById(id: UUID!): StagingBatchDetailDto
+  stagingPurchaseOrderById(id: UUID!): StagingPurchaseOrderDetailDto
+  searchProductsForItem(searchTerm: String!): [ProductSuggestionDto!]!
   suppliers: [SupplierOption!]!
 }
 
@@ -19,6 +21,8 @@ type Mutation {
   updateProduct(id: UUID! input: UpdateProductInput!): Product!
   deleteProduct(id: UUID!): Boolean!
   submitCookies(input: SubmitCookiesInput!): SubmitCookiesPayload!
+  linkStagingItemToProduct(input: LinkStagingItemToProductInput!): LinkStagingItemResult!
+  unlinkStagingItemFromProduct(stagingItemId: UUID!): UnlinkStagingItemResult!
 }
 
 type SupplierOption {
@@ -417,6 +421,66 @@ type StagingBatch {
   updatedAt: DateTime!
   deletedAt: DateTime
   isDeleted: Boolean!
+}
+
+type StagingPurchaseOrderDetailDto {
+  id: UUID!
+  supplierReference: String
+  orderDate: DateTime!
+  status: ProcessingStatus!
+  isImported: Boolean!
+  errorMessage: String
+  supplierName: String
+  items: [StagingPurchaseOrderItemDto!]!
+}
+
+type StagingPurchaseOrderItemDto {
+  id: UUID!
+  name: String!
+  description: String
+  supplierReference: String
+  supplierProductUrl: String
+  quantity: Int!
+  listedUnitPrice: Decimal!
+  actualUnitPrice: Decimal!
+  status: CandidateStatus!
+  isImported: Boolean!
+  productId: UUID
+  product: LinkedProductDto
+  supplierId: UUID
+  supplierName: String
+}
+
+type LinkedProductDto {
+  id: UUID!
+  sku: String
+  name: String!
+  quality: ProductQuality!
+}
+
+type ProductSuggestionDto {
+  id: UUID!
+  sku: String
+  name: String!
+  description: String
+  quality: ProductQuality!
+  stockOnHand: Int!
+}
+
+input LinkStagingItemToProductInput {
+  stagingItemId: UUID!
+  productId: UUID!
+}
+
+type LinkStagingItemResult {
+  success: Boolean!
+  errorMessage: String
+  linkedProduct: LinkedProductDto
+}
+
+type UnlinkStagingItemResult {
+  success: Boolean!
+  errorMessage: String
 }
 
 "The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response."

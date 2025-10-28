@@ -133,6 +133,8 @@
 
 @code {
     [Parameter] public Guid? ProductId { get; set; }
+    [SupplyParameterFromQuery] public string? Name { get; set; }
+    [SupplyParameterFromQuery] public string? Description { get; set; }
 
     private ProductFormModel product = new();
     private bool saving = false;
@@ -162,7 +164,8 @@
             {
                 Quality = ProductQuality.Good,
                 StockOnHand = 0,
-                Name = string.Empty
+                Name = Name ?? string.Empty,
+                Description = Description
             };
         }
     }

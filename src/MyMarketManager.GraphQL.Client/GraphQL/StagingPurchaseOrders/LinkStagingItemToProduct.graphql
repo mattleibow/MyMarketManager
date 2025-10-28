@@ -1,0 +1,12 @@
+mutation LinkStagingItemToProduct($input: LinkStagingItemToProductInput!) {
+  linkStagingItemToProduct(input: $input) {
+    success
+    errorMessage
+    linkedProduct {
+      id
+      sku
+      name
+      quality
+    }
+  }
+}

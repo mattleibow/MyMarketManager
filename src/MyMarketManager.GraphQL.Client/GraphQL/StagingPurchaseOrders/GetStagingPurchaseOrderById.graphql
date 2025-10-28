@@ -1,0 +1,32 @@
+query GetStagingPurchaseOrderById($id: UUID!) {
+  stagingPurchaseOrderById(id: $id) {
+    id
+    supplierReference
+    orderDate
+    status
+    isImported
+    errorMessage
+    supplierName
+    items {
+      id
+      name
+      description
+      supplierReference
+      supplierProductUrl
+      quantity
+      listedUnitPrice
+      actualUnitPrice
+      status
+      isImported
+      productId
+      product {
+        id
+        sku
+        name
+        quality
+      }
+      supplierId
+      supplierName
+    }
+  }
+}

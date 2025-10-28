@@ -1,0 +1,6 @@
+mutation UnlinkStagingItemFromProduct($stagingItemId: UUID!) {
+  unlinkStagingItemFromProduct(stagingItemId: $stagingItemId) {
+    success
+    errorMessage
+  }
+}
