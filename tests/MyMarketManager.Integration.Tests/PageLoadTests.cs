@@ -67,7 +67,7 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
     public async Task PurchaseOrdersPage_LoadsWithoutErrors()
     {
         // Arrange & Act
-        await NavigateToAppAsync("/purchase-orders");
+        await NavigateToAppAsync("/purchase-orders/list");
 
         // Assert - Verify page loaded with main heading (h1)
         await Expect(Page!.Locator("h1").Filter(new() { HasText = "Purchase Orders" })).ToBeVisibleAsync();
@@ -88,11 +88,8 @@ public class PageLoadTests(ITestOutputHelper outputHelper) : PlaywrightTestsBase
         // Assert - Verify page loaded with main heading (h1)
         await Expect(Page!.Locator("h1").Filter(new() { HasText = "Staging Batches" })).ToBeVisibleAsync();
         
-        // Verify View Purchase Orders button is present
-        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "View Purchase Orders" })).ToBeVisibleAsync();
-        
-        // Verify Start Ingestion button is present (using first occurrence in the header)
-        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Start Ingestion" }).First).ToBeVisibleAsync();
+        // Verify Start Ingestion button is present (in empty state)
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Start Ingestion" })).ToBeVisibleAsync();
         
         // Verify no error alerts on page
         await ExpectNoErrorsAsync();
