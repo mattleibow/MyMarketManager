@@ -8,13 +8,7 @@
 
 <h1>Products</h1>
 
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert" data-testid="error-alert">
-        <i class="bi bi-exclamation-triangle-fill"></i> @errorMessage
-        <button type="button" class="btn-close" @onclick="@(() => errorMessage = null)"></button>
-    </div>
-}
+<ErrorAlert @bind-Message="errorMessage" />
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div class="input-group" style="max-width: 400px;">
@@ -28,81 +22,79 @@
     </button>
 </div>
 
-@if (loading)
-{
-    <div class="text-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
-}
-else if (!products.Any())
-{
-    <div class="alert alert-info">
-        No products found. <a href="#" @onclick="AddProduct" @onclick:preventDefault="true">Add your first product</a>
-    </div>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>SKU</th>
-                    <th>Name</th>
-                    <th>Quality</th>
-                    <th>Stock</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var product in products)
-                {
+<DataDisplay TItem="IGetProducts_Products" 
+             Loading="loading" 
+             Items="products" 
+             NoItemsTitle="No products found"
+             ItemCountLabel="product(s)">
+    <NoItemsAction>
+        <a href="#" @onclick="AddProduct" @onclick:preventDefault="true" class="btn btn-primary mt-2">
+            <i class="bi bi-plus-circle me-2"></i>
+            Add your first product
+        </a>
+    </NoItemsAction>
+    
+    <ChildContent Context="productItems">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
                     <tr>
-                        <td>
-                            @if (!string.IsNullOrEmpty(product.Sku))
-                            {
-                                <code>@product.Sku</code>
-                            }
-                            else
-                            {
-                                <em class="text-muted">No SKU</em>
-                            }
-                        </td>
-                        <td>
-                            <strong>@product.Name</strong>
-                            @if (!string.IsNullOrEmpty(product.Description))
-                            {
-                                <br>
-                                <small class="text-muted">@product.Description</small>
-                            }
-                        </td>
-                        <td>
-                            <span class="badge @GetQualityBadgeClass(product.Quality)">
-                                @product.Quality
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge @(product.StockOnHand > 0 ? "bg-success" : "bg-warning")">
-                                @product.StockOnHand
-                            </span>
-                        </td>
-                        <td>
-                            <div class="btn-group" role="group" aria-label="Product actions">
-                                <button type="button" class="btn btn-sm btn-outline-primary" @onclick="() => EditProduct(product.Id)" title="Edit Product">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteProduct(product)" title="Delete Product">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
+                        <th>SKU</th>
+                        <th>Name</th>
+                        <th>Quality</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+                </thead>
+                <tbody>
+                    @foreach (var product in productItems)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(product.Sku))
+                                {
+                                    <code>@product.Sku</code>
+                                }
+                                else
+                                {
+                                    <em class="text-muted">No SKU</em>
+                                }
+                            </td>
+                            <td>
+                                <strong>@product.Name</strong>
+                                @if (!string.IsNullOrEmpty(product.Description))
+                                {
+                                    <br>
+                                    <small class="text-muted">@product.Description</small>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge @GetQualityBadgeClass(product.Quality)">
+                                    @product.Quality
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @(product.StockOnHand > 0 ? "bg-success" : "bg-warning")">
+                                    @product.StockOnHand
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group" aria-label="Product actions">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" @onclick="() => EditProduct(product.Id)" title="Edit Product">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteProduct(product)" title="Delete Product">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </ChildContent>
+</DataDisplay>
 
 <!-- Delete Confirmation Modal -->
 @if (productToDelete != null)
@@ -246,7 +238,7 @@ else
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting product {ProductId}", productToDelete.Id);
+            Logger.LogError(ex, "Error deleting product {ProductId}", productToDelete?.Id);
             errorMessage = $"Error deleting product: {ex.Message}";
             productToDelete = null;
             StateHasChanged();

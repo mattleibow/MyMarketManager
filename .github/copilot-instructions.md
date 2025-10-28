@@ -109,18 +109,26 @@ dotnet ef database update --project src/MyMarketManager.Data
 The GraphQL client code is generated manually using the StrawberryShake CLI tools. To regenerate:
 
 ```bash
-# 1. Navigate to the client project directory
+# 1. Start the AppHost first to run the GraphQL server
+dotnet run --project src/MyMarketManager.AppHost
+
+# 2. In a new terminal, navigate to the client project directory
 cd src/MyMarketManager.GraphQL.Client
 
-# 2. (Optional) Download the latest schema from the running app
-#    Only needed when the server schema has changed
-dotnet graphql download https://localhost:7075/graphql
+# 3. Download the latest schema from the running app
+#    Use the actual port shown in the AppHost output (e.g., https://localhost:41483)
+dotnet graphql download https://localhost:<PORT>/graphql
 
-# 3. Generate the client code
+# 4. Generate the client code
 dotnet graphql generate
 ```
 
-**Note**: The schema only needs to be downloaded when the GraphQL server schema changes (new queries, mutations, or types). Once downloaded, it's cached locally.
+**CRITICAL**: 
+- **NEVER edit the `schema.graphql` file directly**. It must always be downloaded from the running GraphQL server using `dotnet graphql download`.
+- The schema file is auto-generated from the server and any manual edits will be lost on the next download.
+- The schema only needs to be downloaded when the GraphQL server schema changes (new queries, mutations, or types).
+- After downloading the schema, always run `dotnet graphql generate` to regenerate the client code.
+- The port number varies each time the app runs, so check the AppHost output for the actual URL.
 
 ## Key Configuration Files
 

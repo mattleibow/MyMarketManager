@@ -18,13 +18,7 @@
 
         <h1>@(ProductId.HasValue ? "Edit Product" : "Add Product")</h1>
 
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert" data-testid="error-alert">
-                <i class="bi bi-exclamation-triangle-fill"></i> @errorMessage
-                <button type="button" class="btn-close" @onclick="@(() => errorMessage = null)"></button>
-            </div>
-        }
+        <ErrorAlert @bind-Message="errorMessage" />
 
         @if (showForm)
         {

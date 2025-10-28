@@ -1,0 +1,23 @@
+query GetStagingBatchById($id: UUID!) {
+  stagingBatchById(id: $id) {
+    id
+    batchType
+    batchProcessorName
+    supplierId
+    supplierName
+    startedAt
+    completedAt
+    status
+    notes
+    errorMessage
+    stagingPurchaseOrders {
+      id
+      supplierReference
+      orderDate
+      status
+      isImported
+      errorMessage
+      itemCount
+    }
+  }
+}

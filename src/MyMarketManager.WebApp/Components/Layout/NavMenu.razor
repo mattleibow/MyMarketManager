@@ -20,10 +20,31 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="purchase-orders/ingestion">
-                <span class="bi bi-cloud-arrow-down-nav-menu" aria-hidden="true"></span> PO Ingestion
-            </NavLink>
+        <div class="nav-group px-3">
+            <div class="nav-group-header">
+                <button class="nav-group-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#purchaseOrdersCollapse" aria-expanded="true" aria-controls="purchaseOrdersCollapse">
+                    <span class="bi bi-cart-nav-menu" aria-hidden="true"></span> 
+                    <span class="nav-group-title">Purchase Orders</span>
+                    <span class="bi bi-chevron-down-nav-menu collapse-icon" aria-hidden="true"></span>
+                </button>
+            </div>
+            <div class="collapse show nav-group-content" id="purchaseOrdersCollapse">
+                <div class="nav-item nav-subitem">
+                    <NavLink class="nav-link nav-sublink" href="purchase-orders/list">
+                        <span class="bi bi-list-nav-menu" aria-hidden="true"></span> All Orders
+                    </NavLink>
+                </div>
+                <div class="nav-item nav-subitem">
+                    <NavLink class="nav-link nav-sublink" href="purchase-orders/staging">
+                        <span class="bi bi-inbox-nav-menu" aria-hidden="true"></span> Staging
+                    </NavLink>
+                </div>
+                <div class="nav-item nav-subitem">
+                    <NavLink class="nav-link nav-sublink" href="purchase-orders/ingestion">
+                        <span class="bi bi-cloud-arrow-down-nav-menu" aria-hidden="true"></span> Ingestion
+                    </NavLink>
+                </div>
+            </div>
         </div>
     </nav>
 </div>
