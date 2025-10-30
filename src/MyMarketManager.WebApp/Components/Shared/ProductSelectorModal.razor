@@ -167,15 +167,22 @@
     </div>
 </div>
 
+<!-- Product Form Modal (stacked on top) -->
+@if (showProductFormModal)
+{
+    <ProductFormModal 
+        InitialName="@Item.Name"
+        InitialDescription="@Item.Description"
+        OnProductSaved="HandleProductCreated"
+        OnCancel="CloseProductFormModal" />
+}
+
 @code {
     [Parameter, EditorRequired]
     public IGetStagingPurchaseOrderById_StagingPurchaseOrderById_Items Item { get; set; } = null!;
 
     [Parameter]
     public EventCallback<Guid> OnProductSelected { get; set; }
-
-    [Parameter]
-    public EventCallback OnCreateNewProduct { get; set; }
 
     [Parameter]
     public EventCallback OnCancel { get; set; }
@@ -186,6 +193,7 @@
     private bool searching = false;
     private bool hasSearched = false;
     private string? errorMessage;
+    private bool showProductFormModal = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -264,9 +272,23 @@
         await OnProductSelected.InvokeAsync(productId);
     }
 
-    private async Task CreateNewProduct()
+    private void CreateNewProduct()
     {
-        await OnCreateNewProduct.InvokeAsync();
+        showProductFormModal = true;
+        StateHasChanged();
+    }
+
+    private async Task HandleProductCreated(Guid productId)
+    {
+        showProductFormModal = false;
+        // Automatically select the newly created product
+        await OnProductSelected.InvokeAsync(productId);
+    }
+
+    private void CloseProductFormModal()
+    {
+        showProductFormModal = false;
+        StateHasChanged();
     }
 
     private async Task Cancel()

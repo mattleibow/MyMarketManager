@@ -199,7 +199,6 @@
     <ProductSelectorModal 
         Item="selectedItem"
         OnProductSelected="HandleProductSelected"
-        OnCreateNewProduct="HandleCreateNewProduct"
         OnCancel="CancelProductSelection" />
 }
 
@@ -297,21 +296,6 @@
         }
         
         StateHasChanged();
-    }
-
-    private void HandleCreateNewProduct()
-    {
-        if (selectedItem == null) return;
-
-        // Navigate to product form with pre-populated data from the staging item
-        var queryParams = new Dictionary<string, object?>
-        {
-            ["name"] = selectedItem.Name,
-            ["description"] = selectedItem.Description
-        };
-
-        var uri = Navigation.GetUriWithQueryParameters("/products/add", queryParams);
-        Navigation.NavigateTo(uri);
     }
 
     private void CancelProductSelection()

@@ -1,0 +1,302 @@
+@using MyMarketManager.GraphQL.Client
+@inject IMyMarketManagerClient GraphQLClient
+@inject ILogger<ProductFormModal> Logger
+
+<div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(ProductId.HasValue ? "Edit Product" : "Create Product")</h5>
+                <button type="button" class="btn-close" @onclick="Cancel"></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <ErrorAlert @bind-Message="errorMessage" />
+
+                <EditForm Model="@product" OnValidSubmit="@SaveProduct" FormName="ProductFormModal">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="alert alert-danger" />
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sku" class="form-label">SKU</label>
+                                <InputText id="sku" class="form-control" @bind-Value="product.Sku" placeholder="Optional product SKU" />
+                                <ValidationMessage For="@(() => product.Sku)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quality" class="form-label">Quality Rating</label>
+                                <InputSelect id="quality" class="form-select" @bind-Value="product.Quality">
+                                    @foreach (var quality in Enum.GetValues<ProductQuality>())
+                                    {
+                                        <option value="@quality">@quality</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => product.Quality)" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Product Name <span class="text-danger">*</span></label>
+                        <InputText id="name" class="form-control" @bind-Value="product.Name" placeholder="Enter product name" />
+                        <ValidationMessage For="@(() => product.Name)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <InputTextArea id="description" class="form-control" rows="3" @bind-Value="product.Description" placeholder="Product description (optional)" />
+                        <ValidationMessage For="@(() => product.Description)" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="stock" class="form-label">Stock on Hand</label>
+                                <InputNumber id="stock" class="form-control" @bind-Value="product.StockOnHand" min="0" />
+                                <ValidationMessage For="@(() => product.StockOnHand)" />
+                                <div class="form-text">Current inventory level</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <InputTextArea id="notes" class="form-control" rows="2" @bind-Value="product.Notes" placeholder="Additional notes (optional)" />
+                        <ValidationMessage For="@(() => product.Notes)" />
+                    </div>
+
+                    <!-- Quality Guide -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">Quality Guide</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="small">
+                                <div class="mb-2">
+                                    <span class="badge bg-success">Excellent</span>
+                                    <span class="text-muted ms-2">Superior condition, no defects</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-primary">Good</span>
+                                    <span class="text-muted ms-2">Minor imperfections, fully functional</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-warning">Fair</span>
+                                    <span class="text-muted ms-2">Noticeable flaws but acceptable</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-danger">Poor</span>
+                                    <span class="text-muted ms-2">Significant defects, limited usability</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-dark">Terrible</span>
+                                    <span class="text-muted ms-2">Severe damage, may not be sellable</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@saving">
+                            @if (saving)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                                <span>Saving...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-check-circle me-1"></i>
+                                <span>@(ProductId.HasValue ? "Update Product" : "Create Product")</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Guid? ProductId { get; set; }
+
+    [Parameter]
+    public string? InitialName { get; set; }
+
+    [Parameter]
+    public string? InitialDescription { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnProductSaved { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private ProductFormModel product = new();
+    private bool saving = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ProductId.HasValue)
+        {
+            try
+            {
+                await LoadProductAsync(ProductId.Value);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error loading product {ProductId}", ProductId.Value);
+                errorMessage = $"Error loading product: {ex.Message}";
+            }
+        }
+        else
+        {
+            // Initialize default values for new product
+            product = new ProductFormModel
+            {
+                Quality = ProductQuality.Good,
+                StockOnHand = 0,
+                Name = InitialName ?? string.Empty,
+                Description = InitialDescription
+            };
+        }
+    }
+
+    private async Task LoadProductAsync(Guid productId)
+    {
+        var result = await GraphQLClient.GetProductById.ExecuteAsync(productId);
+        
+        if (result.Errors != null && result.Errors.Count > 0)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Message));
+            throw new InvalidOperationException($"GraphQL errors: {errors}");
+        }
+
+        if (result.Data?.ProductById == null)
+        {
+            throw new InvalidOperationException("Product not found");
+        }
+
+        var p = result.Data.ProductById;
+        product = new ProductFormModel
+        {
+            Sku = p.Sku,
+            Name = p.Name ?? string.Empty,
+            Description = p.Description,
+            Quality = p.Quality,
+            Notes = p.Notes,
+            StockOnHand = p.StockOnHand
+        };
+    }
+
+    private async Task SaveProduct()
+    {
+        saving = true;
+        errorMessage = null;
+        
+        try
+        {
+            Guid savedProductId;
+            
+            if (ProductId.HasValue)
+            {
+                await UpdateProductAsync(ProductId.Value);
+                savedProductId = ProductId.Value;
+            }
+            else
+            {
+                savedProductId = await CreateProductAsync();
+            }
+            
+            await OnProductSaved.InvokeAsync(savedProductId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving product");
+            errorMessage = $"Error saving product: {ex.Message}";
+        }
+        finally
+        {
+            saving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<Guid> CreateProductAsync()
+    {
+        var input = new CreateProductInput
+        {
+            Sku = product.Sku,
+            Name = product.Name,
+            Description = product.Description,
+            Quality = product.Quality,
+            Notes = product.Notes,
+            StockOnHand = product.StockOnHand
+        };
+
+        var result = await GraphQLClient.CreateProduct.ExecuteAsync(input);
+        
+        if (result.Errors != null && result.Errors.Count > 0)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Message));
+            throw new InvalidOperationException($"GraphQL errors: {errors}");
+        }
+
+        if (result.Data?.CreateProduct?.Id == null)
+        {
+            throw new InvalidOperationException("Product creation failed - no ID returned");
+        }
+
+        return result.Data.CreateProduct.Id;
+    }
+
+    private async Task UpdateProductAsync(Guid productId)
+    {
+        var input = new UpdateProductInput
+        {
+            Sku = product.Sku,
+            Name = product.Name,
+            Description = product.Description,
+            Quality = product.Quality,
+            Notes = product.Notes,
+            StockOnHand = product.StockOnHand
+        };
+
+        var result = await GraphQLClient.UpdateProduct.ExecuteAsync(productId, input);
+        
+        if (result.Errors != null && result.Errors.Count > 0)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Message));
+            throw new InvalidOperationException($"GraphQL errors: {errors}");
+        }
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+    }
+
+    // Form model class for data binding
+    private class ProductFormModel
+    {
+        public string? Sku { get; set; }
+        
+        [Required(ErrorMessage = "Product name is required")]
+        [StringLength(100, ErrorMessage = "Product name cannot exceed 100 characters")]
+        public string Name { get; set; } = string.Empty;
+        
+        [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
+        public string? Description { get; set; }
+        
+        public ProductQuality Quality { get; set; }
+        
+        public string? Notes { get; set; }
+        
+        [Range(0, int.MaxValue, ErrorMessage = "Stock on hand must be a positive number")]
+        public int StockOnHand { get; set; }
+    }
+}
