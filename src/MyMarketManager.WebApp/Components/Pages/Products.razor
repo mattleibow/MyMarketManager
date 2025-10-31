@@ -127,12 +127,23 @@
     </div>
 }
 
+<!-- Product Form Modal -->
+@if (showProductFormModal)
+{
+    <ProductFormModal 
+        ProductId="editingProductId"
+        OnProductSaved="HandleProductSaved"
+        OnCancel="CloseProductFormModal" />
+}
+
 @code {
     private List<IGetProducts_Products> products = new();
     private bool loading = true;
     private string searchTerm = string.Empty;
     private IGetProducts_Products? productToDelete;
     private string? errorMessage;
+    private bool showProductFormModal = false;
+    private Guid? editingProductId = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -205,12 +216,30 @@
 
     private void AddProduct()
     {
-        Navigation.NavigateTo("/products/add");
+        editingProductId = null;
+        showProductFormModal = true;
+        StateHasChanged();
     }
 
     private void EditProduct(Guid productId)
     {
-        Navigation.NavigateTo($"/products/edit/{productId}");
+        editingProductId = productId;
+        showProductFormModal = true;
+        StateHasChanged();
+    }
+
+    private async Task HandleProductSaved(Guid productId)
+    {
+        showProductFormModal = false;
+        editingProductId = null;
+        await LoadProducts();
+    }
+
+    private void CloseProductFormModal()
+    {
+        showProductFormModal = false;
+        editingProductId = null;
+        StateHasChanged();
     }
 
     private void ConfirmDeleteProduct(IGetProducts_Products product)

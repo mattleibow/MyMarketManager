@@ -1,0 +1,366 @@
+@page "/purchase-orders/staging/migrate/{orderId:guid}"
+@rendermode InteractiveServer
+@using MyMarketManager.GraphQL.Client
+@inject IMyMarketManagerClient GraphQLClient
+@inject NavigationManager Navigation
+@inject ILogger<StagingOrderMigration> Logger
+
+<PageTitle>Migrate Staging Order</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>Migrate Staging Order</h1>
+        @if (stagingOrder != null)
+        {
+            <p class="text-muted mb-0">
+                Order: @(stagingOrder.SupplierReference ?? "No Reference") | 
+                Supplier: @(stagingOrder.SupplierName ?? "Unknown")
+            </p>
+        }
+    </div>
+    <button class="btn btn-outline-secondary" @onclick="GoBack">
+        <i class="bi bi-arrow-left me-2"></i>
+        Back
+    </button>
+</div>
+
+<ErrorAlert @bind-Message="errorMessage" />
+
+<DataDisplay
+    TItem="IGetStagingPurchaseOrderById_StagingPurchaseOrderById"
+    Loading="loading"
+    Item="stagingOrder"
+    NoItemsTitle="Order Not Found"
+    NoItemsMessage="@($"The staging order with ID {OrderId} was not found.")">
+
+    <NoItemsAction>
+        <button class="btn btn-outline-warning" @onclick="GoBack">
+            <i class="bi bi-arrow-left me-2"></i>
+            Back
+        </button>
+    </NoItemsAction>
+
+    <Content Context="order">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Order Date:</dt>
+                            <dd class="col-sm-8">@order.OrderDate.ToString("yyyy-MM-dd HH:mm")</dd>
+                            
+                            <dt class="col-sm-4">Status:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge @GetStatusBadgeClass(order.Status)">
+                                    @order.Status
+                                </span>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Total Items:</dt>
+                            <dd class="col-sm-8">@order.Items.Count</dd>
+                            
+                            <dt class="col-sm-4">Linked:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-success">@order.Items.Count(i => i.ProductId.HasValue)</span> / 
+                                <span class="badge bg-secondary">@order.Items.Count</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Order Items (@order.Items.Count)</h5>
+                @if (order.Items.Any(i => !i.ProductId.HasValue))
+                {
+                    <span class="badge bg-warning">
+                        @order.Items.Count(i => !i.ProductId.HasValue) unmapped
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle me-1"></i>
+                        All items mapped
+                    </span>
+                }
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;">#</th>
+                                <th style="width: 30%;">Item Details</th>
+                                <th style="width: 10%;" class="text-end">Quantity</th>
+                                <th style="width: 15%;" class="text-end">Price</th>
+                                <th style="width: 25%;">Linked Product</th>
+                                <th style="width: 15%;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < order.Items.Count; i++)
+                            {
+                                var item = order.Items[i];
+                                var index = i + 1;
+                                <tr>
+                                    <td>@index</td>
+                                    <td>
+                                        <strong>@item.Name</strong>
+                                        @if (!string.IsNullOrEmpty(item.Description))
+                                        {
+                                            <br>
+                                            <small class="text-muted">@item.Description</small>
+                                        }
+                                        @if (!string.IsNullOrEmpty(item.SupplierReference))
+                                        {
+                                            <br>
+                                            <small><code>@item.SupplierReference</code></small>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="badge bg-info">@item.Quantity</span>
+                                    </td>
+                                    <td class="text-end">
+                                        @if (item.ListedUnitPrice != item.ActualUnitPrice)
+                                        {
+                                            <del class="text-muted">$@item.ListedUnitPrice.ToString("F2")</del><br>
+                                            <strong>$@item.ActualUnitPrice.ToString("F2")</strong>
+                                        }
+                                        else
+                                        {
+                                            <strong>$@item.ActualUnitPrice.ToString("F2")</strong>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.Product != null)
+                                        {
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge @GetQualityBadgeClass(item.Product.Quality) me-2">
+                                                    @item.Product.Quality
+                                                </span>
+                                                <div>
+                                                    <strong>@item.Product.Name</strong>
+                                                    @if (!string.IsNullOrEmpty(item.Product.Sku))
+                                                    {
+                                                        <br>
+                                                        <small><code>@item.Product.Sku</code></small>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                <i class="bi bi-dash-circle me-1"></i>
+                                                Not linked
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.ProductId.HasValue)
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    @onclick="() => UnlinkItem(item)"
+                                                    title="Unlink product">
+                                                <i class="bi bi-x-circle"></i> Unlink
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-primary" 
+                                                    @onclick="() => ShowProductSelector(item)"
+                                                    title="Select or create product">
+                                                <i class="bi bi-link-45deg"></i> Link Product
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </Content>
+</DataDisplay>
+
+<!-- Product Selection Modal -->
+@if (selectedItem != null)
+{
+    <ProductSelectorModal 
+        Item="selectedItem"
+        OnProductSelected="HandleProductSelected"
+        OnCancel="CancelProductSelection" />
+}
+
+@code {
+    [Parameter] public Guid OrderId { get; set; }
+
+    private IGetStagingPurchaseOrderById_StagingPurchaseOrderById? stagingOrder;
+    private IGetStagingPurchaseOrderById_StagingPurchaseOrderById_Items? selectedItem;
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStagingOrder();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (OrderId != Guid.Empty)
+        {
+            await LoadStagingOrder();
+        }
+    }
+
+    private async Task LoadStagingOrder()
+    {
+        try
+        {
+            loading = true;
+            errorMessage = null;
+            stagingOrder = null;
+            StateHasChanged();
+
+            var result = await GraphQLClient.GetStagingPurchaseOrderById.ExecuteAsync(OrderId);
+            
+            if (result.Data?.StagingPurchaseOrderById != null)
+            {
+                stagingOrder = result.Data.StagingPurchaseOrderById;
+            }
+            else if (result.Errors != null && result.Errors.Any())
+            {
+                errorMessage = string.Join(", ", result.Errors.Select(e => e.Message));
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading staging order {OrderId}", OrderId);
+            errorMessage = $"Error loading staging order: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ShowProductSelector(IGetStagingPurchaseOrderById_StagingPurchaseOrderById_Items item)
+    {
+        selectedItem = item;
+        errorMessage = null;
+        StateHasChanged();
+    }
+
+    private async Task HandleProductSelected(Guid productId)
+    {
+        if (selectedItem == null) return;
+
+        try
+        {
+            var input = new LinkStagingItemToProductInput
+            {
+                StagingItemId = selectedItem.Id,
+                ProductId = productId
+            };
+            var result = await GraphQLClient.LinkStagingItemToProduct.ExecuteAsync(input);
+
+            if (result.Data?.LinkStagingItemToProduct?.Success == true)
+            {
+                selectedItem = null;
+                await LoadStagingOrder();
+            }
+            else if (result.Data?.LinkStagingItemToProduct?.ErrorMessage != null)
+            {
+                errorMessage = result.Data.LinkStagingItemToProduct.ErrorMessage;
+            }
+            else if (result.Errors != null && result.Errors.Any())
+            {
+                errorMessage = string.Join(", ", result.Errors.Select(e => e.Message));
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error linking item to product");
+            errorMessage = $"Error linking item: {ex.Message}";
+        }
+        
+        StateHasChanged();
+    }
+
+    private void CancelProductSelection()
+    {
+        selectedItem = null;
+        errorMessage = null;
+        StateHasChanged();
+    }
+
+    private async Task UnlinkItem(IGetStagingPurchaseOrderById_StagingPurchaseOrderById_Items item)
+    {
+        try
+        {
+            var result = await GraphQLClient.UnlinkStagingItemFromProduct.ExecuteAsync(item.Id);
+
+            if (result.Data?.UnlinkStagingItemFromProduct?.Success == true)
+            {
+                await LoadStagingOrder();
+            }
+            else if (result.Data?.UnlinkStagingItemFromProduct?.ErrorMessage != null)
+            {
+                errorMessage = result.Data.UnlinkStagingItemFromProduct.ErrorMessage;
+            }
+            else if (result.Errors != null && result.Errors.Any())
+            {
+                errorMessage = string.Join(", ", result.Errors.Select(e => e.Message));
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error unlinking item from product");
+            errorMessage = $"Error unlinking item: {ex.Message}";
+        }
+        
+        StateHasChanged();
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/purchase-orders/staging");
+    }
+
+    private string GetStatusBadgeClass(ProcessingStatus status)
+    {
+        return status switch
+        {
+            ProcessingStatus.Queued => "bg-secondary",
+            ProcessingStatus.Started => "bg-primary",
+            ProcessingStatus.Completed => "bg-success",
+            ProcessingStatus.Failed => "bg-danger",
+            ProcessingStatus.Cancelled => "bg-warning text-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetQualityBadgeClass(ProductQuality quality)
+    {
+        return quality switch
+        {
+            ProductQuality.Excellent => "bg-success",
+            ProductQuality.Good => "bg-primary",
+            ProductQuality.Fair => "bg-warning",
+            ProductQuality.Poor => "bg-danger",
+            ProductQuality.Terrible => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+}

@@ -27,7 +27,7 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
         };
 
         // Act
-        var response = await PostAsync(query);
+        var response = await PostGraphQLAsync(query);
 
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
@@ -56,7 +56,7 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
         };
 
         // Act
-        var response = await PostAsync(introspectionQuery);
+        var response = await PostGraphQLAsync(introspectionQuery);
 
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
@@ -82,7 +82,7 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
         };
 
         // Act
-        var response = await PostAsync(query);
+        var response = await PostGraphQLAsync(query);
 
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
@@ -114,7 +114,7 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
         };
 
         // Act
-        var response = await PostAsync(mutation);
+        var response = await PostGraphQLAsync(mutation);
 
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
@@ -135,26 +135,12 @@ public class GraphQLEndpointTests(ITestOutputHelper outputHelper) : WebAppTestsB
         };
 
         // Act
-        var response = await PostAsync(query, HttpStatusCode.BadRequest);
+        var response = await PostGraphQLAsync(query, HttpStatusCode.BadRequest);
 
         // Assert
         var result = await response.Content.ReadAsStringAsync(Cancel);
 
         // Should contain error information
         Assert.Contains("\"errors\"", result);
-    }
-
-    protected async Task<HttpResponseMessage> PostAsync<TValue>(TValue query, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
-    {
-        var content = new StringContent(
-            JsonSerializer.Serialize(query),
-            Encoding.UTF8,
-            "application/json");
-
-        var response = await WebAppHttpClient.PostAsync("/graphql", content, Cancel);
-
-        Assert.Equal(expectedStatusCode, response.StatusCode);
-
-        return response;
     }
 }
