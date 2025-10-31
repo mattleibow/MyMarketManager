@@ -38,7 +38,10 @@ public class WebScraperSessionFactory(
         {
             try
             {
-                handler.CookieContainer.Add(new Uri($"https://{cookies.Domain}"), new Cookie
+                var cookieDomain = cookie.Domain ?? cookies.Domain;
+                var uriDomain = cookieDomain.TrimStart('.');
+                var uri = new Uri($"https://{uriDomain}");
+                var systemCookie = new Cookie
                 {
                     Name = cookie.Name,
                     Value = cookie.Value,
@@ -46,11 +49,14 @@ public class WebScraperSessionFactory(
                     Path = cookie.Path ?? "/",
                     Secure = cookie.Secure,
                     HttpOnly = cookie.HttpOnly
-                });
+                };
+                handler.CookieContainer.Add(uri, systemCookie);
+
+                _logger.LogDebug("Added cookie {CookieName} for domain {Domain}", cookie.Name, cookieDomain);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to add cookie {CookieName}", cookie.Name);
+                _logger.LogWarning(ex, "Failed to add cookie {CookieName} with domain {Domain}", cookie.Name, cookie.Domain);
             }
         }
 
@@ -61,10 +67,20 @@ public class WebScraperSessionFactory(
         client.Timeout = _configuration.RequestTimeout;
 
         // Add headers
-        client.DefaultRequestHeaders.Add("user-agent", _configuration.UserAgent);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", _configuration.UserAgent);
+
+        // Add other headers in order from config
         foreach (var header in _configuration.AdditionalHeaders)
         {
-            client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
+            try
+            {
+                client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
+                _logger.LogDebug("Added header {HeaderName}: {HeaderValue}", header.Key, header.Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to add header {HeaderName}", header.Key);
+            }
         }
 
         return client;
