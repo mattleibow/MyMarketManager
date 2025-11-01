@@ -1,6 +1,5 @@
 @using MyMarketManager.Data
 @using MyMarketManager.Data.Entities
-@using MyMarketManager.Data.Services
 @using Microsoft.EntityFrameworkCore
 @inject MyMarketManagerDbContext DbContext
 @inject ILogger<ProductImageUpload> Logger
@@ -20,22 +19,13 @@
                             <div class="card">
                                 <img src="@photo.Url" class="card-img-top" alt="Product" style="height: 150px; object-fit: cover;">
                                 <div class="card-body p-2">
-                                    @if (!string.IsNullOrEmpty(photo.AiDescription))
+                                    @if (!string.IsNullOrEmpty(photo.Caption))
                                     {
-                                        <p class="card-text small text-muted mb-1">@photo.AiDescription</p>
+                                        <p class="card-text small text-muted mb-1">@photo.Caption</p>
                                     }
-                                    @if (!string.IsNullOrEmpty(photo.AiTags))
+                                    @if (photo.VectorEmbedding != null)
                                     {
-                                        <div class="mb-1">
-                                            @foreach (var tag in photo.AiTags.Split(',').Take(3))
-                                            {
-                                                <span class="badge bg-secondary me-1" style="font-size: 0.7rem;">@tag.Trim()</span>
-                                            }
-                                        </div>
-                                    }
-                                    @if (photo.VectorizedAt.HasValue)
-                                    {
-                                        <small class="text-success"><i class="bi bi-check-circle me-1"></i>Analyzed</small>
+                                        <small class="text-success"><i class="bi bi-check-circle me-1"></i>Vectorized</small>
                                     }
                                     else
                                     {
@@ -58,10 +48,10 @@
             <hr />
             
             <div class="mb-3">
-                <label for="imageUrl" class="form-label">Add Image URL</label>
+                <label for="imageUrl" class="form-label">Add Image URL (Blob Storage)</label>
                 <div class="input-group">
                     <input type="text" class="form-control" id="imageUrl" 
-                           @bind="newImageUrl" placeholder="Enter image URL">
+                           @bind="newImageUrl" placeholder="Enter blob storage URL">
                     <button class="btn btn-primary" @onclick="AddImageUrl" disabled="@(string.IsNullOrEmpty(newImageUrl) || isSaving)">
                         @if (isSaving)
                         {
@@ -70,7 +60,7 @@
                         <span>Add</span>
                     </button>
                 </div>
-                <div class="form-text">Image will be automatically analyzed and vectorized within 10 minutes</div>
+                <div class="form-text">Image will be automatically vectorized within 10 minutes</div>
             </div>
             
             @if (!string.IsNullOrEmpty(errorMessage))
@@ -136,7 +126,7 @@
             // Reload product photos
             await DbContext.Entry(Product).Collection(p => p.Photos).LoadAsync();
             
-            successMessage = "Image added successfully! It will be analyzed automatically.";
+            successMessage = "Image added successfully! It will be vectorized automatically.";
             newImageUrl = "";
             
             Logger.LogInformation("Added image {PhotoId} for product {ProductId}", photo.Id, Product.Id);

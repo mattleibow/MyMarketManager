@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 @using MyMarketManager.Data.Services
 @using MyMarketManager.Data.Entities
-@inject ImageVectorizationProcessor ImageProcessor
+@inject ProductImageSearchService SearchService
 @inject ILogger<ProductImageSearch> Logger
 
 <PageTitle>Product Image Search</PageTitle>
@@ -24,12 +24,6 @@
                     <i class="bi bi-search me-2"></i>Search by Text
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link @(searchMode == SearchMode.Tags ? "active" : "")" 
-                        @onclick="() => searchMode = SearchMode.Tags">
-                    <i class="bi bi-tags me-2"></i>Search by Tags
-                </button>
-            </li>
         </ul>
     </div>
 </div>
@@ -46,7 +40,7 @@
                     <div class="mb-3">
                         <label for="imageUrl" class="form-label">Image URL</label>
                         <input type="text" class="form-control" id="imageUrl" @bind="imageSearchUrl" 
-                               placeholder="Enter image URL or upload an image">
+                               placeholder="Enter blob storage URL of the image">
                     </div>
                     
                     <div class="mb-3">
@@ -104,35 +98,6 @@
                 </div>
             </div>
         }
-        else if (searchMode == SearchMode.Tags)
-        {
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Filter by Tags</h5>
-                    <p class="text-muted">Enter tags separated by commas to filter products</p>
-                    
-                    <div class="mb-3">
-                        <label for="searchTags" class="form-label">Tags</label>
-                        <input type="text" class="form-control" id="searchTags" @bind="tagSearchQuery" 
-                               placeholder="e.g., 'dress, red, cotton'">
-                        <div class="form-text">Separate tags with commas</div>
-                    </div>
-                    
-                    <button class="btn btn-primary" @onclick="SearchByTags" disabled="@(isSearching || string.IsNullOrEmpty(tagSearchQuery))">
-                        @if (isSearching)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                            <span>Searching...</span>
-                        }
-                        else
-                        {
-                            <i class="bi bi-search me-2"></i>
-                            <span>Search</span>
-                        }
-                    </button>
-                </div>
-            </div>
-        }
     </div>
 </div>
 
@@ -160,15 +125,9 @@
                          style="height: 200px; object-fit: cover;">
                     <div class="card-body">
                         <h5 class="card-title">@result.Product.Name</h5>
-                        <p class="card-text text-muted">@result.ProductPhoto.AiDescription</p>
-                        @if (!string.IsNullOrEmpty(result.ProductPhoto.AiTags))
+                        @if (!string.IsNullOrEmpty(result.ProductPhoto.Caption))
                         {
-                            <div class="mb-2">
-                                @foreach (var tag in result.ProductPhoto.AiTags.Split(',').Take(5))
-                                {
-                                    <span class="badge bg-secondary me-1">@tag.Trim()</span>
-                                }
-                            </div>
+                            <p class="card-text text-muted">@result.ProductPhoto.Caption</p>
                         }
                         <div class="progress mb-2" style="height: 20px;">
                             <div class="progress-bar" role="progressbar" 
@@ -193,7 +152,7 @@ else if (searchResults != null && !searchResults.Any())
 }
 
 @code {
-    private enum SearchMode { Image, Text, Tags }
+    private enum SearchMode { Image, Text }
     
     private SearchMode searchMode = SearchMode.Text;
     private bool isSearching = false;
@@ -204,8 +163,6 @@ else if (searchResults != null && !searchResults.Any())
     
     private string textSearchQuery = "";
     private float textSimilarityThreshold = 0.6f;
-    
-    private string tagSearchQuery = "";
     
     private List<ProductImageSearchResult>? searchResults;
 
@@ -218,7 +175,7 @@ else if (searchResults != null && !searchResults.Any())
 
         try
         {
-            searchResults = await ImageProcessor.SearchByImageAsync(
+            searchResults = await SearchService.SearchByImageAsync(
                 imageSearchUrl, 
                 maxResults: 20, 
                 similarityThreshold: similarityThreshold);
@@ -246,7 +203,7 @@ else if (searchResults != null && !searchResults.Any())
 
         try
         {
-            searchResults = await ImageProcessor.SearchByTextAsync(
+            searchResults = await SearchService.SearchByTextAsync(
                 textSearchQuery, 
                 maxResults: 20, 
                 similarityThreshold: textSimilarityThreshold);
@@ -257,32 +214,6 @@ else if (searchResults != null && !searchResults.Any())
         {
             Logger.LogError(ex, "Error searching by text");
             errorMessage = $"Error searching by text: {ex.Message}";
-        }
-        finally
-        {
-            isSearching = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task SearchByTags()
-    {
-        isSearching = true;
-        errorMessage = null;
-        searchResults = null;
-        StateHasChanged();
-
-        try
-        {
-            var tags = tagSearchQuery.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            searchResults = await ImageProcessor.SearchByTagsAsync(tags.ToList());
-            
-            Logger.LogInformation("Tag search completed. Found {Count} results", searchResults.Count);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error searching by tags");
-            errorMessage = $"Error searching by tags: {ex.Message}";
         }
         finally
         {

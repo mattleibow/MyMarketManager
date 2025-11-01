@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace MyMarketManager.Data.Entities;
 
 /// <summary>
-/// Stores one or more images associated with a product with AI-generated analysis and vector embeddings for similarity search.
+/// Stores one or more images associated with a product with AI-generated vector embeddings for similarity search.
 /// </summary>
 public class ProductPhoto : EntityBase
 {
@@ -14,28 +14,14 @@ public class ProductPhoto : EntityBase
     public string Url { get; set; } = string.Empty;
     
     /// <summary>
-    /// User-provided or AI-generated caption describing the image.
+    /// Caption describing the image (user-provided or AI-generated).
     /// </summary>
     public string? Caption { get; set; }
     
     /// <summary>
-    /// AI-generated description of the image content.
-    /// </summary>
-    public string? AiDescription { get; set; }
-    
-    /// <summary>
-    /// Comma-separated AI-generated tags for the image.
-    /// </summary>
-    public string? AiTags { get; set; }
-    
-    /// <summary>
-    /// JSON-encoded 1024-dimensional vector embedding from Azure AI Vision multimodal embeddings.
+    /// 1024-dimensional vector embedding from Azure AI Foundry multimodal embeddings.
     /// Used for image similarity search and semantic search.
+    /// Stored as binary in SQL Server, ignored in SQLite.
     /// </summary>
-    public string? VectorEmbedding { get; set; }
-    
-    /// <summary>
-    /// Date when the image was analyzed and vectors were generated.
-    /// </summary>
-    public DateTimeOffset? VectorizedAt { get; set; }
+    public float[]? VectorEmbedding { get; set; }
 }

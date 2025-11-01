@@ -7,6 +7,7 @@ using MyMarketManager.GraphQL.Client;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Shein;
 using MyMarketManager.Data.Processing;
+using Microsoft.Extensions.AI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,22 +25,38 @@ builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 builder.Services.AddScoped<DbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
-// Add Azure AI Vision service for image vectorization
-var visionEndpoint = builder.Configuration["AzureVision:Endpoint"] ?? "";
-var visionApiKey = builder.Configuration["AzureVision:ApiKey"] ?? "";
-builder.Services.AddHttpClient<IAzureVisionService, AzureVisionService>()
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
-    .SetHandlerLifetime(TimeSpan.FromMinutes(5));
-builder.Services.AddScoped<IAzureVisionService>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient(nameof(AzureVisionService));
-    var logger = sp.GetRequiredService<ILogger<AzureVisionService>>();
-    return new AzureVisionService(httpClient, logger, visionEndpoint, visionApiKey);
-});
+// Add Azure AI Foundry embedding generators as keyed services
+// Configuration comes from Aspire-provisioned resources
+var aiFoundryEndpoint = builder.Configuration.GetConnectionString("ai-foundry") ?? builder.Configuration["AzureAI:Endpoint"] ?? "";
+var aiFoundryApiKey = builder.Configuration["AzureAI:ApiKey"] ?? "";
 
-// Add image vectorization services
+if (!string.IsNullOrEmpty(aiFoundryEndpoint) && !string.IsNullOrEmpty(aiFoundryApiKey))
+{
+    // Register HttpClient for embedding generators
+    builder.Services.AddHttpClient("AzureAIEmbedding")
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
+        .SetHandlerLifetime(TimeSpan.FromMinutes(5));
+
+    // Register image embedding generator as keyed service
+    builder.Services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>("image-embeddings", (sp, key) =>
+    {
+        var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+        var httpClient = httpClientFactory.CreateClient("AzureAIEmbedding");
+        return new AzureAIImageEmbeddingGenerator(httpClient, aiFoundryEndpoint, aiFoundryApiKey);
+    });
+
+    // Register text embedding generator as keyed service
+    builder.Services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>("text-embeddings", (sp, key) =>
+    {
+        var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+        var httpClient = httpClientFactory.CreateClient("AzureAIEmbedding");
+        return new AzureAITextEmbeddingGenerator(httpClient, aiFoundryEndpoint, aiFoundryApiKey);
+    });
+}
+
+// Add image vectorization and search services
 builder.Services.AddScoped<ImageVectorizationProcessor>();
+builder.Services.AddScoped<ProductImageSearchService>();
 builder.Services.AddHostedService<ImageVectorizationBackgroundService>();
 
 // Add scraper services
