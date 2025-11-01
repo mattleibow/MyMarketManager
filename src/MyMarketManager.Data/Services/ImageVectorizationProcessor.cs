@@ -28,13 +28,17 @@ public class ImageVectorizationProcessor
     /// <summary>
     /// Processes all product images that don't have vector embeddings yet.
     /// </summary>
-    public async Task<int> ProcessPendingImagesAsync(CancellationToken cancellationToken = default)
+    public async Task ProcessPendingImagesAsync(CancellationToken cancellationToken = default)
     {
         // Find all product photos without vector embeddings
         var pendingPhotos = await _context.ProductPhotos
             .Where(p => p.VectorEmbedding == null)
-            .Take(10) // Process in batches to avoid overwhelming the API
             .ToListAsync(cancellationToken);
+
+        if (pendingPhotos.Count == 0)
+        {
+            return;
+        }
 
         _logger.LogInformation("Found {Count} images pending vectorization", pendingPhotos.Count);
 
@@ -55,7 +59,7 @@ public class ImageVectorizationProcessor
             }
         }
 
-        return processedCount;
+        _logger.LogInformation("Processed {Count} images", processedCount);
     }
 
     /// <summary>
