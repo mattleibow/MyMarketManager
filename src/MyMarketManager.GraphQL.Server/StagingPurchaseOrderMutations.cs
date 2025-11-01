@@ -114,3 +114,12 @@ public record LinkStagingItemResult(
 public record UnlinkStagingItemResult(
     bool Success,
     string? ErrorMessage);
+
+/// <summary>
+/// Linked product information
+/// </summary>
+public record LinkedProductDto(
+    Guid Id,
+    string? SKU,
+    string Name,
+    MyMarketManager.Data.Enums.ProductQuality Quality);
