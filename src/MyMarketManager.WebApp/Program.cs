@@ -34,7 +34,6 @@ builder.Services.AddAzureComputerVisionEmbeddings(computerVisionEndpoint, comput
 // Add image vectorization and search services
 builder.Services.Configure<ImageVectorizationServiceOptions>(builder.Configuration.GetSection("ImageVectorizationService"));
 builder.Services.AddScoped<ImageVectorizationProcessor>();
-builder.Services.AddScoped<ProductImageSearchService>();
 builder.Services.AddHostedService<ImageVectorizationService>();
 
 // Add scraper services
