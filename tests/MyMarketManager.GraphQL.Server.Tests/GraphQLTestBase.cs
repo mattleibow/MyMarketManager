@@ -15,7 +15,7 @@ namespace MyMarketManager.GraphQL.Server.Tests;
 /// </summary>
 public abstract class GraphQLTestBase : SqliteTestBase
 {
-    protected IRequestExecutor Executor { get; private set; } = null!;
+    protected IRequestExecutor Executor { get; set; } = null!;
     private readonly ITestOutputHelper _outputHelper;
 
     protected GraphQLTestBase(ITestOutputHelper outputHelper, bool createSchema = true)

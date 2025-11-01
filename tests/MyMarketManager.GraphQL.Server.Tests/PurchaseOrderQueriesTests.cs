@@ -37,7 +37,7 @@ public class PurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : GraphQL
         // Act
         var result = await ExecuteQueryAsync<PurchaseOrdersResponse>("""
             query {
-                purchaseOrders {
+                purchaseOrders(order: { orderDate: DESC }) {
                     id
                     supplierId
                     orderDate

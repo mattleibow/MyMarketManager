@@ -12,7 +12,6 @@ public class SupplierQueries
 {
     /// <summary>
     /// Get all suppliers with filtering, sorting, and projection support
-    /// Default ordering: Name ascending (alphabetical)
     /// </summary>
     [UseProjection]
     [UseFiltering]
@@ -20,6 +19,6 @@ public class SupplierQueries
     public IQueryable<Supplier> GetSuppliers(
         MyMarketManagerDbContext context)
     {
-        return context.Suppliers.OrderBy(s => s.Name);
+        return context.Suppliers;
     }
 }

@@ -65,28 +65,13 @@ public class StagingPurchaseOrderQueries
     /// <summary>
     /// Search products for matching suggestions based on name and description
     /// </summary>
-    public async Task<List<ProductSuggestionDto>> SearchProductsForItem(
-        string searchTerm,
-        MyMarketManagerDbContext context,
-        CancellationToken cancellationToken)
+    [UseProjection]
+    [UseFiltering]
+    [UseSorting]
+    public IQueryable<Product> SearchProductsForItem(
+        MyMarketManagerDbContext context)
     {
-        var products = await context.Products
-            .Where(p => 
-                EF.Functions.Like(p.Name, $"%{searchTerm}%") ||
-                (p.Description != null && EF.Functions.Like(p.Description, $"%{searchTerm}%")) ||
-                (p.SKU != null && EF.Functions.Like(p.SKU, $"%{searchTerm}%")))
-            .OrderBy(p => p.Name)
-            .Take(50)
-            .Select(p => new ProductSuggestionDto(
-                p.Id,
-                p.SKU,
-                p.Name,
-                p.Description,
-                p.Quality,
-                p.StockOnHand))
-            .ToListAsync(cancellationToken);
-
-        return products;
+        return context.Products;
     }
 }
 
@@ -131,13 +116,3 @@ public record LinkedProductDto(
     string Name,
     MyMarketManager.Data.Enums.ProductQuality Quality);
 
-/// <summary>
-/// Product suggestion for matching
-/// </summary>
-public record ProductSuggestionDto(
-    Guid Id,
-    string? SKU,
-    string Name,
-    string? Description,
-    MyMarketManager.Data.Enums.ProductQuality Quality,
-    int StockOnHand);

@@ -1,18 +1,12 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
-using MyMarketManager.GraphQL.Server;
 using MyMarketManager.Tests.Shared;
 
 namespace MyMarketManager.GraphQL.Server.Tests;
 
 [Trait(TestCategories.Key, TestCategories.Values.GraphQL)]
-public class PurchaseOrderIngestionMutationsTests(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper, createSchema: true)
+public class PurchaseOrderIngestionMutationsTests(ITestOutputHelper outputHelper) : GraphQLTestBase(outputHelper, createSchema: true)
 {
-    private readonly ILogger<PurchaseOrderIngestionMutations> _logger = outputHelper.ToLogger<PurchaseOrderIngestionMutations>();
-    private PurchaseOrderIngestionMutations Mutations => new();
-
     [Fact]
     public async Task SubmitCookies_WithValidInput_ShouldCreateStagingBatch()
     {
@@ -21,30 +15,39 @@ public class PurchaseOrderIngestionMutationsTests(ITestOutputHelper outputHelper
         Context.Suppliers.Add(supplier);
         await Context.SaveChangesAsync(Cancel);
 
-        var input = new SubmitCookiesInput(
-            SupplierId: supplier.Id,
-            ProcessorName: "Shein",
-            CookieJson: """{"cookie1": "value1", "cookie2": "value2"}"""
-        );
+        var cookieJson = """{"cookie1": "value1", "cookie2": "value2"}""";
 
         // Act
-        var result = await Mutations.SubmitCookies(input, Context, _logger, Cancel);
+        var result = await ExecuteQueryAsync<SubmitCookiesResponse>($$"""
+            mutation {
+                submitCookies(input: {
+                    supplierId: "{{supplier.Id}}"
+                    processorName: "Shein"
+                    cookieJson: "{{cookieJson.Replace("\"", "\\\"")}}"
+                }) {
+                    success
+                    batchId
+                    message
+                    error
+                }
+            }
+        """);
 
         // Assert
-        Assert.True(result.Success);
-        Assert.NotNull(result.BatchId);
-        Assert.Contains("successfully", result.Message);
-        Assert.Null(result.Error);
+        Assert.True(result.SubmitCookies.Success);
+        Assert.NotNull(result.SubmitCookies.BatchId);
+        Assert.Contains("successfully", result.SubmitCookies.Message);
+        Assert.Null(result.SubmitCookies.Error);
 
         // Verify batch was created in database
-        var batch = await Context.StagingBatches.FindAsync(result.BatchId);
+        var batch = await Context.StagingBatches.FindAsync(result.SubmitCookies.BatchId);
         Assert.NotNull(batch);
         Assert.Equal(StagingBatchType.WebScrape, batch.BatchType);
         Assert.Equal("Shein", batch.BatchProcessorName);
         Assert.Equal(supplier.Id, batch.SupplierId);
         Assert.Equal(ProcessingStatus.Queued, batch.Status);
         Assert.NotNull(batch.FileHash);
-        Assert.Equal(input.CookieJson, batch.FileContents);
+        Assert.Equal(cookieJson, batch.FileContents);
     }
 
     [Fact]
@@ -55,19 +58,25 @@ public class PurchaseOrderIngestionMutationsTests(ITestOutputHelper outputHelper
         Context.Suppliers.Add(supplier);
         await Context.SaveChangesAsync(Cancel);
 
-        var input = new SubmitCookiesInput(
-            SupplierId: supplier.Id,
-            ProcessorName: "Shein",
-            CookieJson: ""
-        );
-
         // Act
-        var result = await Mutations.SubmitCookies(input, Context, _logger, Cancel);
+        var result = await ExecuteQueryAsync<SubmitCookiesResponse>($$"""
+            mutation {
+                submitCookies(input: {
+                    supplierId: "{{supplier.Id}}"
+                    processorName: "Shein"
+                    cookieJson: ""
+                }) {
+                    success
+                    batchId
+                    error
+                }
+            }
+        """);
 
         // Assert
-        Assert.False(result.Success);
-        Assert.Null(result.BatchId);
-        Assert.Equal("Cookie JSON is required", result.Error);
+        Assert.False(result.SubmitCookies.Success);
+        Assert.Null(result.SubmitCookies.BatchId);
+        Assert.Equal("Cookie JSON is required", result.SubmitCookies.Error);
     }
 
     [Fact]
@@ -78,19 +87,27 @@ public class PurchaseOrderIngestionMutationsTests(ITestOutputHelper outputHelper
         Context.Suppliers.Add(supplier);
         await Context.SaveChangesAsync(Cancel);
 
-        var input = new SubmitCookiesInput(
-            SupplierId: supplier.Id,
-            ProcessorName: "",
-            CookieJson: """{"cookie1": "value1"}"""
-        );
+        var cookieJson = """{"cookie1": "value1"}""";
 
         // Act
-        var result = await Mutations.SubmitCookies(input, Context, _logger, Cancel);
+        var result = await ExecuteQueryAsync<SubmitCookiesResponse>($$"""
+            mutation {
+                submitCookies(input: {
+                    supplierId: "{{supplier.Id}}"
+                    processorName: ""
+                    cookieJson: "{{cookieJson.Replace("\"", "\\\"")}}"
+                }) {
+                    success
+                    batchId
+                    error
+                }
+            }
+        """);
 
         // Assert
-        Assert.False(result.Success);
-        Assert.Null(result.BatchId);
-        Assert.Equal("Processor name is required", result.Error);
+        Assert.False(result.SubmitCookies.Success);
+        Assert.Null(result.SubmitCookies.BatchId);
+        Assert.Equal("Processor name is required", result.SubmitCookies.Error);
     }
 
     [Fact]
@@ -101,19 +118,25 @@ public class PurchaseOrderIngestionMutationsTests(ITestOutputHelper outputHelper
         Context.Suppliers.Add(supplier);
         await Context.SaveChangesAsync(Cancel);
 
-        var input = new SubmitCookiesInput(
-            SupplierId: supplier.Id,
-            ProcessorName: "Shein",
-            CookieJson: "not valid json {{"
-        );
-
-        // Act
-        var result = await Mutations.SubmitCookies(input, Context, _logger, Cancel);
+        // Act - Using invalid JSON with unmatched braces
+        var result = await ExecuteQueryAsync<SubmitCookiesResponse>($$$"""
+            mutation {
+                submitCookies(input: {
+                    supplierId: "{{{supplier.Id}}}"
+                    processorName: "Shein"
+                    cookieJson: "not valid json {{"
+                }) {
+                    success
+                    batchId
+                    error
+                }
+            }
+        """);
 
         // Assert
-        Assert.False(result.Success);
-        Assert.Null(result.BatchId);
-        Assert.Equal("Invalid JSON format", result.Error);
+        Assert.False(result.SubmitCookies.Success);
+        Assert.Null(result.SubmitCookies.BatchId);
+        Assert.Equal("Invalid JSON format", result.SubmitCookies.Error);
     }
 
     [Fact]
@@ -121,19 +144,27 @@ public class PurchaseOrderIngestionMutationsTests(ITestOutputHelper outputHelper
     {
         // Arrange
         var nonExistentSupplierId = Guid.NewGuid();
-        var input = new SubmitCookiesInput(
-            SupplierId: nonExistentSupplierId,
-            ProcessorName: "Shein",
-            CookieJson: """{"cookie1": "value1"}"""
-        );
+        var cookieJson = """{"cookie1": "value1"}""";
 
         // Act
-        var result = await Mutations.SubmitCookies(input, Context, _logger, Cancel);
+        var result = await ExecuteQueryAsync<SubmitCookiesResponse>($$"""
+            mutation {
+                submitCookies(input: {
+                    supplierId: "{{nonExistentSupplierId}}"
+                    processorName: "Shein"
+                    cookieJson: "{{cookieJson.Replace("\"", "\\\"")}}"
+                }) {
+                    success
+                    batchId
+                    error
+                }
+            }
+        """);
 
         // Assert
-        Assert.False(result.Success);
-        Assert.Null(result.BatchId);
-        Assert.Equal("Supplier not found", result.Error);
+        Assert.False(result.SubmitCookies.Success);
+        Assert.Null(result.SubmitCookies.BatchId);
+        Assert.Equal("Supplier not found", result.SubmitCookies.Error);
     }
 
     [Fact]
@@ -144,31 +175,49 @@ public class PurchaseOrderIngestionMutationsTests(ITestOutputHelper outputHelper
         Context.Suppliers.Add(supplier);
         await Context.SaveChangesAsync(Cancel);
 
-        var input1 = new SubmitCookiesInput(
-            SupplierId: supplier.Id,
-            ProcessorName: "Shein",
-            CookieJson: """{"cookie1": "value1"}"""
-        );
-
-        var input2 = new SubmitCookiesInput(
-            SupplierId: supplier.Id,
-            ProcessorName: "Shein",
-            CookieJson: """{"cookie1": "value2"}"""
-        );
+        var cookieJson1 = """{"cookie1": "value1"}""";
+        var cookieJson2 = """{"cookie1": "value2"}""";
 
         // Act
-        var result1 = await Mutations.SubmitCookies(input1, Context, _logger, Cancel);
-        var result2 = await Mutations.SubmitCookies(input2, Context, _logger, Cancel);
+        var result1 = await ExecuteQueryAsync<SubmitCookiesResponse>($$"""
+            mutation {
+                submitCookies(input: {
+                    supplierId: "{{supplier.Id}}"
+                    processorName: "Shein"
+                    cookieJson: "{{cookieJson1.Replace("\"", "\\\"")}}"
+                }) {
+                    success
+                    batchId
+                }
+            }
+        """);
+        
+        var result2 = await ExecuteQueryAsync<SubmitCookiesResponse>($$"""
+            mutation {
+                submitCookies(input: {
+                    supplierId: "{{supplier.Id}}"
+                    processorName: "Shein"
+                    cookieJson: "{{cookieJson2.Replace("\"", "\\\"")}}"
+                }) {
+                    success
+                    batchId
+                }
+            }
+        """);
 
         // Assert
-        Assert.True(result1.Success);
-        Assert.True(result2.Success);
+        Assert.True(result1.SubmitCookies.Success);
+        Assert.True(result2.SubmitCookies.Success);
 
-        var batch1 = await Context.StagingBatches.FindAsync(result1.BatchId);
-        var batch2 = await Context.StagingBatches.FindAsync(result2.BatchId);
+        var batch1 = await Context.StagingBatches.FindAsync(result1.SubmitCookies.BatchId);
+        var batch2 = await Context.StagingBatches.FindAsync(result2.SubmitCookies.BatchId);
 
         Assert.NotNull(batch1);
         Assert.NotNull(batch2);
         Assert.NotEqual(batch1.FileHash, batch2.FileHash);
     }
+
+    private record SubmitCookiesResponse(SubmitCookiesPayloadDto SubmitCookies);
+    private record SubmitCookiesPayloadDto(bool Success, Guid? BatchId, string? Message, string? Error);
 }
+

@@ -37,7 +37,7 @@ public class StagingBatchQueriesTests(ITestOutputHelper outputHelper) : GraphQLT
         // Act
         var result = await ExecuteQueryAsync<StagingBatchesResponse>(@"
             query {
-                stagingBatches {
+                stagingBatches(order: { startedAt: DESC }) {
                     id
                     startedAt
                 }
