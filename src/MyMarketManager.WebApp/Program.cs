@@ -45,7 +45,11 @@ builder.Services.Configure<IngestionServiceOptions>(builder.Configuration.GetSec
 builder.Services.AddScoped<BatchProcessingService>();
 builder.Services.AddHostedService<IngestionService>();
 builder.Services.AddBatchProcessorFactory()
-    .AddWebScraper<SheinWebScraper>("Shein");
+    .AddWebScraper<SheinWebScraper>(
+        processorName: "Shein",
+        purpose: ProcessorPurpose.Ingestion,
+        displayName: "Shein Web Scraper",
+        description: "Scrapes purchase orders from Shein.com");
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
