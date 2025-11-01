@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyMarketManager.Data;
 
@@ -11,9 +12,11 @@ using MyMarketManager.Data;
 namespace MyMarketManager.Data.Migrations
 {
     [DbContext(typeof(MyMarketManagerDbContext))]
-    partial class MyMarketManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251101144444_AddProductImageVectorization")]
+    partial class AddProductImageVectorization
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -180,6 +183,12 @@ namespace MyMarketManager.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AiDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AiTags")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Caption")
                         .HasColumnType("nvarchar(max)");
 
@@ -201,6 +210,9 @@ namespace MyMarketManager.Data.Migrations
 
                     b.Property<string>("VectorEmbedding")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("VectorizedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
