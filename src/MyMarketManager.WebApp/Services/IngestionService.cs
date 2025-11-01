@@ -6,6 +6,11 @@ namespace MyMarketManager.WebApp.Services;
 /// Background service that processes queued staging batches.
 /// Simply gets batches and delegates to appropriate processors.
 /// </summary>
+/// <remarks>
+/// This service has been replaced by <see cref="BackgroundProcessingService"/> which provides
+/// a unified approach to handling all background processing tasks.
+/// </remarks>
+[Obsolete("This service has been replaced by BackgroundProcessingService. Use BackgroundProcessingService instead.")]
 public class IngestionService(
     IServiceProvider serviceProvider,
     ILogger<IngestionService> logger,

@@ -13,4 +13,6 @@ public interface IBatchProcessorFactory
     ProcessorMetadata? GetProcessorMetadata(string processorName);
 
     IBatchProcessor? GetProcessor(string processorName);
+
+    object? GetWorkItemProcessor(string processorName, Type workItemType);
 }

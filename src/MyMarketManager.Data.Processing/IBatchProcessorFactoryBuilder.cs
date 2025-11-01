@@ -14,4 +14,12 @@ public interface IBatchProcessorFactoryBuilder
         string? displayName = null,
         string? description = null)
         where TProcessor : class, IBatchProcessor;
+
+    IBatchProcessorFactoryBuilder AddWorkItemProcessor<TProcessor, TWorkItem>(
+        string processorName,
+        ProcessorPurpose purpose = ProcessorPurpose.Internal,
+        string? displayName = null,
+        string? description = null)
+        where TProcessor : class, IWorkItemProcessor<TWorkItem>
+        where TWorkItem : IWorkItem;
 }

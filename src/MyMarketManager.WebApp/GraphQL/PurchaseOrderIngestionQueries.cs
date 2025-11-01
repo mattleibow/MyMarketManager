@@ -45,6 +45,7 @@ public class PurchaseOrderIngestionQueries
 
         return new ProcessorMetadataDto(
             metadata.BatchType,
+            metadata.WorkItemType.Name,
             metadata.ProcessorType.Name,
             metadata.Purpose,
             metadata.DisplayName,
@@ -56,7 +57,8 @@ public class PurchaseOrderIngestionQueries
 /// Processor metadata for GraphQL
 /// </summary>
 public record ProcessorMetadataDto(
-    StagingBatchType BatchType,
+    StagingBatchType? BatchType,
+    string WorkItemTypeName,
     string ProcessorTypeName,
     ProcessorPurpose Purpose,
     string? DisplayName,

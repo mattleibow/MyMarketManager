@@ -31,25 +31,50 @@ var computerVisionEndpoint = builder.Configuration.GetConnectionString("ai-found
 var computerVisionApiKey = builder.Configuration["AzureAI:ApiKey"] ?? "";
 builder.Services.AddAzureComputerVisionEmbeddings(computerVisionEndpoint, computerVisionApiKey);
 
-// Add image vectorization and search services
-builder.Services.Configure<ImageVectorizationServiceOptions>(builder.Configuration.GetSection("ImageVectorizationService"));
+// Add image vectorization processor
 builder.Services.AddScoped<ImageVectorizationProcessor>();
-builder.Services.AddHostedService<ImageVectorizationService>();
 
 // Add scraper services
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
 
-// Add ingestion services
-builder.Services.Configure<IngestionServiceOptions>(builder.Configuration.GetSection("IngestionService"));
+// Add batch processing services
 builder.Services.AddScoped<BatchProcessingService>();
-builder.Services.AddHostedService<IngestionService>();
 builder.Services.AddBatchProcessorFactory()
     .AddWebScraper<SheinWebScraper>(
         processorName: "Shein",
         purpose: ProcessorPurpose.Ingestion,
         displayName: "Shein Web Scraper",
-        description: "Scrapes purchase orders from Shein.com");
+        description: "Scrapes purchase orders from Shein.com")
+    .AddImageVectorization<ImageVectorizationWorkItemProcessor>();
+
+// Add unified background processing service
+// This replaces both IngestionService and ImageVectorizationService
+builder.Services.Configure<BackgroundProcessingServiceOptions>(options =>
+{
+    // Configure intervals from existing config sections for backward compatibility
+    var ingestionConfig = builder.Configuration.GetSection("IngestionService");
+    var vectorizationConfig = builder.Configuration.GetSection("ImageVectorizationService");
+
+    if (ingestionConfig.Exists())
+    {
+        var pollInterval = ingestionConfig.GetValue<TimeSpan?>("PollInterval");
+        if (pollInterval.HasValue)
+        {
+            options.BatchProcessingInterval = pollInterval.Value;
+        }
+    }
+
+    if (vectorizationConfig.Exists())
+    {
+        var pollInterval = vectorizationConfig.GetValue<TimeSpan?>("PollInterval");
+        if (pollInterval.HasValue)
+        {
+            options.ImageVectorizationInterval = pollInterval.Value;
+        }
+    }
+});
+builder.Services.AddHostedService<BackgroundProcessingService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

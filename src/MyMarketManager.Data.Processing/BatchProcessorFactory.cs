@@ -5,13 +5,14 @@ using MyMarketManager.Data.Enums;
 namespace MyMarketManager.Data.Processing;
 
 /// <summary>
-/// Factory that creates batch processors based on batch type and processor name.
-/// Centralizes processor registration in one place.
+/// Factory that creates processors based on processor name.
+/// Supports both legacy IBatchProcessor and generic IWorkItemProcessor.
 /// </summary>
 internal class BatchProcessorFactory(IServiceProvider serviceProvider, IOptions<BatchProcessorOptions> options) : IBatchProcessorFactory
 {
     /// <summary>
-    /// Gets a processor for the given processor name.
+    /// Gets a batch processor for the given processor name.
+    /// Returns null if the processor is not an IBatchProcessor.
     /// </summary>
     public IBatchProcessor? GetProcessor(string processorName)
     {
@@ -26,7 +27,38 @@ internal class BatchProcessorFactory(IServiceProvider serviceProvider, IOptions<
             return null;
         }
 
+        // Only return if it's an IBatchProcessor
+        if (!typeof(IBatchProcessor).IsAssignableFrom(metadata.ProcessorType))
+        {
+            return null;
+        }
+
         return serviceProvider.GetRequiredService(metadata.ProcessorType) as IBatchProcessor;
+    }
+
+    /// <summary>
+    /// Gets a generic work item processor for the given processor name and work item type.
+    /// </summary>
+    public object? GetWorkItemProcessor(string processorName, Type workItemType)
+    {
+        if (string.IsNullOrWhiteSpace(processorName) || workItemType == null)
+        {
+            return null;
+        }
+
+        var processors = options.Value.Processors;
+        if (!processors.TryGetValue(processorName, out var metadata))
+        {
+            return null;
+        }
+
+        // Verify the work item type matches
+        if (metadata.WorkItemType != workItemType)
+        {
+            return null;
+        }
+
+        return serviceProvider.GetRequiredService(metadata.ProcessorType);
     }
 
     /// <summary>
@@ -72,3 +104,4 @@ internal class BatchProcessorFactory(IServiceProvider serviceProvider, IOptions<
         return options.Value.Processors.TryGetValue(processorName, out var metadata) ? metadata : null;
     }
 }
+

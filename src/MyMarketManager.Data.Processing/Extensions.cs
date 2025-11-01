@@ -39,4 +39,19 @@ public static class Extensions
         string? description = null)
         where TProcessor : class, IBatchProcessor =>
         builder.AddProcessor<TProcessor>(StagingBatchType.BlobUpload, processorName, purpose, displayName, description);
+
+    /// <summary>
+    /// Registers an image vectorization processor.
+    /// </summary>
+    public static IBatchProcessorFactoryBuilder AddImageVectorization<TProcessor>(
+        this IBatchProcessorFactoryBuilder builder,
+        string processorName = "ImageVectorization",
+        string? displayName = null,
+        string? description = null)
+        where TProcessor : class, IWorkItemProcessor<ImageVectorizationWorkItem> =>
+        builder.AddWorkItemProcessor<TProcessor, ImageVectorizationWorkItem>(
+            processorName,
+            ProcessorPurpose.Internal,
+            displayName ?? "Image Vectorization",
+            description ?? "Generates vector embeddings for product images");
 }
