@@ -9,6 +9,13 @@ namespace MyMarketManager.Data;
 /// </summary>
 public class MyMarketManagerDbContext : DbContext
 {
+    // Static value converters for DateTimeOffset to DateTime conversion (SQLite compatibility)
+    private static readonly ValueConverter<DateTimeOffset, DateTime> DateTimeOffsetToDateTimeConverter =
+        new(v => v.UtcDateTime, v => new DateTimeOffset(v, TimeSpan.Zero));
+
+    private static readonly ValueConverter<DateTimeOffset?, DateTime?> NullableDateTimeOffsetToDateTimeConverter =
+        new(v => v.HasValue ? v.Value.UtcDateTime : null, v => v.HasValue ? new DateTimeOffset(v.Value, TimeSpan.Zero) : null);
+
     public MyMarketManagerDbContext(DbContextOptions<MyMarketManagerDbContext> options)
         : base(options)
     {
@@ -57,16 +64,12 @@ public class MyMarketManagerDbContext : DbContext
                     if (property.ClrType == typeof(DateTimeOffset))
                     {
                         entity.Property(property.Name)
-                            .HasConversion(new ValueConverter<DateTimeOffset, DateTime>(
-                                v => v.UtcDateTime,
-                                v => new DateTimeOffset(v, TimeSpan.Zero)));
+                            .HasConversion(DateTimeOffsetToDateTimeConverter);
                     }
                     else if (property.ClrType == typeof(DateTimeOffset?))
                     {
                         entity.Property(property.Name)
-                            .HasConversion(new ValueConverter<DateTimeOffset?, DateTime?>(
-                                v => v.HasValue ? v.Value.UtcDateTime : null,
-                                v => v.HasValue ? new DateTimeOffset(v.Value, TimeSpan.Zero) : null));
+                            .HasConversion(NullableDateTimeOffsetToDateTimeConverter);
                     }
                 }
             }
