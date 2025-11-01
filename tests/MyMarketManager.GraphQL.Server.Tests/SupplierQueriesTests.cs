@@ -20,7 +20,7 @@ public class SupplierQueriesTests(ITestOutputHelper outputHelper) : GraphQLTestB
         // Act
         var result = await ExecuteQueryAsync<SuppliersResponse>(@"
             query {
-                suppliers {
+                suppliers(order: { name: ASC }) {
                     id
                     name
                 }

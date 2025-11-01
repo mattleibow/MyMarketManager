@@ -1,16 +1,12 @@
-using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
-using MyMarketManager.GraphQL.Server;
 using MyMarketManager.Tests.Shared;
 
 namespace MyMarketManager.GraphQL.Server.Tests;
 
 [Trait(TestCategories.Key, TestCategories.Values.GraphQL)]
-public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper, createSchema: true)
+public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : GraphQLTestBase(outputHelper, createSchema: true)
 {
-    private StagingPurchaseOrderQueries Queries => new();
-
     [Fact]
     public async Task GetStagingPurchaseOrderById_WithValidId_ShouldReturnDetailWithItems()
     {
@@ -65,19 +61,35 @@ public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : 
         await Context.SaveChangesAsync(Cancel);
 
         // Act
-        var result = await Queries.GetStagingPurchaseOrderById(order.Id, Context, Cancel);
+        var result = await ExecuteQueryAsync<StagingPurchaseOrderByIdResponse>($$"""
+            query {
+                stagingPurchaseOrderById(id: "{{order.Id}}") {
+                    id
+                    supplierReference
+                    supplierName
+                    items {
+                        name
+                        description
+                        quantity
+                        product {
+                            name
+                        }
+                    }
+                }
+            }
+        """);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(order.Id, result.Id);
-        Assert.Equal("PO-001", result.SupplierReference);
-        Assert.Equal(supplier.Name, result.SupplierName);
-        Assert.Single(result.Items);
-        Assert.Equal("Test Item", result.Items[0].Name);
-        Assert.Equal("Test Description", result.Items[0].Description);
-        Assert.Equal(5, result.Items[0].Quantity);
-        Assert.NotNull(result.Items[0].Product);
-        Assert.Equal(product.Name, result.Items[0].Product!.Name);
+        Assert.NotNull(result.StagingPurchaseOrderById);
+        Assert.Equal(order.Id, result.StagingPurchaseOrderById.Id);
+        Assert.Equal("PO-001", result.StagingPurchaseOrderById.SupplierReference);
+        Assert.Equal(supplier.Name, result.StagingPurchaseOrderById.SupplierName);
+        Assert.Single(result.StagingPurchaseOrderById.Items);
+        Assert.Equal("Test Item", result.StagingPurchaseOrderById.Items[0].Name);
+        Assert.Equal("Test Description", result.StagingPurchaseOrderById.Items[0].Description);
+        Assert.Equal(5, result.StagingPurchaseOrderById.Items[0].Quantity);
+        Assert.NotNull(result.StagingPurchaseOrderById.Items[0].Product);
+        Assert.Equal(product.Name, result.StagingPurchaseOrderById.Items[0].Product!.Name);
     }
 
     [Fact]
@@ -87,10 +99,16 @@ public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : 
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await Queries.GetStagingPurchaseOrderById(nonExistentId, Context, Cancel);
+        var result = await ExecuteQueryAsync<StagingPurchaseOrderByIdResponse>($$"""
+            query {
+                stagingPurchaseOrderById(id: "{{nonExistentId}}") {
+                    id
+                }
+            }
+        """);
 
         // Assert
-        Assert.Null(result);
+        Assert.Null(result.StagingPurchaseOrderById);
     }
 
     [Fact]
@@ -123,12 +141,21 @@ public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : 
         await Context.SaveChangesAsync(Cancel);
 
         // Act
-        var result = await Queries.SearchProductsForItem("Widget", Context, Cancel);
+        var result = await ExecuteQueryAsync<SearchProductsResponse>("""
+            query {
+                searchProductsForItem(where: { name: { contains: "Widget" } }) {
+                    id
+                    name
+                    quality
+                    stockOnHand
+                }
+            }
+        """);
 
         // Assert
-        Assert.Equal(2, result.Count);
-        Assert.Contains(result, p => p.Name == "Red Widget");
-        Assert.Contains(result, p => p.Name == "Blue Widget");
+        Assert.Equal(2, result.SearchProductsForItem.Count);
+        Assert.Contains(result.SearchProductsForItem, p => p.Name == "Red Widget");
+        Assert.Contains(result.SearchProductsForItem, p => p.Name == "Blue Widget");
     }
 
     [Fact]
@@ -156,11 +183,18 @@ public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : 
         await Context.SaveChangesAsync(Cancel);
 
         // Act
-        var result = await Queries.SearchProductsForItem("widget", Context, Cancel);
+        var result = await ExecuteQueryAsync<SearchProductsResponse>("""
+            query {
+                searchProductsForItem(where: { description: { contains: "widget" } }) {
+                    id
+                    name
+                }
+            }
+        """);
 
         // Assert
-        Assert.Single(result);
-        Assert.Equal("Product A", result[0].Name);
+        Assert.Single(result.SearchProductsForItem);
+        Assert.Equal("Product A", result.SearchProductsForItem[0].Name);
     }
 
     [Fact]
@@ -188,16 +222,24 @@ public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : 
         await Context.SaveChangesAsync(Cancel);
 
         // Act
-        var result = await Queries.SearchProductsForItem("WID", Context, Cancel);
+        var result = await ExecuteQueryAsync<SearchProductsResponse>("""
+            query {
+                searchProductsForItem(where: { sku: { contains: "WID" } }) {
+                    id
+                    name
+                    sku
+                }
+            }
+        """);
 
         // Assert
-        Assert.Single(result);
-        Assert.Equal("Product A", result[0].Name);
-        Assert.Equal("WID-001", result[0].SKU);
+        Assert.Single(result.SearchProductsForItem);
+        Assert.Equal("Product A", result.SearchProductsForItem[0].Name);
+        Assert.Equal("WID-001", result.SearchProductsForItem[0].SKU);
     }
 
     [Fact]
-    public async Task SearchProductsForItem_ShouldReturnMaximum50Results()
+    public async Task SearchProductsForItem_ShouldFilterAndReturnResults()
     {
         // Arrange
         for (int i = 0; i < 100; i++)
@@ -213,10 +255,17 @@ public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : 
         await Context.SaveChangesAsync(Cancel);
 
         // Act
-        var result = await Queries.SearchProductsForItem("Widget", Context, Cancel);
+        var result = await ExecuteQueryAsync<SearchProductsResponse>("""
+            query {
+                searchProductsForItem(where: { name: { contains: "Widget" } }) {
+                    id
+                    name
+                }
+            }
+        """);
 
-        // Assert
-        Assert.Equal(50, result.Count);
+        // Assert - All 100 widgets should be returned (no manual limit anymore)
+        Assert.Equal(100, result.SearchProductsForItem.Count);
     }
 
     [Fact]
@@ -242,11 +291,29 @@ public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : 
         await Context.SaveChangesAsync(Cancel);
 
         // Act
-        var result = await Queries.SearchProductsForItem("Widget", Context, Cancel);
+        var result = await ExecuteQueryAsync<SearchProductsResponse>("""
+            query {
+                searchProductsForItem(
+                    where: { name: { contains: "Widget" } }
+                    order: { name: ASC }
+                ) {
+                    id
+                    name
+                }
+            }
+        """);
 
         // Assert
-        Assert.Equal(2, result.Count);
-        Assert.Equal("Apple Widget", result[0].Name);
-        Assert.Equal("Zebra Widget", result[1].Name);
+        Assert.Equal(2, result.SearchProductsForItem.Count);
+        Assert.Equal("Apple Widget", result.SearchProductsForItem[0].Name);
+        Assert.Equal("Zebra Widget", result.SearchProductsForItem[1].Name);
     }
+
+    private record StagingPurchaseOrderByIdResponse(StagingPurchaseOrderDetailDto? StagingPurchaseOrderById);
+    private record StagingPurchaseOrderDetailDto(Guid Id, string? SupplierReference, string? SupplierName, List<StagingPurchaseOrderItemDto> Items);
+    private record StagingPurchaseOrderItemDto(string Name, string? Description, int Quantity, ProductDto? Product);
+    private record ProductDto(string Name);
+    private record SearchProductsResponse(List<ProductSearchDto> SearchProductsForItem);
+    private record ProductSearchDto(Guid Id, string Name, string? SKU, string? Description, ProductQuality Quality, int StockOnHand);
 }
+

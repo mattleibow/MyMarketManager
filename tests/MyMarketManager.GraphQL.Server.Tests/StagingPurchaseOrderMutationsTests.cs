@@ -1,16 +1,12 @@
-using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
-using MyMarketManager.GraphQL.Server;
 using MyMarketManager.Tests.Shared;
 
 namespace MyMarketManager.GraphQL.Server.Tests;
 
 [Trait(TestCategories.Key, TestCategories.Values.GraphQL)]
-public class StagingPurchaseOrderMutationsTests(ITestOutputHelper outputHelper) : SqliteTestBase(outputHelper, createSchema: true)
+public class StagingPurchaseOrderMutationsTests(ITestOutputHelper outputHelper) : GraphQLTestBase(outputHelper, createSchema: true)
 {
-    private StagingPurchaseOrderMutations Mutations => new();
-
     [Fact]
     public async Task LinkStagingItemToProduct_WithValidIds_ShouldLinkItem()
     {
@@ -60,20 +56,29 @@ public class StagingPurchaseOrderMutationsTests(ITestOutputHelper outputHelper) 
         Context.StagingPurchaseOrderItems.Add(item);
         await Context.SaveChangesAsync(Cancel);
 
-        var input = new LinkStagingItemToProductInput(
-            StagingItemId: item.Id,
-            ProductId: product.Id
-        );
-
         // Act
-        var result = await Mutations.LinkStagingItemToProduct(input, Context, Cancel);
+        var result = await ExecuteQueryAsync<LinkStagingItemResponse>($$"""
+            mutation {
+                linkStagingItemToProduct(input: {
+                    stagingItemId: "{{item.Id}}"
+                    productId: "{{product.Id}}"
+                }) {
+                    success
+                    errorMessage
+                    linkedProduct {
+                        id
+                        name
+                    }
+                }
+            }
+        """);
 
         // Assert
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorMessage);
-        Assert.NotNull(result.LinkedProduct);
-        Assert.Equal(product.Id, result.LinkedProduct.Id);
-        Assert.Equal(product.Name, result.LinkedProduct.Name);
+        Assert.True(result.LinkStagingItemToProduct.Success);
+        Assert.Null(result.LinkStagingItemToProduct.ErrorMessage);
+        Assert.NotNull(result.LinkStagingItemToProduct.LinkedProduct);
+        Assert.Equal(product.Id, result.LinkStagingItemToProduct.LinkedProduct.Id);
+        Assert.Equal(product.Name, result.LinkStagingItemToProduct.LinkedProduct.Name);
 
         // Verify database was updated
         var dbItem = await Context.StagingPurchaseOrderItems.FindAsync(new object[] { item.Id }, Cancel);
@@ -96,18 +101,28 @@ public class StagingPurchaseOrderMutationsTests(ITestOutputHelper outputHelper) 
         Context.Products.Add(product);
         await Context.SaveChangesAsync(Cancel);
 
-        var input = new LinkStagingItemToProductInput(
-            StagingItemId: Guid.NewGuid(),
-            ProductId: product.Id
-        );
+        var invalidItemId = Guid.NewGuid();
 
         // Act
-        var result = await Mutations.LinkStagingItemToProduct(input, Context, Cancel);
+        var result = await ExecuteQueryAsync<LinkStagingItemResponse>($$"""
+            mutation {
+                linkStagingItemToProduct(input: {
+                    stagingItemId: "{{invalidItemId}}"
+                    productId: "{{product.Id}}"
+                }) {
+                    success
+                    errorMessage
+                    linkedProduct {
+                        id
+                    }
+                }
+            }
+        """);
 
         // Assert
-        Assert.False(result.Success);
-        Assert.Equal("Staging item not found", result.ErrorMessage);
-        Assert.Null(result.LinkedProduct);
+        Assert.False(result.LinkStagingItemToProduct.Success);
+        Assert.Equal("Staging item not found", result.LinkStagingItemToProduct.ErrorMessage);
+        Assert.Null(result.LinkStagingItemToProduct.LinkedProduct);
     }
 
     [Fact]
@@ -149,18 +164,28 @@ public class StagingPurchaseOrderMutationsTests(ITestOutputHelper outputHelper) 
         Context.StagingPurchaseOrderItems.Add(item);
         await Context.SaveChangesAsync(Cancel);
 
-        var input = new LinkStagingItemToProductInput(
-            StagingItemId: item.Id,
-            ProductId: Guid.NewGuid()
-        );
+        var invalidProductId = Guid.NewGuid();
 
         // Act
-        var result = await Mutations.LinkStagingItemToProduct(input, Context, Cancel);
+        var result = await ExecuteQueryAsync<LinkStagingItemResponse>($$"""
+            mutation {
+                linkStagingItemToProduct(input: {
+                    stagingItemId: "{{item.Id}}"
+                    productId: "{{invalidProductId}}"
+                }) {
+                    success
+                    errorMessage
+                    linkedProduct {
+                        id
+                    }
+                }
+            }
+        """);
 
         // Assert
-        Assert.False(result.Success);
-        Assert.Equal("Product not found", result.ErrorMessage);
-        Assert.Null(result.LinkedProduct);
+        Assert.False(result.LinkStagingItemToProduct.Success);
+        Assert.Equal("Product not found", result.LinkStagingItemToProduct.ErrorMessage);
+        Assert.Null(result.LinkStagingItemToProduct.LinkedProduct);
     }
 
     [Fact]
@@ -213,11 +238,18 @@ public class StagingPurchaseOrderMutationsTests(ITestOutputHelper outputHelper) 
         await Context.SaveChangesAsync(Cancel);
 
         // Act
-        var result = await Mutations.UnlinkStagingItemFromProduct(item.Id, Context, Cancel);
+        var result = await ExecuteQueryAsync<UnlinkStagingItemResponse>($$"""
+            mutation {
+                unlinkStagingItemFromProduct(stagingItemId: "{{item.Id}}") {
+                    success
+                    errorMessage
+                }
+            }
+        """);
 
         // Assert
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorMessage);
+        Assert.True(result.UnlinkStagingItemFromProduct.Success);
+        Assert.Null(result.UnlinkStagingItemFromProduct.ErrorMessage);
 
         // Verify database was updated
         var dbItem = await Context.StagingPurchaseOrderItems.FindAsync(new object[] { item.Id }, Cancel);
@@ -233,10 +265,24 @@ public class StagingPurchaseOrderMutationsTests(ITestOutputHelper outputHelper) 
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await Mutations.UnlinkStagingItemFromProduct(nonExistentId, Context, Cancel);
+        var result = await ExecuteQueryAsync<UnlinkStagingItemResponse>($$"""
+            mutation {
+                unlinkStagingItemFromProduct(stagingItemId: "{{nonExistentId}}") {
+                    success
+                    errorMessage
+                }
+            }
+        """);
 
         // Assert
-        Assert.False(result.Success);
-        Assert.Equal("Staging item not found", result.ErrorMessage);
+        Assert.False(result.UnlinkStagingItemFromProduct.Success);
+        Assert.Equal("Staging item not found", result.UnlinkStagingItemFromProduct.ErrorMessage);
     }
+
+    private record LinkStagingItemResponse(LinkStagingItemResultDto LinkStagingItemToProduct);
+    private record LinkStagingItemResultDto(bool Success, string? ErrorMessage, LinkedProductDto? LinkedProduct);
+    private record LinkedProductDto(Guid Id, string Name);
+    private record UnlinkStagingItemResponse(UnlinkStagingItemResultDto UnlinkStagingItemFromProduct);
+    private record UnlinkStagingItemResultDto(bool Success, string? ErrorMessage);
 }
+
