@@ -19,14 +19,24 @@ public static class Extensions
     /// <summary>
     /// Registers a web scraper processor.
     /// </summary>
-    public static IBatchProcessorFactoryBuilder AddWebScraper<TProcessor>(this IBatchProcessorFactoryBuilder builder, string processorName)
+    public static IBatchProcessorFactoryBuilder AddWebScraper<TProcessor>(
+        this IBatchProcessorFactoryBuilder builder,
+        string processorName,
+        ProcessorPurpose purpose = ProcessorPurpose.Ingestion,
+        string? displayName = null,
+        string? description = null)
         where TProcessor : class, IBatchProcessor =>
-        builder.AddProcessor<TProcessor>(StagingBatchType.WebScrape, processorName);
+        builder.AddProcessor<TProcessor>(StagingBatchType.WebScrape, processorName, purpose, displayName, description);
 
     /// <summary>
     /// Registers a blob storage processor.
     /// </summary>
-    public static IBatchProcessorFactoryBuilder AddBlobStorageProcessor<TProcessor>(this IBatchProcessorFactoryBuilder builder, string processorName)
+    public static IBatchProcessorFactoryBuilder AddBlobStorageProcessor<TProcessor>(
+        this IBatchProcessorFactoryBuilder builder,
+        string processorName,
+        ProcessorPurpose purpose = ProcessorPurpose.Ingestion,
+        string? displayName = null,
+        string? description = null)
         where TProcessor : class, IBatchProcessor =>
-        builder.AddProcessor<TProcessor>(StagingBatchType.BlobUpload, processorName);
+        builder.AddProcessor<TProcessor>(StagingBatchType.BlobUpload, processorName, purpose, displayName, description);
 }
