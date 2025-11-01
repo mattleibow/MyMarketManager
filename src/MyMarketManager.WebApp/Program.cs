@@ -29,11 +29,7 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 // Configuration comes from Aspire-provisioned resources or appsettings
 var computerVisionEndpoint = builder.Configuration.GetConnectionString("ai-foundry") ?? builder.Configuration["AzureAI:Endpoint"] ?? "";
 var computerVisionApiKey = builder.Configuration["AzureAI:ApiKey"] ?? "";
-
-if (!string.IsNullOrEmpty(computerVisionEndpoint) && !string.IsNullOrEmpty(computerVisionApiKey))
-{
-    builder.Services.AddAzureComputerVisionEmbeddings(computerVisionEndpoint, computerVisionApiKey);
-}
+builder.Services.AddAzureComputerVisionEmbeddings(computerVisionEndpoint, computerVisionApiKey);
 
 // Add image vectorization and search services
 builder.Services.Configure<ImageVectorizationServiceOptions>(builder.Configuration.GetSection("ImageVectorizationService"));
