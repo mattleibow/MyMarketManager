@@ -13,7 +13,6 @@ public class PurchaseOrderQueries
 {
     /// <summary>
     /// Get all purchase orders with filtering, sorting, and projection support
-    /// Default ordering: OrderDate descending (most recent first)
     /// </summary>
     [UseProjection]
     [UseFiltering]
@@ -21,7 +20,7 @@ public class PurchaseOrderQueries
     public IQueryable<PurchaseOrder> GetPurchaseOrders(
         MyMarketManagerDbContext context)
     {
-        return context.PurchaseOrders.OrderByDescending(po => po.OrderDate);
+        return context.PurchaseOrders;
     }
 
     /// <summary>
