@@ -12,7 +12,6 @@ public class StagingBatchQueries
 {
     /// <summary>
     /// Get all staging batches with filtering, sorting, and projection support
-    /// Default ordering: StartedAt descending (most recent first)
     /// </summary>
     [UseProjection]
     [UseFiltering]
@@ -20,7 +19,7 @@ public class StagingBatchQueries
     public IQueryable<StagingBatch> GetStagingBatches(
         MyMarketManagerDbContext context)
     {
-        return context.StagingBatches.OrderByDescending(sb => sb.StartedAt);
+        return context.StagingBatches;
     }
 
     /// <summary>
