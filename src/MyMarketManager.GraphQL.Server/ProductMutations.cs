@@ -4,7 +4,7 @@ using MyMarketManager.Data;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
 
-namespace MyMarketManager.WebApp.GraphQL;
+namespace MyMarketManager.GraphQL.Server;
 
 /// <summary>
 /// GraphQL mutations for products
@@ -58,7 +58,6 @@ public class ProductMutations
         product.Notes = input.Notes;
         product.StockOnHand = input.StockOnHand;
 
-        context.Products.Update(product);
         await context.SaveChangesAsync(cancellationToken);
 
         return product;

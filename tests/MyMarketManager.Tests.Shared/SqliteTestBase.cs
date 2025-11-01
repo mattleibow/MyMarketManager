@@ -14,6 +14,8 @@ public abstract class SqliteTestBase(ITestOutputHelper outputHelper, bool create
 
     protected MyMarketManagerDbContext Context { get; private set; } = null!;
 
+    protected CancellationToken Cancel => TestContext.Current.CancellationToken;
+
     public virtual async ValueTask InitializeAsync()
     {
         var connection = await _sqlite.ConnectAsync();

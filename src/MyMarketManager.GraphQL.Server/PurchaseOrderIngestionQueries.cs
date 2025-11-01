@@ -1,7 +1,7 @@
 using MyMarketManager.Data.Enums;
 using MyMarketManager.Data.Processing;
 
-namespace MyMarketManager.WebApp.GraphQL;
+namespace MyMarketManager.GraphQL.Server;
 
 /// <summary>
 /// GraphQL queries for PO ingestion

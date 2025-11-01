@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyMarketManager.Data.Entities;
 
 namespace MyMarketManager.Data;
@@ -8,6 +9,13 @@ namespace MyMarketManager.Data;
 /// </summary>
 public class MyMarketManagerDbContext : DbContext
 {
+    // Static value converters for DateTimeOffset to DateTime conversion (SQLite compatibility)
+    private static readonly ValueConverter<DateTimeOffset, DateTime> DateTimeOffsetToDateTimeConverter =
+        new(v => v.UtcDateTime, v => new DateTimeOffset(v, TimeSpan.Zero));
+
+    private static readonly ValueConverter<DateTimeOffset?, DateTime?> NullableDateTimeOffsetToDateTimeConverter =
+        new(v => v.HasValue ? v.Value.UtcDateTime : null, v => v.HasValue ? new DateTimeOffset(v.Value, TimeSpan.Zero) : null);
+
     public MyMarketManagerDbContext(DbContextOptions<MyMarketManagerDbContext> options)
         : base(options)
     {
@@ -47,6 +55,22 @@ public class MyMarketManagerDbContext : DbContext
                     property.ClrType == typeof(decimal?))
                 {
                     entity.Property(property.Name).HasPrecision(18, 4);
+                }
+
+                // Configure DateTimeOffset to DateTime conversion for SQLite compatibility
+                // SQLite stores DateTimeOffset as TEXT, but we can store as DateTime in UTC instead
+                if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+                {
+                    if (property.ClrType == typeof(DateTimeOffset))
+                    {
+                        entity.Property(property.Name)
+                            .HasConversion(DateTimeOffsetToDateTimeConverter);
+                    }
+                    else if (property.ClrType == typeof(DateTimeOffset?))
+                    {
+                        entity.Property(property.Name)
+                            .HasConversion(NullableDateTimeOffsetToDateTimeConverter);
+                    }
                 }
             }
 
