@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data;
 using MyMarketManager.Data.Enums;
 
-namespace MyMarketManager.WebApp.GraphQL;
+namespace MyMarketManager.GraphQL.Server;
 
 /// <summary>
 /// GraphQL mutations for staging purchase orders
@@ -28,6 +28,11 @@ public class StagingPurchaseOrderMutations
             return new LinkStagingItemResult(false, "Staging item not found", null);
         }
 
+        if (item.IsImported)
+        {
+            return new LinkStagingItemResult(false, "Cannot link item that has already been imported", null);
+        }
+
         var product = await context.Products
             .FirstOrDefaultAsync(p => p.Id == input.ProductId, cancellationToken);
 
@@ -39,7 +44,6 @@ public class StagingPurchaseOrderMutations
         // Link the item to the product
         item.ProductId = input.ProductId;
         item.Status = CandidateStatus.Linked;
-        item.UpdatedAt = DateTimeOffset.UtcNow;
 
         await context.SaveChangesAsync(cancellationToken);
 
@@ -69,10 +73,19 @@ public class StagingPurchaseOrderMutations
             return new UnlinkStagingItemResult(false, "Staging item not found");
         }
 
+        if (item.IsImported)
+        {
+            return new UnlinkStagingItemResult(false, "Cannot unlink item that has already been imported");
+        }
+
         // Unlink the item
         item.ProductId = null;
-        item.Status = CandidateStatus.Pending;
-        item.UpdatedAt = DateTimeOffset.UtcNow;
+        
+        // Only reset to Pending if it was Linked; preserve other statuses like Rejected
+        if (item.Status == CandidateStatus.Linked)
+        {
+            item.Status = CandidateStatus.Pending;
+        }
 
         await context.SaveChangesAsync(cancellationToken);
 

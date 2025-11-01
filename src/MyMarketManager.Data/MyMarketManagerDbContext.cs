@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyMarketManager.Data.Entities;
 
 namespace MyMarketManager.Data;
@@ -47,6 +48,26 @@ public class MyMarketManagerDbContext : DbContext
                     property.ClrType == typeof(decimal?))
                 {
                     entity.Property(property.Name).HasPrecision(18, 4);
+                }
+
+                // Configure DateTimeOffset to DateTime conversion for SQLite compatibility
+                // SQLite stores DateTimeOffset as TEXT, but we can store as DateTime in UTC instead
+                if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+                {
+                    if (property.ClrType == typeof(DateTimeOffset))
+                    {
+                        entity.Property(property.Name)
+                            .HasConversion(new ValueConverter<DateTimeOffset, DateTime>(
+                                v => v.UtcDateTime,
+                                v => new DateTimeOffset(v, TimeSpan.Zero)));
+                    }
+                    else if (property.ClrType == typeof(DateTimeOffset?))
+                    {
+                        entity.Property(property.Name)
+                            .HasConversion(new ValueConverter<DateTimeOffset?, DateTime?>(
+                                v => v.HasValue ? v.Value.UtcDateTime : null,
+                                v => v.HasValue ? new DateTimeOffset(v.Value, TimeSpan.Zero) : null));
+                    }
                 }
             }
 

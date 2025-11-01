@@ -1,5 +1,6 @@
 using HotChocolate;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MyMarketManager.Data;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
@@ -8,7 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace MyMarketManager.WebApp.GraphQL;
+namespace MyMarketManager.GraphQL.Server;
 
 /// <summary>
 /// GraphQL mutations for PO ingestion

@@ -79,8 +79,7 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
             SupplierId = supplier.Id,
             BatchType = StagingBatchType.WebScrape,
             Status = ProcessingStatus.Started,
-            FileContents = "{}", // Empty JSON for mock cookies
-            CreatedAt = DateTimeOffset.UtcNow
+            FileContents = "{}" // Empty JSON for mock cookies
         };
         Context.StagingBatches.Add(batch);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -134,8 +133,7 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
             SupplierId = supplier.Id,
             BatchType = StagingBatchType.WebScrape,
             Status = ProcessingStatus.Started,
-            FileContents = LoadFixture("cookies.shein.json"),
-            CreatedAt = DateTimeOffset.UtcNow
+            FileContents = LoadFixture("cookies.shein.json")
         };
         Context.StagingBatches.Add(batch);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);

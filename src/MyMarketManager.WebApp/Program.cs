@@ -1,9 +1,9 @@
 using MyMarketManager.Data;
 using MyMarketManager.Data.Services;
 using MyMarketManager.WebApp.Components;
-using MyMarketManager.WebApp.GraphQL;
 using MyMarketManager.WebApp.Services;
 using MyMarketManager.GraphQL.Client;
+using MyMarketManager.GraphQL.Server;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Shein;
 using MyMarketManager.Data.Processing;
@@ -38,19 +38,7 @@ builder.Services.AddBatchProcessorFactory()
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Add GraphQL server with HotChocolate first
-builder.Services
-    .AddGraphQLServer()
-    .AddQueryType(d => d.Name("Query"))
-        .AddTypeExtension<ProductQueries>()
-        .AddTypeExtension<PurchaseOrderQueries>()
-        .AddTypeExtension<PurchaseOrderIngestionQueries>()
-        .AddTypeExtension<StagingBatchQueries>()
-        .AddTypeExtension<StagingPurchaseOrderQueries>()
-        .AddTypeExtension<SupplierQueries>()
-    .AddMutationType(d => d.Name("Mutation"))
-        .AddTypeExtension<ProductMutations>()
-        .AddTypeExtension<PurchaseOrderIngestionMutations>()
-        .AddTypeExtension<StagingPurchaseOrderMutations>();
+builder.Services.AddMyMarketManagerGraphQLServer();
 
 // Add GraphQL client using InMemory transport for server-side execution
 // This avoids HTTP overhead and URL configuration issues

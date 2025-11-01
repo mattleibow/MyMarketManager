@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data;
 using MyMarketManager.Data.Entities;
 
-namespace MyMarketManager.WebApp.GraphQL;
+namespace MyMarketManager.GraphQL.Server;
 
 /// <summary>
 /// GraphQL queries for staging purchase orders
@@ -21,11 +21,11 @@ public class StagingPurchaseOrderQueries
     {
         var order = await context.StagingPurchaseOrders
             .Include(spo => spo.Items)
-            .ThenInclude(i => i.Product)
+                .ThenInclude(i => i.Product)
             .Include(spo => spo.Items)
-            .ThenInclude(i => i.Supplier)
+                .ThenInclude(i => i.Supplier)
             .Include(spo => spo.StagingBatch)
-            .ThenInclude(sb => sb.Supplier)
+                .ThenInclude(sb => sb.Supplier)
             .FirstOrDefaultAsync(spo => spo.Id == id, cancellationToken);
 
         if (order == null)

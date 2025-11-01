@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HotChocolate.AspNetCore" Version="15.1.10" />
+    <PackageReference Include="HotChocolate.Data.EntityFramework" Version="15.1.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyMarketManager.Data\MyMarketManager.Data.csproj" />
+    <ProjectReference Include="..\MyMarketManager.Data.Processing\MyMarketManager.Data.Processing.csproj" />
+    <ProjectReference Include="..\MyMarketManager.Scrapers\MyMarketManager.Scrapers.csproj" />
+  </ItemGroup>
+
+</Project>
