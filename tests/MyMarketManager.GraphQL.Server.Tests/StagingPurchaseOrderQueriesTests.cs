@@ -66,7 +66,11 @@ public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : 
                 stagingPurchaseOrderById(id: "{{order.Id}}") {
                     id
                     supplierReference
-                    supplierName
+                    stagingBatch {
+                        supplier {
+                            name
+                        }
+                    }
                     items {
                         name
                         description
@@ -83,7 +87,7 @@ public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : 
         Assert.NotNull(result.StagingPurchaseOrderById);
         Assert.Equal(order.Id, result.StagingPurchaseOrderById.Id);
         Assert.Equal("PO-001", result.StagingPurchaseOrderById.SupplierReference);
-        Assert.Equal(supplier.Name, result.StagingPurchaseOrderById.SupplierName);
+        Assert.Equal(supplier.Name, result.StagingPurchaseOrderById.StagingBatch.Supplier!.Name);
         Assert.Single(result.StagingPurchaseOrderById.Items);
         Assert.Equal("Test Item", result.StagingPurchaseOrderById.Items[0].Name);
         Assert.Equal("Test Description", result.StagingPurchaseOrderById.Items[0].Description);
@@ -309,8 +313,10 @@ public class StagingPurchaseOrderQueriesTests(ITestOutputHelper outputHelper) : 
         Assert.Equal("Zebra Widget", result.SearchProductsForItem[1].Name);
     }
 
-    private record StagingPurchaseOrderByIdResponse(StagingPurchaseOrderDetailDto? StagingPurchaseOrderById);
-    private record StagingPurchaseOrderDetailDto(Guid Id, string? SupplierReference, string? SupplierName, List<StagingPurchaseOrderItemDto> Items);
+    private record StagingPurchaseOrderByIdResponse(StagingPurchaseOrderDto? StagingPurchaseOrderById);
+    private record StagingPurchaseOrderDto(Guid Id, string? SupplierReference, StagingBatchDto StagingBatch, List<StagingPurchaseOrderItemDto> Items);
+    private record StagingBatchDto(SupplierDto? Supplier);
+    private record SupplierDto(string Name);
     private record StagingPurchaseOrderItemDto(string Name, string? Description, int Quantity, ProductDto? Product);
     private record ProductDto(string Name);
     private record SearchProductsResponse(List<ProductSearchDto> SearchProductsForItem);
