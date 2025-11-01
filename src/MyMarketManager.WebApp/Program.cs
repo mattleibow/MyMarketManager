@@ -24,6 +24,28 @@ builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 builder.Services.AddScoped<DbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
+// Add Azure AI Vision service for image vectorization
+var visionEndpoint = builder.Configuration["AzureVision:Endpoint"] ?? "";
+var visionApiKey = builder.Configuration["AzureVision:ApiKey"] ?? "";
+builder.Services.AddHttpClient<IAzureVisionService, AzureVisionService>(client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(2);
+})
+.ConfigureHttpClient((sp, client) =>
+{
+    // HttpClient is already injected, no additional configuration needed
+});
+builder.Services.AddScoped<IAzureVisionService>(sp =>
+{
+    var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(AzureVisionService));
+    var logger = sp.GetRequiredService<ILogger<AzureVisionService>>();
+    return new AzureVisionService(httpClient, logger, visionEndpoint, visionApiKey);
+});
+
+// Add image vectorization services
+builder.Services.AddScoped<ImageVectorizationProcessor>();
+builder.Services.AddHostedService<ImageVectorizationBackgroundService>();
+
 // Add scraper services
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
