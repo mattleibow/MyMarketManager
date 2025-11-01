@@ -96,6 +96,7 @@ public class ImageVectorizationProcessor
 
     /// <summary>
     /// Searches for product images similar to the given image URL.
+    /// Note: For large datasets, consider implementing pagination or using a vector database.
     /// </summary>
     public async Task<List<ProductImageSearchResult>> SearchByImageAsync(
         string imageUrl,
@@ -106,10 +107,11 @@ public class ImageVectorizationProcessor
         // Vectorize the search image
         var searchVector = await _visionService.VectorizeImageAsync(imageUrl, cancellationToken);
 
-        // Get all vectorized images
+        // Get vectorized images (for large datasets, consider pagination or filtering)
         var allPhotos = await _context.ProductPhotos
             .Include(p => p.Product)
             .Where(p => p.VectorEmbedding != null)
+            .Take(1000) // Limit to prevent memory issues with large datasets
             .ToListAsync(cancellationToken);
 
         // Calculate similarity scores
@@ -149,6 +151,7 @@ public class ImageVectorizationProcessor
 
     /// <summary>
     /// Searches for product images using semantic text search.
+    /// Note: For large datasets, consider implementing pagination or using a vector database.
     /// </summary>
     public async Task<List<ProductImageSearchResult>> SearchByTextAsync(
         string searchText,
@@ -159,10 +162,11 @@ public class ImageVectorizationProcessor
         // Vectorize the search text
         var searchVector = await _visionService.VectorizeTextAsync(searchText, cancellationToken);
 
-        // Get all vectorized images
+        // Get vectorized images (for large datasets, consider pagination or filtering)
         var allPhotos = await _context.ProductPhotos
             .Include(p => p.Product)
             .Where(p => p.VectorEmbedding != null)
+            .Take(1000) // Limit to prevent memory issues with large datasets
             .ToListAsync(cancellationToken);
 
         // Calculate similarity scores

@@ -27,17 +27,13 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 // Add Azure AI Vision service for image vectorization
 var visionEndpoint = builder.Configuration["AzureVision:Endpoint"] ?? "";
 var visionApiKey = builder.Configuration["AzureVision:ApiKey"] ?? "";
-builder.Services.AddHttpClient<IAzureVisionService, AzureVisionService>(client =>
-{
-    client.Timeout = TimeSpan.FromMinutes(2);
-})
-.ConfigureHttpClient((sp, client) =>
-{
-    // HttpClient is already injected, no additional configuration needed
-});
+builder.Services.AddHttpClient<IAzureVisionService, AzureVisionService>()
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
+    .SetHandlerLifetime(TimeSpan.FromMinutes(5));
 builder.Services.AddScoped<IAzureVisionService>(sp =>
 {
-    var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(AzureVisionService));
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient(nameof(AzureVisionService));
     var logger = sp.GetRequiredService<ILogger<AzureVisionService>>();
     return new AzureVisionService(httpClient, logger, visionEndpoint, visionApiKey);
 });

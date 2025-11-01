@@ -274,8 +274,8 @@ else if (searchResults != null && !searchResults.Any())
 
         try
         {
-            var tags = tagSearchQuery.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
-            searchResults = await ImageProcessor.SearchByTagsAsync(tags);
+            var tags = tagSearchQuery.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            searchResults = await ImageProcessor.SearchByTagsAsync(tags.ToList());
             
             Logger.LogInformation("Tag search completed. Found {Count} results", searchResults.Count);
         }

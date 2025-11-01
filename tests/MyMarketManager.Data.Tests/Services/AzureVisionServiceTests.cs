@@ -4,16 +4,16 @@ using MyMarketManager.Tests.Shared;
 
 namespace MyMarketManager.Data.Tests.Services;
 
-public class AzureVisionServiceTests(ITestOutputHelper outputHelper)
+public class AzureVisionServiceTests(ITestOutputHelper outputHelper) : IDisposable
 {
     private readonly ILogger<AzureVisionService> _logger = outputHelper.ToLogger<AzureVisionService>();
+    private readonly HttpClient _httpClient = new HttpClient();
 
     [Fact]
     public void CalculateCosineSimilarity_IdenticalVectors_ReturnsOne()
     {
         // Arrange
-        var httpClient = new HttpClient();
-        var service = new AzureVisionService(httpClient, _logger, "https://test.com", "test-key");
+        var service = new AzureVisionService(_httpClient, _logger, "https://test.com", "test-key");
         var vector1 = new float[] { 1.0f, 2.0f, 3.0f, 4.0f };
         var vector2 = new float[] { 1.0f, 2.0f, 3.0f, 4.0f };
 
@@ -28,8 +28,7 @@ public class AzureVisionServiceTests(ITestOutputHelper outputHelper)
     public void CalculateCosineSimilarity_OppositeVectors_ReturnsNegativeOne()
     {
         // Arrange
-        var httpClient = new HttpClient();
-        var service = new AzureVisionService(httpClient, _logger, "https://test.com", "test-key");
+        var service = new AzureVisionService(_httpClient, _logger, "https://test.com", "test-key");
         var vector1 = new float[] { 1.0f, 2.0f, 3.0f };
         var vector2 = new float[] { -1.0f, -2.0f, -3.0f };
 
@@ -44,8 +43,7 @@ public class AzureVisionServiceTests(ITestOutputHelper outputHelper)
     public void CalculateCosineSimilarity_OrthogonalVectors_ReturnsZero()
     {
         // Arrange
-        var httpClient = new HttpClient();
-        var service = new AzureVisionService(httpClient, _logger, "https://test.com", "test-key");
+        var service = new AzureVisionService(_httpClient, _logger, "https://test.com", "test-key");
         var vector1 = new float[] { 1.0f, 0.0f };
         var vector2 = new float[] { 0.0f, 1.0f };
 
@@ -60,8 +58,7 @@ public class AzureVisionServiceTests(ITestOutputHelper outputHelper)
     public void CalculateCosineSimilarity_SimilarVectors_ReturnsHighValue()
     {
         // Arrange
-        var httpClient = new HttpClient();
-        var service = new AzureVisionService(httpClient, _logger, "https://test.com", "test-key");
+        var service = new AzureVisionService(_httpClient, _logger, "https://test.com", "test-key");
         var vector1 = new float[] { 1.0f, 2.0f, 3.0f };
         var vector2 = new float[] { 1.1f, 2.1f, 2.9f };
 
@@ -76,8 +73,7 @@ public class AzureVisionServiceTests(ITestOutputHelper outputHelper)
     public void CalculateCosineSimilarity_DifferentLengthVectors_ThrowsException()
     {
         // Arrange
-        var httpClient = new HttpClient();
-        var service = new AzureVisionService(httpClient, _logger, "https://test.com", "test-key");
+        var service = new AzureVisionService(_httpClient, _logger, "https://test.com", "test-key");
         var vector1 = new float[] { 1.0f, 2.0f };
         var vector2 = new float[] { 1.0f, 2.0f, 3.0f };
 
@@ -90,8 +86,7 @@ public class AzureVisionServiceTests(ITestOutputHelper outputHelper)
     public void CalculateCosineSimilarity_ZeroVectors_ReturnsZero()
     {
         // Arrange
-        var httpClient = new HttpClient();
-        var service = new AzureVisionService(httpClient, _logger, "https://test.com", "test-key");
+        var service = new AzureVisionService(_httpClient, _logger, "https://test.com", "test-key");
         var vector1 = new float[] { 0.0f, 0.0f, 0.0f };
         var vector2 = new float[] { 1.0f, 2.0f, 3.0f };
 
@@ -100,5 +95,10 @@ public class AzureVisionServiceTests(ITestOutputHelper outputHelper)
 
         // Assert
         Assert.Equal(0.0f, similarity);
+    }
+
+    public void Dispose()
+    {
+        _httpClient?.Dispose();
     }
 }
