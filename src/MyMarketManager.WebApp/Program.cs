@@ -42,7 +42,7 @@ builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>(
 builder.Services.AddScoped<BatchProcessingService>();
 builder.Services.AddBatchProcessorFactory()
     .AddWebScraper<SheinWebScraper>(
-        processorName: "Shein",
+        processorName: ProcessorNames.SheinWebScraper,
         purpose: ProcessorPurpose.Ingestion,
         displayName: "Shein Web Scraper",
         description: "Scrapes purchase orders from Shein.com")

@@ -63,6 +63,8 @@ internal class BatchProcessorFactory(IServiceProvider serviceProvider, IOptions<
 
     /// <summary>
     /// Gets all available processor names for a given batch type.
+    /// Note: This only returns processors that handle StagingBatch work items.
+    /// Work item processors with null BatchType (like ImageVectorization) are excluded.
     /// </summary>
     public IEnumerable<string> GetAvailableProcessors(StagingBatchType batchType)
     {

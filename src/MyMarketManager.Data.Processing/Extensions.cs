@@ -45,7 +45,7 @@ public static class Extensions
     /// </summary>
     public static IBatchProcessorFactoryBuilder AddImageVectorization<TProcessor>(
         this IBatchProcessorFactoryBuilder builder,
-        string processorName = "ImageVectorization",
+        string processorName = ProcessorNames.ImageVectorization,
         string? displayName = null,
         string? description = null)
         where TProcessor : class, IWorkItemProcessor<ImageVectorizationWorkItem> =>

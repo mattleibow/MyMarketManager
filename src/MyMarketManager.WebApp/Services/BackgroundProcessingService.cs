@@ -54,10 +54,12 @@ public class BackgroundProcessingService(
                 logger.LogError(ex, "Error in background processing");
             }
 
-            // Wait for the shorter of the two intervals before checking again
-            var nextBatchProcessing = lastBatchProcessing + _options.BatchProcessingInterval - now;
-            var nextVectorization = lastVectorization + _options.ImageVectorizationInterval - now;
-            var waitTime = TimeSpan.FromSeconds(Math.Max(1, Math.Min(nextBatchProcessing.TotalSeconds, nextVectorization.TotalSeconds)));
+            // Calculate wait time until next processing run
+            // We wait for whichever comes first: batch processing or vectorization
+            var timeUntilNextBatch = lastBatchProcessing + _options.BatchProcessingInterval - now;
+            var timeUntilNextVectorization = lastVectorization + _options.ImageVectorizationInterval - now;
+            var shortestWait = Math.Min(timeUntilNextBatch.TotalSeconds, timeUntilNextVectorization.TotalSeconds);
+            var waitTime = TimeSpan.FromSeconds(Math.Max(1, shortestWait)); // At least 1 second
 
             await Task.Delay(waitTime, stoppingToken);
         }
@@ -84,15 +86,15 @@ public class BackgroundProcessingService(
         try
         {
             // Create a work item for this vectorization run
-            var workItem = new ImageVectorizationWorkItem("ImageVectorization");
+            var workItem = new ImageVectorizationWorkItem(ProcessorNames.ImageVectorization);
 
             // Get the processor from the factory
-            var processor = processorFactory.GetWorkItemProcessor("ImageVectorization", typeof(ImageVectorizationWorkItem)) 
+            var processor = processorFactory.GetWorkItemProcessor(ProcessorNames.ImageVectorization, typeof(ImageVectorizationWorkItem)) 
                 as IWorkItemProcessor<ImageVectorizationWorkItem>;
 
             if (processor == null)
             {
-                logger.LogWarning("Image vectorization processor not registered");
+                logger.LogWarning("Image vectorization processor '{ProcessorName}' not registered", ProcessorNames.ImageVectorization);
                 return;
             }
 
