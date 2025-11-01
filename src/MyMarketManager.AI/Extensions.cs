@@ -6,7 +6,7 @@ namespace MyMarketManager.AI;
 /// <summary>
 /// Extension methods for registering Azure Computer Vision embedding generators.
 /// </summary>
-public static class AzureComputerVisionEmbeddingExtensions
+public static class Extensions
 {
     private const string HttpClientName = "AzureComputerVisionEmbedding";
 
@@ -37,7 +37,7 @@ public static class AzureComputerVisionEmbeddingExtensions
         services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>("image", (sp, key) =>
         {
             var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-            return new AzureComputerVisionImageEmbeddingGenerator(
+            return new ImageEmbeddingGenerator(
                 httpClientFactory,
                 HttpClientName,
                 modelVersion);
@@ -47,7 +47,7 @@ public static class AzureComputerVisionEmbeddingExtensions
         services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>("text", (sp, key) =>
         {
             var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-            return new AzureComputerVisionTextEmbeddingGenerator(
+            return new TextEmbeddingGenerator(
                 httpClientFactory,
                 HttpClientName,
                 modelVersion);
