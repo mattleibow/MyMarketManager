@@ -31,50 +31,32 @@ var computerVisionEndpoint = builder.Configuration.GetConnectionString("ai-found
 var computerVisionApiKey = builder.Configuration["AzureAI:ApiKey"] ?? "";
 builder.Services.AddAzureComputerVisionEmbeddings(computerVisionEndpoint, computerVisionApiKey);
 
-// Add image vectorization processor
-builder.Services.AddScoped<ImageVectorizationProcessor>();
-
 // Add scraper services
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
 
-// Add batch processing services
+// Add batch processor factory (for web scrapers, blob processors)
 builder.Services.AddScoped<BatchProcessingService>();
 builder.Services.AddBatchProcessorFactory()
-    .AddWebScraper<SheinWebScraper>(
-        processorName: ProcessorNames.SheinWebScraper,
-        purpose: ProcessorPurpose.Ingestion,
-        displayName: "Shein Web Scraper",
-        description: "Scrapes purchase orders from Shein.com")
-    .AddImageVectorization<ImageVectorizationWorkItemProcessor>();
+    .AddWebScraper<SheinWebScraper>("Shein");
 
-// Add unified background processing service
-// This replaces both IngestionService and ImageVectorizationService
-builder.Services.Configure<BackgroundProcessingServiceOptions>(options =>
+// Add unified work item processing system
+builder.Services.Configure<UnifiedBackgroundProcessingOptions>(options =>
 {
-    // Configure intervals from existing config sections for backward compatibility
+    // Read from existing config for backward compatibility
     var ingestionConfig = builder.Configuration.GetSection("IngestionService");
-    var vectorizationConfig = builder.Configuration.GetSection("ImageVectorizationService");
-
-    if (ingestionConfig.Exists())
+    var pollInterval = ingestionConfig.GetValue<TimeSpan?>("PollInterval");
+    if (pollInterval.HasValue)
     {
-        var pollInterval = ingestionConfig.GetValue<TimeSpan?>("PollInterval");
-        if (pollInterval.HasValue)
-        {
-            options.BatchProcessingInterval = pollInterval.Value;
-        }
-    }
-
-    if (vectorizationConfig.Exists())
-    {
-        var pollInterval = vectorizationConfig.GetValue<TimeSpan?>("PollInterval");
-        if (pollInterval.HasValue)
-        {
-            options.ImageVectorizationInterval = pollInterval.Value;
-        }
+        options.PollInterval = pollInterval.Value;
     }
 });
-builder.Services.AddHostedService<BackgroundProcessingService>();
+
+builder.Services.AddWorkItemProcessing()
+    .AddHandler<StagingBatchHandler, StagingBatchWorkItem>()
+    .AddHandler<ImageVectorizationHandler, ImageVectorizationWorkItem>();
+
+builder.Services.AddHostedService<UnifiedBackgroundProcessingService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

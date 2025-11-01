@@ -1,3 +1,5 @@
+using MyMarketManager.Data.Enums;
+
 namespace MyMarketManager.Data.Processing;
 
 /// <summary>
@@ -7,7 +9,7 @@ internal class BatchProcessorOptions
 {
     /// <summary>
     /// Dictionary of registered processors keyed by processor name.
-    /// Value contains metadata about the processor.
+    /// Value contains the batch type and processor type.
     /// </summary>
-    public Dictionary<string, ProcessorMetadata> Processors { get; } = new();
+    public Dictionary<string, (StagingBatchType BatchType, Type ProcessorType)> Processors { get; } = new();
 }

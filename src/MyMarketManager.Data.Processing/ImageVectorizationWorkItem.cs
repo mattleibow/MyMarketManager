@@ -1,37 +1,18 @@
+using MyMarketManager.Data.Entities;
+
 namespace MyMarketManager.Data.Processing;
 
 /// <summary>
-/// Represents a batch of images to be vectorized.
-/// This is a lightweight work item that doesn't require database persistence.
-/// The actual work is finding and processing all pending ProductPhoto records.
+/// Work item representing a product photo that needs vectorization.
 /// </summary>
 public class ImageVectorizationWorkItem : IWorkItem
 {
-    /// <summary>
-    /// Creates a new image vectorization work item.
-    /// </summary>
-    /// <param name="processorName">The name of the processor to use (typically "ImageVectorization").</param>
-    public ImageVectorizationWorkItem(string processorName)
+    public ImageVectorizationWorkItem(ProductPhoto photo)
     {
-        Id = Guid.NewGuid();
-        ProcessorName = processorName ?? throw new ArgumentNullException(nameof(processorName));
-        CreatedAt = DateTimeOffset.UtcNow;
+        Photo = photo ?? throw new ArgumentNullException(nameof(photo));
     }
 
-    /// <inheritdoc/>
-    public Guid Id { get; }
+    public Guid Id => Photo.Id;
 
-    /// <inheritdoc/>
-    public string ProcessorName { get; }
-
-    /// <summary>
-    /// When this work item was created.
-    /// </summary>
-    public DateTimeOffset CreatedAt { get; }
-
-    /// <summary>
-    /// Optional limit on the number of images to process in this batch.
-    /// If null, processes all pending images.
-    /// </summary>
-    public int? MaxImages { get; set; }
+    public ProductPhoto Photo { get; }
 }

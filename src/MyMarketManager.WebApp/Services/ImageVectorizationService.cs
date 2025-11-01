@@ -7,6 +7,15 @@ namespace MyMarketManager.WebApp.Services;
 /// Background service that periodically processes product images for AI analysis and vectorization.
 /// Simply polls for pending images and delegates to the processor.
 /// </summary>
+/// <remarks>
+/// This service has been replaced by <see cref="UnifiedBackgroundProcessingService"/> which uses
+/// the <see cref="ImageVectorizationHandler"/> work item handler. The new system:
+/// - Allows processors to fetch their own work items
+/// - Prevents starvation with bounded channels  
+/// - Supports multiple work item types
+/// - Can be easily extended to handle multiple sources (product photos, delivery photos, etc.)
+/// </remarks>
+[Obsolete("Use UnifiedBackgroundProcessingService with ImageVectorizationHandler instead. This will be removed in a future version.")]
 public class ImageVectorizationService(
     IServiceProvider serviceProvider,
     ILogger<ImageVectorizationService> logger,

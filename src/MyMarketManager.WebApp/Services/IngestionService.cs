@@ -7,10 +7,14 @@ namespace MyMarketManager.WebApp.Services;
 /// Simply gets batches and delegates to appropriate processors.
 /// </summary>
 /// <remarks>
-/// This service has been replaced by <see cref="BackgroundProcessingService"/> which provides
-/// a unified approach to handling all background processing tasks.
+/// This service has been replaced by <see cref="UnifiedBackgroundProcessingService"/> which uses
+/// a Channel-based work item processing system. The new system:
+/// - Allows processors to fetch their own work items
+/// - Prevents starvation with bounded channels
+/// - Supports multiple work item types (StagingBatch, ImageVectorization, cleanup, etc.)
+/// - Uses a single background service for all processing
 /// </remarks>
-[Obsolete("This service has been replaced by BackgroundProcessingService. Use BackgroundProcessingService instead.")]
+[Obsolete("Use UnifiedBackgroundProcessingService with IWorkItemHandler instead. This will be removed in a future version.")]
 public class IngestionService(
     IServiceProvider serviceProvider,
     ILogger<IngestionService> logger,

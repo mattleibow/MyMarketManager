@@ -3,27 +3,16 @@ using MyMarketManager.Data.Entities;
 namespace MyMarketManager.Data.Processing;
 
 /// <summary>
-/// Adapter that wraps a StagingBatch to make it compatible with IWorkItem.
-/// This allows StagingBatch to work with the generic work item processing framework
-/// without modifying the entity itself.
+/// Work item that wraps a StagingBatch for processing.
 /// </summary>
 public class StagingBatchWorkItem : IWorkItem
 {
-    private readonly StagingBatch _batch;
-
     public StagingBatchWorkItem(StagingBatch batch)
     {
-        _batch = batch ?? throw new ArgumentNullException(nameof(batch));
+        Batch = batch ?? throw new ArgumentNullException(nameof(batch));
     }
 
-    /// <summary>
-    /// Gets the underlying StagingBatch.
-    /// </summary>
-    public StagingBatch Batch => _batch;
+    public Guid Id => Batch.Id;
 
-    /// <inheritdoc/>
-    public Guid Id => _batch.Id;
-
-    /// <inheritdoc/>
-    public string? ProcessorName => _batch.BatchProcessorName;
+    public StagingBatch Batch { get; }
 }

@@ -1,13 +1,13 @@
 namespace MyMarketManager.Data.Processing;
 
 /// <summary>
-/// Generic interface for processors that handle work items of a specific type.
+/// Processes work items of a specific type.
 /// </summary>
 /// <typeparam name="TWorkItem">The type of work item this processor handles.</typeparam>
 public interface IWorkItemProcessor<in TWorkItem> where TWorkItem : IWorkItem
 {
     /// <summary>
-    /// Processes a work item.
+    /// Processes a single work item.
     /// </summary>
     /// <param name="workItem">The work item to process.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

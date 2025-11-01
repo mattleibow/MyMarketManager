@@ -19,39 +19,14 @@ public static class Extensions
     /// <summary>
     /// Registers a web scraper processor.
     /// </summary>
-    public static IBatchProcessorFactoryBuilder AddWebScraper<TProcessor>(
-        this IBatchProcessorFactoryBuilder builder,
-        string processorName,
-        ProcessorPurpose purpose = ProcessorPurpose.Ingestion,
-        string? displayName = null,
-        string? description = null)
+    public static IBatchProcessorFactoryBuilder AddWebScraper<TProcessor>(this IBatchProcessorFactoryBuilder builder, string processorName)
         where TProcessor : class, IBatchProcessor =>
-        builder.AddProcessor<TProcessor>(StagingBatchType.WebScrape, processorName, purpose, displayName, description);
+        builder.AddProcessor<TProcessor>(StagingBatchType.WebScrape, processorName);
 
     /// <summary>
     /// Registers a blob storage processor.
     /// </summary>
-    public static IBatchProcessorFactoryBuilder AddBlobStorageProcessor<TProcessor>(
-        this IBatchProcessorFactoryBuilder builder,
-        string processorName,
-        ProcessorPurpose purpose = ProcessorPurpose.Ingestion,
-        string? displayName = null,
-        string? description = null)
+    public static IBatchProcessorFactoryBuilder AddBlobStorageProcessor<TProcessor>(this IBatchProcessorFactoryBuilder builder, string processorName)
         where TProcessor : class, IBatchProcessor =>
-        builder.AddProcessor<TProcessor>(StagingBatchType.BlobUpload, processorName, purpose, displayName, description);
-
-    /// <summary>
-    /// Registers an image vectorization processor.
-    /// </summary>
-    public static IBatchProcessorFactoryBuilder AddImageVectorization<TProcessor>(
-        this IBatchProcessorFactoryBuilder builder,
-        string processorName = ProcessorNames.ImageVectorization,
-        string? displayName = null,
-        string? description = null)
-        where TProcessor : class, IWorkItemProcessor<ImageVectorizationWorkItem> =>
-        builder.AddWorkItemProcessor<TProcessor, ImageVectorizationWorkItem>(
-            processorName,
-            ProcessorPurpose.Internal,
-            displayName ?? "Image Vectorization",
-            description ?? "Generates vector embeddings for product images");
+        builder.AddProcessor<TProcessor>(StagingBatchType.BlobUpload, processorName);
 }
