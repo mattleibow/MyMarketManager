@@ -13,16 +13,19 @@ namespace MyMarketManager.Data.Services;
 public class ProductImageSearchService
 {
     private readonly MyMarketManagerDbContext _context;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IEmbeddingGenerator<string, Embedding<float>> _imageEmbeddingGenerator;
+    private readonly IEmbeddingGenerator<string, Embedding<float>> _textEmbeddingGenerator;
     private readonly ILogger<ProductImageSearchService> _logger;
 
     public ProductImageSearchService(
         MyMarketManagerDbContext context,
-        IServiceProvider serviceProvider,
+        [FromKeyedServices("image")] IEmbeddingGenerator<string, Embedding<float>> imageEmbeddingGenerator,
+        [FromKeyedServices("text")] IEmbeddingGenerator<string, Embedding<float>> textEmbeddingGenerator,
         ILogger<ProductImageSearchService> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _imageEmbeddingGenerator = imageEmbeddingGenerator ?? throw new ArgumentNullException(nameof(imageEmbeddingGenerator));
+        _textEmbeddingGenerator = textEmbeddingGenerator ?? throw new ArgumentNullException(nameof(textEmbeddingGenerator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -36,11 +39,8 @@ public class ProductImageSearchService
         float similarityThreshold = 0.7f,
         CancellationToken cancellationToken = default)
     {
-        // Get the keyed image embedding generator
-        var imageEmbeddingGenerator = _serviceProvider.GetRequiredKeyedService<IEmbeddingGenerator<string, Embedding<float>>>("image-embeddings");
-
         // Vectorize the search image
-        var result = await imageEmbeddingGenerator.GenerateAsync([imageUrl], cancellationToken: cancellationToken);
+        var result = await _imageEmbeddingGenerator.GenerateAsync([imageUrl], cancellationToken: cancellationToken);
         var searchEmbedding = result.FirstOrDefault();
 
         if (searchEmbedding == null)
@@ -66,7 +66,7 @@ public class ProductImageSearchService
             {
                 if (photo.VectorEmbedding == null) continue;
 
-                var similarity = CalculateCosineSimilarity(searchVector, photo.VectorEmbedding);
+                var similarity = TensorPrimitives.CosineSimilarity(searchVector, photo.VectorEmbedding);
 
                 if (similarity >= similarityThreshold)
                 {
@@ -101,11 +101,8 @@ public class ProductImageSearchService
         float similarityThreshold = 0.6f,
         CancellationToken cancellationToken = default)
     {
-        // Get the keyed text embedding generator
-        var textEmbeddingGenerator = _serviceProvider.GetRequiredKeyedService<IEmbeddingGenerator<string, Embedding<float>>>("text-embeddings");
-
         // Vectorize the search text
-        var result = await textEmbeddingGenerator.GenerateAsync([searchText], cancellationToken: cancellationToken);
+        var result = await _textEmbeddingGenerator.GenerateAsync([searchText], cancellationToken: cancellationToken);
         var searchEmbedding = result.FirstOrDefault();
 
         if (searchEmbedding == null)
@@ -131,7 +128,7 @@ public class ProductImageSearchService
             {
                 if (photo.VectorEmbedding == null) continue;
 
-                var similarity = CalculateCosineSimilarity(searchVector, photo.VectorEmbedding);
+                var similarity = TensorPrimitives.CosineSimilarity(searchVector, photo.VectorEmbedding);
 
                 if (similarity >= similarityThreshold)
                 {
@@ -154,19 +151,6 @@ public class ProductImageSearchService
             .OrderByDescending(r => r.SimilarityScore)
             .Take(maxResults)
             .ToList();
-    }
-
-    /// <summary>
-    /// Calculates cosine similarity between two vectors using TensorPrimitives.
-    /// </summary>
-    private static float CalculateCosineSimilarity(float[] vector1, float[] vector2)
-    {
-        if (vector1.Length != vector2.Length)
-        {
-            throw new ArgumentException("Vectors must have the same length");
-        }
-
-        return TensorPrimitives.CosineSimilarity(vector1, vector2);
     }
 }
 

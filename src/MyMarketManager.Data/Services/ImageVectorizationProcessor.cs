@@ -12,16 +12,16 @@ namespace MyMarketManager.Data.Services;
 public class ImageVectorizationProcessor
 {
     private readonly MyMarketManagerDbContext _context;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IEmbeddingGenerator<string, Embedding<float>> _imageEmbeddingGenerator;
     private readonly ILogger<ImageVectorizationProcessor> _logger;
 
     public ImageVectorizationProcessor(
         MyMarketManagerDbContext context,
-        IServiceProvider serviceProvider,
+        [FromKeyedServices("image")] IEmbeddingGenerator<string, Embedding<float>> imageEmbeddingGenerator,
         ILogger<ImageVectorizationProcessor> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _imageEmbeddingGenerator = imageEmbeddingGenerator ?? throw new ArgumentNullException(nameof(imageEmbeddingGenerator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -65,11 +65,8 @@ public class ImageVectorizationProcessor
     {
         try
         {
-            // Get the keyed image embedding generator
-            var imageEmbeddingGenerator = _serviceProvider.GetRequiredKeyedService<IEmbeddingGenerator<string, Embedding<float>>>("image-embeddings");
-
             // Vectorize image for similarity search
-            var result = await imageEmbeddingGenerator.GenerateAsync([photo.Url], cancellationToken: cancellationToken);
+            var result = await _imageEmbeddingGenerator.GenerateAsync([photo.Url], cancellationToken: cancellationToken);
             var embedding = result.FirstOrDefault();
 
             if (embedding != null)
