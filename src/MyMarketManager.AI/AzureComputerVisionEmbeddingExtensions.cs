@@ -8,6 +8,8 @@ namespace MyMarketManager.AI;
 /// </summary>
 public static class AzureComputerVisionEmbeddingExtensions
 {
+    private const string HttpClientName = "AzureComputerVisionEmbedding";
+
     /// <summary>
     /// Adds Azure Computer Vision embedding generators as keyed services.
     /// </summary>
@@ -23,7 +25,7 @@ public static class AzureComputerVisionEmbeddingExtensions
         string modelVersion = "2023-04-15")
     {
         // Register a single named HttpClient with proper configuration
-        services.AddHttpClient("AzureComputerVisionEmbedding", client =>
+        services.AddHttpClient(HttpClientName, client =>
         {
             client.BaseAddress = new Uri(endpoint);
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
@@ -37,7 +39,7 @@ public static class AzureComputerVisionEmbeddingExtensions
             var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
             return new AzureComputerVisionImageEmbeddingGenerator(
                 httpClientFactory,
-                "AzureComputerVisionEmbedding",
+                HttpClientName,
                 modelVersion);
         });
 
@@ -47,7 +49,7 @@ public static class AzureComputerVisionEmbeddingExtensions
             var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
             return new AzureComputerVisionTextEmbeddingGenerator(
                 httpClientFactory,
-                "AzureComputerVisionEmbedding",
+                HttpClientName,
                 modelVersion);
         });
 
