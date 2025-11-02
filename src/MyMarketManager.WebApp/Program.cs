@@ -7,6 +7,8 @@ using MyMarketManager.GraphQL.Client;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Shein;
 using MyMarketManager.Processing;
+using MyMarketManager.Processing.AI;
+using MyMarketManager.AI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,11 +31,22 @@ builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSectio
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
 builder.Services.AddScoped<SheinWebScraper>();
 
+// Add Azure Computer Vision AI embeddings
+// Configuration comes from Aspire via the ai-foundry reference
+var aiConfig = builder.Configuration.GetSection("AzureAI");
+var endpoint = aiConfig["Endpoint"] ?? throw new InvalidOperationException("AzureAI:Endpoint configuration is required");
+var apiKey = aiConfig["ApiKey"] ?? throw new InvalidOperationException("AzureAI:ApiKey configuration is required");
+builder.Services.AddAzureComputerVisionEmbeddings(endpoint, apiKey);
+
 builder.Services.AddBackgroundProcessing(builder.Configuration.GetSection("BackgroundProcessing"))
     .AddHandler<SheinBatchHandler>(
         name: "Shein",
         maxItemsPerCycle: 5,
-        purpose: WorkItemHandlerPurpose.Ingestion);
+        purpose: WorkItemHandlerPurpose.Ingestion)
+    .AddHandler<ImageVectorizationHandler>(
+        name: "ImageVectorization",
+        maxItemsPerCycle: 10,
+        purpose: WorkItemHandlerPurpose.Internal);
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
