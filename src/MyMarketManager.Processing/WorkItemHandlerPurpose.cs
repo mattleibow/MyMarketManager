@@ -1,9 +1,9 @@
-namespace MyMarketManager.Data.Processing;
+namespace MyMarketManager.Processing;
 
 /// <summary>
 /// Defines the purpose or category of a processor for UI filtering.
 /// </summary>
-public enum ProcessorPurpose
+public enum WorkItemHandlerPurpose
 {
     /// <summary>
     /// Processors for data ingestion (e.g., web scrapers, file uploads).

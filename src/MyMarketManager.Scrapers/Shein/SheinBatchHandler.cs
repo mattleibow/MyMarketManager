@@ -3,33 +3,24 @@ using Microsoft.Extensions.Logging;
 using MyMarketManager.Data;
 using MyMarketManager.Data.Enums;
 using MyMarketManager.Data.Processing;
-using MyMarketManager.Scrapers.Shein;
+using MyMarketManager.Processing;
 
-namespace MyMarketManager.WebApp.Services;
+namespace MyMarketManager.Scrapers.Shein;
 
 /// <summary>
 /// Handler that fetches and processes Shein staging batches.
 /// This handler specifically handles batches with BatchProcessorName = "Shein".
 /// </summary>
-public class SheinBatchHandler : IWorkItemHandler<StagingBatchWorkItem>
+public class SheinBatchHandler(
+    MyMarketManagerDbContext context,
+    SheinWebScraper scraper,
+    ILogger<SheinBatchHandler> logger) : IWorkItemHandler<SheinWorkItem>
 {
-    private readonly MyMarketManagerDbContext _context;
-    private readonly SheinWebScraper _scraper;
-    private readonly ILogger<SheinBatchHandler> _logger;
+    private readonly MyMarketManagerDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
+    private readonly SheinWebScraper _scraper = scraper ?? throw new ArgumentNullException(nameof(scraper));
+    private readonly ILogger<SheinBatchHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-    public SheinBatchHandler(
-        MyMarketManagerDbContext context,
-        SheinWebScraper scraper,
-        ILogger<SheinBatchHandler> logger)
-    {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-        _scraper = scraper ?? throw new ArgumentNullException(nameof(scraper));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<IReadOnlyCollection<StagingBatchWorkItem>> FetchWorkItemsAsync(
-        int maxItems, 
-        CancellationToken cancellationToken)
+    public async Task<IReadOnlyCollection<SheinWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
     {
         // Fetch queued Shein batches from database
         var queuedBatches = await _context.StagingBatches
@@ -42,11 +33,11 @@ public class SheinBatchHandler : IWorkItemHandler<StagingBatchWorkItem>
         _logger.LogDebug("Found {Count} queued Shein staging batches", queuedBatches.Count);
 
         return queuedBatches
-            .Select(b => new StagingBatchWorkItem(b))
+            .Select(b => new SheinWorkItem(b))
             .ToList();
     }
 
-    public async Task ProcessAsync(StagingBatchWorkItem workItem, CancellationToken cancellationToken)
+    public async Task ProcessAsync(SheinWorkItem workItem, CancellationToken cancellationToken)
     {
         var batch = workItem.Batch;
 

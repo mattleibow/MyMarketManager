@@ -1,4 +1,4 @@
-using MyMarketManager.Data.Processing;
+using MyMarketManager.Processing;
 
 namespace MyMarketManager.WebApp.GraphQL;
 
@@ -12,8 +12,8 @@ public class PurchaseOrderIngestionQueries
     /// Get available scrapers (ingestion processors)
     /// </summary>
     public IEnumerable<string> GetAvailableScrapers(
-        [Service] WorkItemProcessingEngine engine)
+        [Service] WorkItemProcessingService engine)
     {
-        return engine.GetHandlerNamesByPurpose(ProcessorPurpose.Ingestion);
+        return engine.GetHandlers(WorkItemHandlerPurpose.Ingestion);
     }
 }

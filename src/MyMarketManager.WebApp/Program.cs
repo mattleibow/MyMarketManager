@@ -6,7 +6,7 @@ using MyMarketManager.WebApp.Services;
 using MyMarketManager.GraphQL.Client;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Shein;
-using MyMarketManager.Data.Processing;
+using MyMarketManager.Processing;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,25 +29,11 @@ builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSectio
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
 builder.Services.AddScoped<SheinWebScraper>();
 
-// Add unified work item processing system
-builder.Services.Configure<UnifiedBackgroundProcessingOptions>(options =>
-{
-    // Read from existing config for backward compatibility
-    var ingestionConfig = builder.Configuration.GetSection("IngestionService");
-    var pollInterval = ingestionConfig.GetValue<TimeSpan?>("PollInterval");
-    if (pollInterval.HasValue)
-    {
-        options.PollInterval = pollInterval.Value;
-    }
-});
-
-builder.Services.AddWorkItemProcessing()
-    .AddHandler<SheinBatchHandler, StagingBatchWorkItem>(
+builder.Services.AddBackgroundProcessing(builder.Configuration.GetSection("BackgroundProcessing"))
+    .AddHandler<SheinBatchHandler>(
         name: "Shein",
         maxItemsPerCycle: 5,
-        purpose: ProcessorPurpose.Ingestion);
-
-builder.Services.AddHostedService<UnifiedBackgroundProcessingService>();
+        purpose: WorkItemHandlerPurpose.Ingestion);
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

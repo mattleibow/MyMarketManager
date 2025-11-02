@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
-using MyMarketManager.Data.Processing;
+using MyMarketManager.Processing;
 
-namespace MyMarketManager.Data.Processing.Tests;
+namespace MyMarketManager.Processing.Tests;
 
 public class WorkItemProcessingExtensionsTests
 {
@@ -14,12 +14,12 @@ public class WorkItemProcessingExtensionsTests
         services.AddLogging();
 
         // Act
-        var builder = services.AddWorkItemProcessing();
+        var builder = services.AddBackgroundProcessing();
 
         // Assert
         Assert.NotNull(builder);
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetService<WorkItemProcessingEngine>();
+        var engine = serviceProvider.GetService<WorkItemProcessingService>();
         Assert.NotNull(engine);
     }
 
@@ -31,7 +31,7 @@ public class WorkItemProcessingExtensionsTests
         services.AddLogging();
 
         // Act
-        var builder = services.AddWorkItemProcessing();
+        var builder = services.AddBackgroundProcessing();
 
         // Assert
         Assert.NotNull(builder);
@@ -45,10 +45,10 @@ public class WorkItemProcessingExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        var builder = services.AddWorkItemProcessing();
+        var builder = services.AddBackgroundProcessing();
 
         // Act
-        builder.AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
+        builder.AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
@@ -70,11 +70,11 @@ public class WorkItemProcessingExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        var builder = services.AddWorkItemProcessing();
+        var builder = services.AddBackgroundProcessing();
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            builder.AddHandler<TestWorkItemHandler, TestWorkItem>(null!, 5, ProcessorPurpose.Internal));
+            builder.AddHandler<TestWorkItemHandler, TestWorkItem>(null!, 5, WorkItemHandlerPurpose.Internal));
     }
 
     [Fact]
@@ -83,11 +83,11 @@ public class WorkItemProcessingExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        var builder = services.AddWorkItemProcessing();
+        var builder = services.AddBackgroundProcessing();
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() =>
-            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("", 5, ProcessorPurpose.Internal));
+            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("", 5, WorkItemHandlerPurpose.Internal));
     }
 
     [Fact]
@@ -96,11 +96,11 @@ public class WorkItemProcessingExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        var builder = services.AddWorkItemProcessing();
+        var builder = services.AddBackgroundProcessing();
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() =>
-            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("   ", 5, ProcessorPurpose.Internal));
+            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("   ", 5, WorkItemHandlerPurpose.Internal));
     }
 
     [Fact]
@@ -109,11 +109,11 @@ public class WorkItemProcessingExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        var builder = services.AddWorkItemProcessing();
+        var builder = services.AddBackgroundProcessing();
 
         // Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 0, ProcessorPurpose.Internal));
+            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 0, WorkItemHandlerPurpose.Internal));
     }
 
     [Fact]
@@ -122,11 +122,11 @@ public class WorkItemProcessingExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        var builder = services.AddWorkItemProcessing();
+        var builder = services.AddBackgroundProcessing();
 
         // Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("Test", -1, ProcessorPurpose.Internal));
+            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("Test", -1, WorkItemHandlerPurpose.Internal));
     }
 
     [Fact]
@@ -137,9 +137,9 @@ public class WorkItemProcessingExtensionsTests
         services.AddLogging();
 
         // Act
-        var builder = services.AddWorkItemProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test1", 5, ProcessorPurpose.Internal)
-            .AddHandler<AnotherTestWorkItemHandler, TestWorkItem>("Test2", 10, ProcessorPurpose.Ingestion);
+        var builder = services.AddBackgroundProcessing()
+            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test1", 5, WorkItemHandlerPurpose.Internal)
+            .AddHandler<AnotherTestWorkItemHandler, TestWorkItem>("Test2", 10, WorkItemHandlerPurpose.Ingestion);
 
         // Assert
         Assert.NotNull(builder);
@@ -160,18 +160,18 @@ public class WorkItemProcessingExtensionsTests
         services.AddLogging();
 
         // Act
-        services.AddWorkItemProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Ingestion", 5, ProcessorPurpose.Ingestion)
-            .AddHandler<AnotherTestWorkItemHandler, TestWorkItem>("Internal", 10, ProcessorPurpose.Internal)
-            .AddHandler<ThirdTestWorkItemHandler, TestWorkItem>("Export", 15, ProcessorPurpose.Export);
+        services.AddBackgroundProcessing()
+            .AddHandler<TestWorkItemHandler, TestWorkItem>("Ingestion", 5, WorkItemHandlerPurpose.Ingestion)
+            .AddHandler<AnotherTestWorkItemHandler, TestWorkItem>("Internal", 10, WorkItemHandlerPurpose.Internal)
+            .AddHandler<ThirdTestWorkItemHandler, TestWorkItem>("Export", 15, WorkItemHandlerPurpose.Export);
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
-        var ingestionHandlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Ingestion).ToList();
-        var internalHandlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Internal).ToList();
-        var exportHandlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Export).ToList();
+        var ingestionHandlers = engine.GetHandlers(WorkItemHandlerPurpose.Ingestion).ToList();
+        var internalHandlers = engine.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
+        var exportHandlers = engine.GetHandlers(WorkItemHandlerPurpose.Export).ToList();
 
         Assert.Single(ingestionHandlers);
         Assert.Contains("Ingestion", ingestionHandlers);
@@ -191,7 +191,7 @@ public class WorkItemProcessingExtensionsTests
         services.AddLogging();
 
         // Act
-        services.AddWorkItemProcessing()
+        services.AddBackgroundProcessing()
             .AddHandler<TestWorkItemHandler, TestWorkItem>("Test");
 
         // Assert - If this doesn't throw, the default of 10 was accepted
@@ -208,14 +208,14 @@ public class WorkItemProcessingExtensionsTests
         services.AddLogging();
 
         // Act
-        services.AddWorkItemProcessing()
+        services.AddBackgroundProcessing()
             .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5);
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
-        var internalHandlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Internal).ToList();
+        var internalHandlers = engine.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
         Assert.Single(internalHandlers);
         Assert.Contains("Test", internalHandlers);
     }

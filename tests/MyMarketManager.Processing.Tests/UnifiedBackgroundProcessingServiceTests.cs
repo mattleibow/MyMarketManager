@@ -2,11 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using MyMarketManager.Data.Processing;
-using MyMarketManager.WebApp.Services;
+using MyMarketManager.Processing;
 using NSubstitute;
 
-namespace MyMarketManager.Data.Processing.Tests;
+namespace MyMarketManager.Processing.Tests;
 
 public class UnifiedBackgroundProcessingServiceTests
 {
@@ -14,12 +13,12 @@ public class UnifiedBackgroundProcessingServiceTests
     public void Constructor_WithNullEngine_ThrowsArgumentNullException()
     {
         // Arrange
-        var logger = Substitute.For<ILogger<UnifiedBackgroundProcessingService>>();
-        var options = Options.Create(new UnifiedBackgroundProcessingOptions());
+        var logger = Substitute.For<ILogger<BackgroundProcessingService>>();
+        var options = Options.Create(new BackgroundProcessingOptions());
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new UnifiedBackgroundProcessingService(null!, logger, options));
+            new BackgroundProcessingService(null!, logger, options));
     }
 
     [Fact]
@@ -28,14 +27,14 @@ public class UnifiedBackgroundProcessingServiceTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddWorkItemProcessing();
+        services.AddBackgroundProcessing();
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        var options = Options.Create(new UnifiedBackgroundProcessingOptions());
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var options = Options.Create(new BackgroundProcessingOptions());
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new UnifiedBackgroundProcessingService(engine, null!, options));
+            new BackgroundProcessingService(engine, null!, options));
     }
 
     [Fact]
@@ -44,16 +43,16 @@ public class UnifiedBackgroundProcessingServiceTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddWorkItemProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
+        services.AddBackgroundProcessing()
+            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
 
         // Act - Engine initialization happens during GetRequiredService
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
         // Assert - Engine should have handler registered and ready to use
-        var handlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Internal).ToList();
+        var handlers = engine.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
         Assert.Single(handlers);
         Assert.Contains("Test", handlers);
     }
@@ -66,18 +65,18 @@ public class UnifiedBackgroundProcessingServiceTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton<TestProcessTracker>(sp => new TestProcessTracker { OnProcess = () => processCalled = true });
-        services.AddWorkItemProcessing()
-            .AddHandler<TrackedProcessingWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
+        services.AddBackgroundProcessing()
+            .AddHandler<TrackedProcessingWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        var logger = Substitute.For<ILogger<UnifiedBackgroundProcessingService>>();
-        var options = Options.Create(new UnifiedBackgroundProcessingOptions
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var logger = Substitute.For<ILogger<BackgroundProcessingService>>();
+        var options = Options.Create(new BackgroundProcessingOptions
         {
             PollInterval = TimeSpan.FromMilliseconds(10)
         });
 
-        var service = new UnifiedBackgroundProcessingService(engine, logger, options);
+        var service = new BackgroundProcessingService(engine, logger, options);
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMilliseconds(100));
 
@@ -98,18 +97,18 @@ public class UnifiedBackgroundProcessingServiceTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton<TestFailureTracker>(sp => new TestFailureTracker { OnFetch = () => callCount++ });
-        services.AddWorkItemProcessing()
-            .AddHandler<FailingFetchWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
+        services.AddBackgroundProcessing()
+            .AddHandler<FailingFetchWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        var logger = Substitute.For<ILogger<UnifiedBackgroundProcessingService>>();
-        var options = Options.Create(new UnifiedBackgroundProcessingOptions
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var logger = Substitute.For<ILogger<BackgroundProcessingService>>();
+        var options = Options.Create(new BackgroundProcessingOptions
         {
             PollInterval = TimeSpan.FromMilliseconds(20)
         });
 
-        var service = new UnifiedBackgroundProcessingService(engine, logger, options);
+        var service = new BackgroundProcessingService(engine, logger, options);
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMilliseconds(100));
 
@@ -128,18 +127,18 @@ public class UnifiedBackgroundProcessingServiceTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddWorkItemProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
+        services.AddBackgroundProcessing()
+            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        var logger = Substitute.For<ILogger<UnifiedBackgroundProcessingService>>();
-        var options = Options.Create(new UnifiedBackgroundProcessingOptions
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var logger = Substitute.For<ILogger<BackgroundProcessingService>>();
+        var options = Options.Create(new BackgroundProcessingOptions
         {
             PollInterval = TimeSpan.FromMilliseconds(10)
         });
 
-        var service = new UnifiedBackgroundProcessingService(engine, logger, options);
+        var service = new BackgroundProcessingService(engine, logger, options);
 
         // Act
         await service.StartAsync(CancellationToken.None);

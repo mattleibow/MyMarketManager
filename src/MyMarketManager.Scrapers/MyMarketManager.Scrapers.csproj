@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MyMarketManager.Scrapers.Core\MyMarketManager.Scrapers.Core.csproj" />
     <ProjectReference Include="..\MyMarketManager.Data\MyMarketManager.Data.csproj" />
-    <ProjectReference Include="..\MyMarketManager.Data.Processing\MyMarketManager.Data.Processing.csproj" />
+    <ProjectReference Include="..\MyMarketManager.Processing\MyMarketManager.Processing.csproj" />
+    <ProjectReference Include="..\MyMarketManager.Scrapers.Core\MyMarketManager.Scrapers.Core.csproj" />
   </ItemGroup>
 
 </Project>

@@ -39,8 +39,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MyMarketManager.Data\MyMarketManager.Data.csproj" />
-    <ProjectReference Include="..\..\src\MyMarketManager.Data.Processing\MyMarketManager.Data.Processing.csproj" />
-    <ProjectReference Include="..\..\src\MyMarketManager.WebApp\MyMarketManager.WebApp.csproj" />
+    <ProjectReference Include="..\..\src\MyMarketManager.Processing\MyMarketManager.Processing.csproj" />
     <ProjectReference Include="..\MyMarketManager.Tests.Shared\MyMarketManager.Tests.Shared.csproj" />
   </ItemGroup>
 

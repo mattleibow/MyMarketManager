@@ -1,4 +1,4 @@
-namespace MyMarketManager.Data.Processing;
+namespace MyMarketManager.Processing;
 
 /// <summary>
 /// Represents a unit of work to be processed.

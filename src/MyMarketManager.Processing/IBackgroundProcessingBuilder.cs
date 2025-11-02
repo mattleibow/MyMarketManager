@@ -1,11 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MyMarketManager.Data.Processing;
+namespace MyMarketManager.Processing;
 
 /// <summary>
 /// Builder for registering work item handlers.
 /// </summary>
-public interface IWorkItemProcessingBuilder
+public interface IBackgroundProcessingBuilder
 {
     IServiceCollection Services { get; }
 
@@ -15,10 +15,9 @@ public interface IWorkItemProcessingBuilder
     /// <param name="name">Unique name for this handler registration (e.g., "Shein", "ImageVectorization")</param>
     /// <param name="maxItemsPerCycle">Maximum number of items to process per cycle (default: 10)</param>
     /// <param name="purpose">Purpose/category of this handler for UI filtering (default: Internal)</param>
-    IWorkItemProcessingBuilder AddHandler<THandler, TWorkItem>(
+    IBackgroundProcessingBuilder AddHandler<THandler>(
         string name,
         int maxItemsPerCycle = 10,
-        ProcessorPurpose purpose = ProcessorPurpose.Internal)
-        where THandler : class, IWorkItemHandler<TWorkItem>
-        where TWorkItem : IWorkItem;
+        WorkItemHandlerPurpose purpose = WorkItemHandlerPurpose.Internal)
+        where THandler : class, IWorkItemHandler;
 }
