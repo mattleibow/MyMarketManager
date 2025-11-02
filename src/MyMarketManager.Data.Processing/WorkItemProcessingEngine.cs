@@ -1,24 +1,10 @@
+using System.Reflection.Metadata;
 using System.Threading.Channels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace MyMarketManager.Data.Processing;
-
-/// <summary>
-/// Configuration options for the WorkItemProcessingEngine.
-/// </summary>
-public class WorkItemProcessingEngineOptions
-{
-    internal List<HandlerRegistration> Registrations { get; } = new();
-
-    internal record HandlerRegistration(
-        Type HandlerType,
-        Type WorkItemType,
-        string Name,
-        int MaxItemsPerCycle,
-        ProcessorPurpose Purpose);
-}
 
 /// <summary>
 /// Central processing engine that orchestrates work item processing using System.Threading.Channels.
@@ -112,7 +98,7 @@ public class WorkItemProcessingEngine
         // Create a bounded channel to hold all work items for this cycle
         // Capacity = sum of max items from all handlers
         var totalCapacity = _registrations.Sum(r => r.GetMaxItemsPerCycle());
-        var channel = Channel.CreateBounded<WorkItemEnvelope>(new BoundedChannelOptions(totalCapacity)
+        var channel = Channel.CreateBounded<IWorkItemEnvelope>(new BoundedChannelOptions(totalCapacity)
         {
             FullMode = BoundedChannelFullMode.Wait,
             SingleReader = false, // Multiple consumers
@@ -137,7 +123,7 @@ public class WorkItemProcessingEngine
         }
     }
 
-    private async Task FetchWorkItemsAsync(ChannelWriter<WorkItemEnvelope> writer, CancellationToken cancellationToken)
+    private async Task FetchWorkItemsAsync(ChannelWriter<IWorkItemEnvelope> writer, CancellationToken cancellationToken)
     {
         var fetchTasks = new List<Task>();
 
@@ -153,7 +139,7 @@ public class WorkItemProcessingEngine
         await Task.WhenAll(fetchTasks);
     }
 
-    private async Task ProcessWorkItemsAsync(ChannelReader<WorkItemEnvelope> reader, CancellationToken cancellationToken)
+    private async Task ProcessWorkItemsAsync(ChannelReader<IWorkItemEnvelope> reader, CancellationToken cancellationToken)
     {
         var processingTasks = new List<Task>();
         var processedCount = 0;
@@ -174,7 +160,7 @@ public class WorkItemProcessingEngine
         }
     }
 
-    private async Task ProcessWorkItemAsync(WorkItemEnvelope envelope, CancellationToken cancellationToken)
+    private async Task ProcessWorkItemAsync(IWorkItemEnvelope envelope, CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
         
@@ -193,13 +179,14 @@ public class WorkItemProcessingEngine
 
     private interface IWorkItemHandlerRegistration
     {
-        Task FetchAndEnqueueAsync(IServiceProvider serviceProvider, ChannelWriter<WorkItemEnvelope> writer, ILogger logger, CancellationToken cancellationToken);
+        Task FetchAndEnqueueAsync(IServiceProvider serviceProvider, ChannelWriter<IWorkItemEnvelope> writer, ILogger logger, CancellationToken cancellationToken);
         int GetMaxItemsPerCycle();
         string GetName();
         ProcessorPurpose GetPurpose();
     }
 
-    private class WorkItemHandlerRegistration<TWorkItem> : IWorkItemHandlerRegistration where TWorkItem : IWorkItem
+    private class WorkItemHandlerRegistration<TWorkItem> : IWorkItemHandlerRegistration
+        where TWorkItem : IWorkItem
     {
         private readonly Type _handlerType;
         private readonly string _name;
@@ -224,7 +211,7 @@ public class WorkItemProcessingEngine
 
         public async Task FetchAndEnqueueAsync(
             IServiceProvider serviceProvider, 
-            ChannelWriter<WorkItemEnvelope> writer,
+            ChannelWriter<IWorkItemEnvelope> writer,
             ILogger logger,
             CancellationToken cancellationToken)
         {
@@ -255,33 +242,26 @@ public class WorkItemProcessingEngine
         }
     }
 
-    private abstract class WorkItemEnvelope
+    private interface IWorkItemEnvelope
     {
-        public abstract string HandlerName { get; }
-        public abstract Guid WorkItemId { get; }
-        public abstract Task ProcessAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken);
+        string HandlerName { get; }
+
+        Guid WorkItemId { get; }
+
+        Task ProcessAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken);
     }
 
-    private class WorkItemEnvelope<TWorkItem> : WorkItemEnvelope where TWorkItem : IWorkItem
+    private class WorkItemEnvelope<TWorkItem>(string handlerName, Type handlerType, TWorkItem workItem) : IWorkItemEnvelope
+        where TWorkItem : IWorkItem
     {
-        private readonly string _handlerName;
-        private readonly Type _handlerType;
-        private readonly TWorkItem _workItem;
+        public string HandlerName => handlerName;
 
-        public WorkItemEnvelope(string handlerName, Type handlerType, TWorkItem workItem)
+        public Guid WorkItemId => workItem.Id;
+
+        public async Task ProcessAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
-            _handlerName = handlerName;
-            _handlerType = handlerType;
-            _workItem = workItem;
-        }
-
-        public override string HandlerName => _handlerName;
-        public override Guid WorkItemId => _workItem.Id;
-
-        public override async Task ProcessAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
-        {
-            var handler = (IWorkItemHandler<TWorkItem>)serviceProvider.GetRequiredService(_handlerType);
-            await handler.ProcessAsync(_workItem, cancellationToken);
+            var handler = (IWorkItemHandler<TWorkItem>)serviceProvider.GetRequiredService(handlerType);
+            await handler.ProcessAsync(workItem, cancellationToken);
         }
     }
 }
