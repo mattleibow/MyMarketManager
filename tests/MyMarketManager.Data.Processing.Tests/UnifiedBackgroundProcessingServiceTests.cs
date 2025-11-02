@@ -1,0 +1,260 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using MyMarketManager.Data.Processing;
+using MyMarketManager.WebApp.Services;
+using NSubstitute;
+
+namespace MyMarketManager.Data.Processing.Tests;
+
+public class UnifiedBackgroundProcessingServiceTests
+{
+    [Fact]
+    public void Constructor_WithNullEngine_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger<UnifiedBackgroundProcessingService>>();
+        var options = Options.Create(new UnifiedBackgroundProcessingOptions());
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new UnifiedBackgroundProcessingService(null!, logger, options));
+    }
+
+    [Fact]
+    public void Constructor_WithNullLogger_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+        var serviceProvider = services.BuildServiceProvider();
+        var logger = Substitute.For<ILogger<WorkItemProcessingEngine>>();
+        var engine = new WorkItemProcessingEngine(serviceProvider, logger);
+        var options = Options.Create(new UnifiedBackgroundProcessingOptions());
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new UnifiedBackgroundProcessingService(engine, null!, options));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_InitializesEngine()
+    {
+        // Arrange
+        var initialized = false;
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<TestInitializationTracker>(sp => new TestInitializationTracker { OnInitialize = () => initialized = true });
+        services.AddWorkItemProcessing()
+            .AddHandler<TrackedTestWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
+        
+        var serviceProvider = services.BuildServiceProvider();
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
+        var logger = Substitute.For<ILogger<UnifiedBackgroundProcessingService>>();
+        var options = Options.Create(new UnifiedBackgroundProcessingOptions
+        {
+            PollInterval = TimeSpan.FromMilliseconds(10)
+        });
+
+        var service = new UnifiedBackgroundProcessingService(engine, logger, options);
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(50));
+
+        // Act
+        await service.StartAsync(CancellationToken.None);
+        await Task.Delay(100);
+        await service.StopAsync(CancellationToken.None);
+
+        // Assert - Service should have called Initialize
+        Assert.True(initialized);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_CallsProcessCycleAsync()
+    {
+        // Arrange
+        var processCalled = false;
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<TestProcessTracker>(sp => new TestProcessTracker { OnProcess = () => processCalled = true });
+        services.AddWorkItemProcessing()
+            .AddHandler<TrackedProcessingWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
+        
+        var serviceProvider = services.BuildServiceProvider();
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
+        var logger = Substitute.For<ILogger<UnifiedBackgroundProcessingService>>();
+        var options = Options.Create(new UnifiedBackgroundProcessingOptions
+        {
+            PollInterval = TimeSpan.FromMilliseconds(10)
+        });
+
+        var service = new UnifiedBackgroundProcessingService(engine, logger, options);
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(100));
+
+        // Act
+        await service.StartAsync(CancellationToken.None);
+        await Task.Delay(150);
+        await service.StopAsync(CancellationToken.None);
+
+        // Assert - ProcessCycleAsync should have been called (handler was fetched)
+        Assert.True(processCalled);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithHandlerThrowingException_ContinuesProcessing()
+    {
+        // Arrange
+        var callCount = 0;
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<TestFailureTracker>(sp => new TestFailureTracker { OnFetch = () => callCount++ });
+        services.AddWorkItemProcessing()
+            .AddHandler<FailingFetchWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
+        
+        var serviceProvider = services.BuildServiceProvider();
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
+        var logger = Substitute.For<ILogger<UnifiedBackgroundProcessingService>>();
+        var options = Options.Create(new UnifiedBackgroundProcessingOptions
+        {
+            PollInterval = TimeSpan.FromMilliseconds(20)
+        });
+
+        var service = new UnifiedBackgroundProcessingService(engine, logger, options);
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(100));
+
+        // Act
+        await service.StartAsync(CancellationToken.None);
+        await Task.Delay(150);
+        await service.StopAsync(CancellationToken.None);
+
+        // Assert - Should have tried multiple times despite exceptions
+        Assert.True(callCount > 1, $"Expected multiple fetch attempts, got {callCount}");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithCancellation_StopsGracefully()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddWorkItemProcessing()
+            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
+        
+        var serviceProvider = services.BuildServiceProvider();
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
+        var logger = Substitute.For<ILogger<UnifiedBackgroundProcessingService>>();
+        var options = Options.Create(new UnifiedBackgroundProcessingOptions
+        {
+            PollInterval = TimeSpan.FromMilliseconds(10)
+        });
+
+        var service = new UnifiedBackgroundProcessingService(engine, logger, options);
+
+        // Act
+        await service.StartAsync(CancellationToken.None);
+        await Task.Delay(50);
+        await service.StopAsync(CancellationToken.None);
+
+        // Assert - Should complete without throwing (graceful shutdown)
+    }
+
+    // Test helper classes
+    public class TestInitializationTracker
+    {
+        public Action? OnInitialize { get; set; }
+    }
+
+    public class TestProcessTracker
+    {
+        public Action? OnProcess { get; set; }
+    }
+
+    public class TestFailureTracker
+    {
+        public Action? OnFetch { get; set; }
+    }
+
+    private class TestWorkItem : IWorkItem
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+    }
+
+    private class TestWorkItemHandler : IWorkItemHandler<TestWorkItem>
+    {
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
+        }
+
+        public Task ProcessAsync(TestWorkItem workItem, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+    private class TrackedTestWorkItemHandler : IWorkItemHandler<TestWorkItem>
+    {
+        private readonly TestInitializationTracker _tracker;
+
+        public TrackedTestWorkItemHandler(TestInitializationTracker tracker)
+        {
+            _tracker = tracker;
+            _tracker.OnInitialize?.Invoke();
+        }
+
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
+        }
+
+        public Task ProcessAsync(TestWorkItem workItem, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+    private class TrackedProcessingWorkItemHandler : IWorkItemHandler<TestWorkItem>
+    {
+        private readonly TestProcessTracker _tracker;
+
+        public TrackedProcessingWorkItemHandler(TestProcessTracker tracker)
+        {
+            _tracker = tracker;
+        }
+
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        {
+            _tracker.OnProcess?.Invoke();
+            return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
+        }
+
+        public Task ProcessAsync(TestWorkItem workItem, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+    private class FailingFetchWorkItemHandler : IWorkItemHandler<TestWorkItem>
+    {
+        private readonly TestFailureTracker _tracker;
+
+        public FailingFetchWorkItemHandler(TestFailureTracker tracker)
+        {
+            _tracker = tracker;
+        }
+
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        {
+            _tracker.OnFetch?.Invoke();
+            throw new InvalidOperationException("Simulated fetch failure");
+        }
+
+        public Task ProcessAsync(TestWorkItem workItem, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+    }
+}
