@@ -1,7 +1,7 @@
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Processing;
 
-namespace MyMarketManager.Data.Processing;
+namespace MyMarketManager.Scrapers.Shein;
 
 /// <summary>
 /// Work item that wraps a StagingBatch for processing.

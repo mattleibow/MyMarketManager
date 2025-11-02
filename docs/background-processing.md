@@ -1,291 +1,170 @@
 # Background Processing System
 
-The background processing system handles asynchronous work items like web scraping, image vectorization, and data cleanup. It uses a Channel-based architecture for fair scheduling, starvation prevention, and concurrent processing.
+The background processing system handles asynchronous work like web scraping, data imports, and cleanup tasks. It uses channels for fair scheduling and concurrent processing.
 
-## Overview
+## Quick Start
 
-The system is built on Microsoft's `System.Threading.Channels` pattern with a single `BackgroundService` orchestrating multiple work item handlers. Each handler fetches its own work items and processes them independently.
+### 1. Create a Work Item
 
-**Key Benefits:**
-- Single background service replaces multiple independent services
-- Fair scheduling prevents any handler from monopolizing resources
-- Bounded channels prevent memory issues
-- Concurrent processing with backpressure control
-- Easy to add new processors without creating new services
-
-## Architecture
-
-```
-Registration (Program.cs)
-    ↓
-WorkItemProcessingEngine
-    ↓ Fetch Phase (parallel)
-    ├─> Handler A: FetchWorkItemsAsync(maxItems)
-    ├─> Handler B: FetchWorkItemsAsync(maxItems)
-    └─> Handler C: FetchWorkItemsAsync(maxItems)
-    ↓
-Channel<WorkItemEnvelope> (bounded queue)
-    ↓ Process Phase (concurrent)
-    ├─> Process item 1
-    ├─> Process item 2
-    └─> Process item N
-```
-
-### Core Components
-
-**`IWorkItem`** - Marker interface for work items
-```csharp
-public interface IWorkItem
-{
-    Guid Id { get; }
-}
-```
-
-**`IWorkItemHandler<TWorkItem>`** - Combined fetcher and processor
-```csharp
-public interface IWorkItemHandler<TWorkItem> : IWorkItemSource<TWorkItem>, IWorkItemProcessor<TWorkItem>
-    where TWorkItem : IWorkItem
-{
-    // Implementation handles both fetching and processing
-}
-```
-
-**`WorkItemProcessingEngine`** - Orchestrates the fetch/process cycle
-- Manages handler registrations
-- Coordinates bounded channel queue
-- Validates item counts
-- Provides purpose-based filtering
-
-**`UnifiedBackgroundProcessingService`** - Single hosted service
-- Polls on configurable interval (default: 5 minutes)
-- Calls engine to process one cycle
-- Handles errors and continues running
-
-## Creating a New Handler
-
-### Step 1: Define Your Work Item
-
-Create a class implementing `IWorkItem`:
+Work items represent units of work to process. They must implement `IWorkItem`:
 
 ```csharp
 public class MyWorkItem : IWorkItem
 {
     public Guid Id { get; }
-    public string SomeData { get; set; }
-    
-    public MyWorkItem(Guid id)
-    {
-        Id = id;
-    }
+    public string Data { get; set; }
 }
 ```
 
-### Step 2: Implement the Handler
+### 2. Create a Handler
 
-Create a handler implementing `IWorkItemHandler<TWorkItem>`:
+Handlers fetch and process work items. Implement `IWorkItemHandler<TWorkItem>`:
 
 ```csharp
-public class MyWorkItemHandler : IWorkItemHandler<MyWorkItem>
+public class MyHandler : IWorkItemHandler<MyWorkItem>
 {
-    private readonly MyMarketManagerDbContext _context;
-    private readonly ILogger<MyWorkItemHandler> _logger;
-
-    public MyWorkItemHandler(
-        MyMarketManagerDbContext context,
-        ILogger<MyWorkItemHandler> logger)
+    public async Task<IReadOnlyCollection<MyWorkItem>> FetchNextAsync(
+        int maxItems, CancellationToken cancellationToken)
     {
-        _context = context;
-        _logger = logger;
+        // Query your data source and return up to maxItems
+        return await GetPendingWorkAsync(maxItems);
     }
 
-    // Fetch work items from your data source
-    public async Task<IReadOnlyCollection<MyWorkItem>> FetchWorkItemsAsync(
-        int maxItems, 
-        CancellationToken cancellationToken)
-    {
-        // Query your data source
-        var items = await _context.MyEntities
-            .Where(e => e.NeedsProcessing)
-            .Take(maxItems)  // IMPORTANT: Respect the limit
-            .ToListAsync(cancellationToken);
-
-        _logger.LogDebug("Found {Count} items to process", items.Count);
-
-        return items
-            .Select(e => new MyWorkItem(e.Id) { SomeData = e.Data })
-            .ToList();
-    }
-
-    // Process a single work item
     public async Task ProcessAsync(
-        MyWorkItem workItem, 
-        CancellationToken cancellationToken)
+        MyWorkItem workItem, CancellationToken cancellationToken)
     {
-        try
-        {
-            _logger.LogInformation("Processing item {Id}", workItem.Id);
-
-            // Do your processing work here
-            // ...
-
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to process item {Id}", workItem.Id);
-            throw;
-        }
+        // Process the work item
+        await DoWorkAsync(workItem);
     }
 }
 ```
 
-### Step 3: Register the Handler
+### 3. Register the Handler
 
-In `Program.cs`, register your handler with configuration:
-
-```csharp
-builder.Services.AddWorkItemProcessing()
-    .AddHandler<MyWorkItemHandler, MyWorkItem>(
-        name: "MyProcessor",           // Unique name
-        maxItemsPerCycle: 10,           // Max items per cycle
-        purpose: ProcessorPurpose.Internal  // For UI filtering
-    );
-```
-
-### Registration Parameters
-
-- **`name`** (required) - Unique identifier for this handler registration
-  - Used for logging and configuration lookup
-  - Allows registering same handler type multiple times with different names
-  
-- **`maxItemsPerCycle`** (default: 10) - Maximum items to process per cycle
-  - Prevents starvation by limiting each handler
-  - Engine validates and truncates if handler returns more
-  
-- **`purpose`** (default: Internal) - Category for UI filtering
-  - `Ingestion` - User-facing processors (web scrapers, file uploads)
-  - `Internal` - Background processors (vectorization, cleanup)
-  - `Export` - Export and reporting processors
-
-## Processor Categories (Purpose)
-
-Use `ProcessorPurpose` to categorize handlers for UI display:
+In `Program.cs`, register your handler:
 
 ```csharp
-public enum ProcessorPurpose
-{
-    Ingestion = 0,  // Show on ingestion/import pages
-    Internal = 1,   // Hide from UI
-    Export = 2      // Show on export/reporting pages
-}
+builder.Services.AddBackgroundProcessing(config)
+    .AddHandler<MyHandler>(
+        name: "MyProcessor",
+        maxItemsPerCycle: 10,
+        purpose: WorkItemHandlerPurpose.Internal);
 ```
 
-### Querying by Purpose
+Done! Your handler will now run automatically on the configured poll interval.
 
-Get handlers for a specific purpose (useful for UI):
+## Architecture
 
-```csharp
-var ingestionHandlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Ingestion);
-// Returns: ["Shein", "Yoco", ...]
+The system has three main parts:
+
+1. **WorkItemProcessingService** - Fetches work from all handlers, queues items in a channel, and processes them concurrently
+2. **BackgroundProcessingService** - Runs on a timer, calling the processing service each cycle
+3. **Your Handlers** - Fetch and process your specific work items
+
+**Flow:**
+```
+Timer triggers → Fetch from all handlers in parallel → Queue in channel → Process concurrently
 ```
 
-## Built-in Handlers
-
-### SheinBatchHandler
-
-Processes Shein web scraping batches:
-
-```csharp
-.AddHandler<SheinBatchHandler, StagingBatchWorkItem>(
-    name: "Shein",
-    maxItemsPerCycle: 5,
-    purpose: ProcessorPurpose.Ingestion)
-```
-
-- Fetches `StagingBatch` records where `BatchProcessorName = "Shein"`
-- Delegates to `SheinWebScraper` for processing
-- Updates batch status (Completed/Failed)
+**Key features:**
+- Single background service handles all work types
+- Fair scheduling - no handler monopolizes resources
+- Bounded channels prevent memory issues
+- Handlers are isolated - errors don't affect others
 
 ## Configuration
 
-Configure the polling interval in `appsettings.json`:
+Configure via `appsettings.json`:
 
 ```json
 {
-  "IngestionService": {
-    "PollInterval": "00:05:00"  // 5 minutes
+  "BackgroundProcessing": {
+    "PollInterval": "00:05:00"
   }
 }
 ```
 
-Or configure programmatically:
+Or in code:
 
 ```csharp
-builder.Services.Configure<UnifiedBackgroundProcessingOptions>(options =>
+builder.Services.AddBackgroundProcessing(options =>
 {
     options.PollInterval = TimeSpan.FromMinutes(5);
 });
 ```
 
+## Handler Purposes
+
+Categorize handlers for UI filtering:
+
+- **Ingestion** - Import data from external sources (web scraping, API imports)
+- **Internal** - Internal processing (cleanup, calculations, aggregations)
+- **Export** - Send data to external systems (exports, notifications)
+
 ## Best Practices
 
-### Respect maxItems Parameter
+### Idempotency
+Make handlers idempotent - they should be safe to run multiple times on the same work item.
 
-Always respect the `maxItems` parameter in `FetchWorkItemsAsync`:
+### Error Handling
+Catch exceptions in `ProcessAsync` and update work item status. Unhandled exceptions are logged but don't stop other items.
+
+### Batch Sizes
+Choose `maxItemsPerCycle` based on:
+- Item processing time
+- System resources
+- Desired throughput
+
+### Database Contexts
+Use scoped dependencies. The framework creates a new scope for each handler instance.
+
+### Logging
+Use structured logging with work item IDs for traceability.
+
+## Example: Shein Batch Handler
+
+See `SheinBatchHandler` for a complete real-world example that:
+- Fetches queued staging batches from database
+- Processes each batch using a web scraper
+- Updates batch status on completion or failure
+- Logs progress and errors
+
+## GraphQL Integration
+
+Get available handlers by purpose:
 
 ```csharp
-// ✅ GOOD: Respects limit
-var items = await _context.Items
-    .Where(i => i.NeedsProcessing)
-    .Take(maxItems)
-    .ToListAsync(cancellationToken);
-
-// ❌ BAD: Ignores limit
-var items = await _context.Items
-    .Where(i => i.NeedsProcessing)
-    .ToListAsync(cancellationToken);  // Could return thousands!
-```
-
-The engine validates and truncates, but violating the limit wastes resources and causes warning logs.
-
-### Handle Errors Gracefully
-
-Wrap processing in try-catch to prevent one failure from stopping the entire cycle:
-
-```csharp
-public async Task ProcessAsync(MyWorkItem workItem, CancellationToken cancellationToken)
+public IEnumerable<string> GetAvailableScrapers(
+    [Service] WorkItemProcessingService engine)
 {
-    try
-    {
-        // Processing logic
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Failed to process {Id}", workItem.Id);
-        
-        // Mark item as failed in database if applicable
-        // Don't re-throw unless you want to stop all processing
-    }
+    return engine.GetHandlers(WorkItemHandlerPurpose.Ingestion);
 }
 ```
 
-### Use Appropriate Logging Levels
+## Testing
 
-- `LogDebug` - Detailed fetch/process steps
-- `LogInformation` - Work item counts, successful completions
-- `LogWarning` - Unusual conditions (returned too many items)
-- `LogError` - Processing failures
+Test handlers independently:
+
+```csharp
+[Fact]
+public async Task FetchNextAsync_ReturnsPendingItems()
+{
+    var handler = new MyHandler(...);
+    var items = await handler.FetchNextAsync(10, CancellationToken.None);
+    Assert.NotEmpty(items);
+}
+```
+
+No need to test the framework - focus on your handler logic.
 
 ## Migration from Old System
 
-The old services have been removed:
-- ❌ `IngestionService` → ✅ `SheinBatchHandler`
-- ❌ `BatchProcessingService` → ✅ Handler-based architecture
+The new system replaces:
+- Individual `BackgroundService` implementations → Single `BackgroundProcessingService`
+- Manual service registration → Fluent `AddHandler()` API
+- `IBatchProcessor` interface → `IWorkItemHandler<T>` interface
 
-All functionality is preserved, just better organized with the new handler-based system.
-
-## See Also
-
-- [Web Scraping](web-scraping.md) - Web scraping infrastructure details
-- [Architecture](architecture.md) - System architecture overview
-- [Development Guide](development-guide.md) - Development workflows
+Key changes:
+- Method renamed: `FetchWorkItemsAsync` → `FetchNextAsync`
+- Registration simplified: Single call with name and config
+- No factory pattern needed

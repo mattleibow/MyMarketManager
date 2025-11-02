@@ -92,8 +92,8 @@ The application uses a Channel-based work item processing system for asynchronou
 
 ### Key Components
 
-- **UnifiedBackgroundProcessingService** - Single `BackgroundService` that orchestrates all processors
-- **WorkItemProcessingEngine** - Manages handler registrations, coordinates fetch/process cycles
+- **BackgroundProcessingService** - Single `BackgroundService` that runs on a timer
+- **WorkItemProcessingService** - Manages handler registrations, coordinates fetch/process cycles
 - **IWorkItemHandler<T>** - Interface for handlers that fetch and process work items
 - **System.Threading.Channels** - Bounded queues for fair scheduling and starvation prevention
 

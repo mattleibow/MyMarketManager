@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyMarketManager.Data;
 using MyMarketManager.Data.Enums;
-using MyMarketManager.Data.Processing;
 using MyMarketManager.Processing;
 
 namespace MyMarketManager.Scrapers.Shein;

@@ -7,7 +7,7 @@ using NSubstitute;
 
 namespace MyMarketManager.Processing.Tests;
 
-public class UnifiedBackgroundProcessingServiceTests
+public class BackgroundProcessingServiceTests
 {
     [Fact]
     public void Constructor_WithNullEngine_ThrowsArgumentNullException()

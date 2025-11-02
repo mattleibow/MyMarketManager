@@ -4,11 +4,11 @@ using NSubstitute;
 
 namespace MyMarketManager.Processing.Tests;
 
-public class WorkItemProcessingEngineTests
+public class WorkItemProcessingServiceTests
 {
     private readonly ILogger<WorkItemProcessingService> _logger;
 
-    public WorkItemProcessingEngineTests()
+    public WorkItemProcessingServiceTests()
     {
         _logger = Substitute.For<ILogger<WorkItemProcessingService>>();
     }
