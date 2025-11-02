@@ -31,21 +31,33 @@ var computerVisionEndpoint = builder.Configuration.GetConnectionString("ai-found
 var computerVisionApiKey = builder.Configuration["AzureAI:ApiKey"] ?? "";
 builder.Services.AddAzureComputerVisionEmbeddings(computerVisionEndpoint, computerVisionApiKey);
 
-// Add image vectorization and search services
-builder.Services.Configure<ImageVectorizationServiceOptions>(builder.Configuration.GetSection("ImageVectorizationService"));
-builder.Services.AddScoped<ImageVectorizationProcessor>();
-builder.Services.AddHostedService<ImageVectorizationService>();
-
 // Add scraper services
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
 
-// Add ingestion services
-builder.Services.Configure<IngestionServiceOptions>(builder.Configuration.GetSection("IngestionService"));
-builder.Services.AddScoped<BatchProcessingService>();
-builder.Services.AddHostedService<IngestionService>();
-builder.Services.AddBatchProcessorFactory()
-    .AddWebScraper<SheinWebScraper>("Shein");
+// Add unified work item processing system
+builder.Services.Configure<UnifiedBackgroundProcessingOptions>(options =>
+{
+    // Read from existing config for backward compatibility
+    var ingestionConfig = builder.Configuration.GetSection("IngestionService");
+    var pollInterval = ingestionConfig.GetValue<TimeSpan?>("PollInterval");
+    if (pollInterval.HasValue)
+    {
+        options.PollInterval = pollInterval.Value;
+    }
+});
+
+builder.Services.AddWorkItemProcessing()
+    .AddHandler<SheinBatchHandler, StagingBatchWorkItem>(
+        name: "Shein",
+        maxItemsPerCycle: 5,
+        purpose: ProcessorPurpose.Ingestion)
+    .AddHandler<ImageVectorizationHandler, ImageVectorizationWorkItem>(
+        name: "ImageVectorization",
+        maxItemsPerCycle: 10,
+        purpose: ProcessorPurpose.Internal);
+
+builder.Services.AddHostedService<UnifiedBackgroundProcessingService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
