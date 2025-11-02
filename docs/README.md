@@ -20,6 +20,7 @@ Resources for developers working on MyMarketManager:
 - **[GraphQL Server](graphql-server.md)** - Server implementation, operations, and extending the API
 - **[GraphQL Client](graphql-client.md)** - Client library usage, service registration, and examples
 - **[Web Scraping](web-scraping.md)** - Web scraping infrastructure for data ingestion from supplier websites
+- **[Background Processing](background-processing.md)** - Asynchronous work item processing system (web scraping, cleanup)
 
 ## Reference
 
