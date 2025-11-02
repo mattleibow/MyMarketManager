@@ -48,7 +48,7 @@ public class WorkItemProcessingExtensionsTests
         var builder = services.AddBackgroundProcessing();
 
         // Act
-        builder.AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
+        builder.AddHandler<TestWorkItemHandler>("Test", 5, WorkItemHandlerPurpose.Internal);
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
@@ -74,7 +74,7 @@ public class WorkItemProcessingExtensionsTests
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            builder.AddHandler<TestWorkItemHandler, TestWorkItem>(null!, 5, WorkItemHandlerPurpose.Internal));
+            builder.AddHandler<TestWorkItemHandler>(null!, 5, WorkItemHandlerPurpose.Internal));
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public class WorkItemProcessingExtensionsTests
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() =>
-            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("", 5, WorkItemHandlerPurpose.Internal));
+            builder.AddHandler<TestWorkItemHandler>("", 5, WorkItemHandlerPurpose.Internal));
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class WorkItemProcessingExtensionsTests
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() =>
-            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("   ", 5, WorkItemHandlerPurpose.Internal));
+            builder.AddHandler<TestWorkItemHandler>("   ", 5, WorkItemHandlerPurpose.Internal));
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class WorkItemProcessingExtensionsTests
 
         // Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 0, WorkItemHandlerPurpose.Internal));
+            builder.AddHandler<TestWorkItemHandler>("Test", 0, WorkItemHandlerPurpose.Internal));
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class WorkItemProcessingExtensionsTests
 
         // Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            builder.AddHandler<TestWorkItemHandler, TestWorkItem>("Test", -1, WorkItemHandlerPurpose.Internal));
+            builder.AddHandler<TestWorkItemHandler>("Test", -1, WorkItemHandlerPurpose.Internal));
     }
 
     [Fact]
@@ -138,8 +138,8 @@ public class WorkItemProcessingExtensionsTests
 
         // Act
         var builder = services.AddBackgroundProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test1", 5, WorkItemHandlerPurpose.Internal)
-            .AddHandler<AnotherTestWorkItemHandler, TestWorkItem>("Test2", 10, WorkItemHandlerPurpose.Ingestion);
+            .AddHandler<TestWorkItemHandler>("Test1", 5, WorkItemHandlerPurpose.Internal)
+            .AddHandler<AnotherTestWorkItemHandler>("Test2", 10, WorkItemHandlerPurpose.Ingestion);
 
         // Assert
         Assert.NotNull(builder);
@@ -161,9 +161,9 @@ public class WorkItemProcessingExtensionsTests
 
         // Act
         services.AddBackgroundProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Ingestion", 5, WorkItemHandlerPurpose.Ingestion)
-            .AddHandler<AnotherTestWorkItemHandler, TestWorkItem>("Internal", 10, WorkItemHandlerPurpose.Internal)
-            .AddHandler<ThirdTestWorkItemHandler, TestWorkItem>("Export", 15, WorkItemHandlerPurpose.Export);
+            .AddHandler<TestWorkItemHandler>("Ingestion", 5, WorkItemHandlerPurpose.Ingestion)
+            .AddHandler<AnotherTestWorkItemHandler>("Internal", 10, WorkItemHandlerPurpose.Internal)
+            .AddHandler<ThirdTestWorkItemHandler>("Export", 15, WorkItemHandlerPurpose.Export);
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
@@ -192,7 +192,7 @@ public class WorkItemProcessingExtensionsTests
 
         // Act
         services.AddBackgroundProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test");
+            .AddHandler<TestWorkItemHandler>("Test");
 
         // Assert - If this doesn't throw, the default of 10 was accepted
         var serviceProvider = services.BuildServiceProvider();
@@ -209,7 +209,7 @@ public class WorkItemProcessingExtensionsTests
 
         // Act
         services.AddBackgroundProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5);
+            .AddHandler<TestWorkItemHandler>("Test", 5);
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
@@ -228,7 +228,7 @@ public class WorkItemProcessingExtensionsTests
 
     private class TestWorkItemHandler : IWorkItemHandler<TestWorkItem>
     {
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
         }
@@ -241,7 +241,7 @@ public class WorkItemProcessingExtensionsTests
 
     private class AnotherTestWorkItemHandler : IWorkItemHandler<TestWorkItem>
     {
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
         }
@@ -254,7 +254,7 @@ public class WorkItemProcessingExtensionsTests
 
     private class ThirdTestWorkItemHandler : IWorkItemHandler<TestWorkItem>
     {
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
         }

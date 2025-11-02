@@ -66,7 +66,7 @@ public class WorkItemProcessingEngineTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddBackgroundProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
+            .AddHandler<TestWorkItemHandler>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
 
@@ -104,9 +104,9 @@ public class WorkItemProcessingEngineTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddBackgroundProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Handler1", 5, WorkItemHandlerPurpose.Ingestion)
-            .AddHandler<AnotherTestWorkItemHandler, TestWorkItem>("Handler2", 10, WorkItemHandlerPurpose.Ingestion)
-            .AddHandler<ThirdTestWorkItemHandler, TestWorkItem>("Handler3", 15, WorkItemHandlerPurpose.Internal);
+            .AddHandler<TestWorkItemHandler>("Handler1", 5, WorkItemHandlerPurpose.Ingestion)
+            .AddHandler<AnotherTestWorkItemHandler>("Handler2", 10, WorkItemHandlerPurpose.Ingestion)
+            .AddHandler<ThirdTestWorkItemHandler>("Handler3", 15, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
@@ -150,7 +150,7 @@ public class WorkItemProcessingEngineTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddBackgroundProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
+            .AddHandler<TestWorkItemHandler>("Test", 5, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
@@ -178,7 +178,7 @@ public class WorkItemProcessingEngineTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddBackgroundProcessing()
-            .AddHandler<TrackingTestWorkItemHandler, TestWorkItem>("Test", 10, WorkItemHandlerPurpose.Internal);
+            .AddHandler<TrackingTestWorkItemHandler>("Test", 10, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
@@ -209,8 +209,8 @@ public class WorkItemProcessingEngineTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddBackgroundProcessing()
-            .AddHandler<TrackingTestWorkItemHandler, TestWorkItem>("Handler1", 10, WorkItemHandlerPurpose.Internal)
-            .AddHandler<AnotherTrackingTestWorkItemHandler, TestWorkItem>("Handler2", 10, WorkItemHandlerPurpose.Internal);
+            .AddHandler<TrackingTestWorkItemHandler>("Handler1", 10, WorkItemHandlerPurpose.Internal)
+            .AddHandler<AnotherTrackingTestWorkItemHandler>("Handler2", 10, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
@@ -242,7 +242,7 @@ public class WorkItemProcessingEngineTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddBackgroundProcessing()
-            .AddHandler<TrackingTestWorkItemHandler, TestWorkItem>("Test", 3, WorkItemHandlerPurpose.Internal); // Max 3 items
+            .AddHandler<TrackingTestWorkItemHandler>("Test", 3, WorkItemHandlerPurpose.Internal); // Max 3 items
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
@@ -269,7 +269,7 @@ public class WorkItemProcessingEngineTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddBackgroundProcessing()
-            .AddHandler<TrackingTestWorkItemHandler, TestWorkItem>("Test", 10, WorkItemHandlerPurpose.Internal);
+            .AddHandler<TrackingTestWorkItemHandler>("Test", 10, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
@@ -287,7 +287,7 @@ public class WorkItemProcessingEngineTests
         services.AddLogging();
         services.AddScoped<FailingTestWorkItemHandler>();
         services.AddBackgroundProcessing()
-            .AddHandler<FailingTestWorkItemHandler, TestWorkItem>("Test", 10, WorkItemHandlerPurpose.Internal);
+            .AddHandler<FailingTestWorkItemHandler>("Test", 10, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
@@ -304,7 +304,7 @@ public class WorkItemProcessingEngineTests
 
     private class TestWorkItemHandler : IWorkItemHandler<TestWorkItem>
     {
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
         }
@@ -317,7 +317,7 @@ public class WorkItemProcessingEngineTests
 
     private class AnotherTestWorkItemHandler : IWorkItemHandler<TestWorkItem>
     {
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
         }
@@ -330,7 +330,7 @@ public class WorkItemProcessingEngineTests
 
     private class ThirdTestWorkItemHandler : IWorkItemHandler<TestWorkItem>
     {
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
         }
@@ -352,7 +352,7 @@ public class WorkItemProcessingEngineTests
             _processedItems = processedItems;
         }
 
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(_itemsToReturn ?? new List<TestWorkItem>());
         }
@@ -375,7 +375,7 @@ public class WorkItemProcessingEngineTests
             _processedItems = processedItems;
         }
 
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(_itemsToReturn ?? new List<TestWorkItem>());
         }
@@ -389,7 +389,7 @@ public class WorkItemProcessingEngineTests
 
     private class FailingTestWorkItemHandler : IWorkItemHandler<TestWorkItem>
     {
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(new[] { new TestWorkItem() });
         }

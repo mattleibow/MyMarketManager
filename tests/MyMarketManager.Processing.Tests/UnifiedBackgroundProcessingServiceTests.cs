@@ -44,7 +44,7 @@ public class UnifiedBackgroundProcessingServiceTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddBackgroundProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
+            .AddHandler<TestWorkItemHandler>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
 
@@ -66,7 +66,7 @@ public class UnifiedBackgroundProcessingServiceTests
         services.AddLogging();
         services.AddSingleton<TestProcessTracker>(sp => new TestProcessTracker { OnProcess = () => processCalled = true });
         services.AddBackgroundProcessing()
-            .AddHandler<TrackedProcessingWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
+            .AddHandler<TrackedProcessingWorkItemHandler>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
@@ -98,7 +98,7 @@ public class UnifiedBackgroundProcessingServiceTests
         services.AddLogging();
         services.AddSingleton<TestFailureTracker>(sp => new TestFailureTracker { OnFetch = () => callCount++ });
         services.AddBackgroundProcessing()
-            .AddHandler<FailingFetchWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
+            .AddHandler<FailingFetchWorkItemHandler>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
@@ -128,7 +128,7 @@ public class UnifiedBackgroundProcessingServiceTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddBackgroundProcessing()
-            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, WorkItemHandlerPurpose.Internal);
+            .AddHandler<TestWorkItemHandler>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
@@ -171,7 +171,7 @@ public class UnifiedBackgroundProcessingServiceTests
 
     private class TestWorkItemHandler : IWorkItemHandler<TestWorkItem>
     {
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
         }
@@ -192,7 +192,7 @@ public class UnifiedBackgroundProcessingServiceTests
             _tracker.OnInitialize?.Invoke();
         }
 
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
         }
@@ -212,7 +212,7 @@ public class UnifiedBackgroundProcessingServiceTests
             _tracker = tracker;
         }
 
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             _tracker.OnProcess?.Invoke();
             return Task.FromResult<IReadOnlyCollection<TestWorkItem>>(Array.Empty<TestWorkItem>());
@@ -233,7 +233,7 @@ public class UnifiedBackgroundProcessingServiceTests
             _tracker = tracker;
         }
 
-        public Task<IReadOnlyCollection<TestWorkItem>> FetchWorkItemsAsync(int maxItems, CancellationToken cancellationToken)
+        public Task<IReadOnlyCollection<TestWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
         {
             _tracker.OnFetch?.Invoke();
             throw new InvalidOperationException("Simulated fetch failure");
