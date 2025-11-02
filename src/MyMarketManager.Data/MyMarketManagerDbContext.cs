@@ -37,11 +37,11 @@ public class MyMarketManagerDbContext : DbContext
 
         // Configure ProductPhoto VectorEmbedding
         // Store as comma-separated string
-        // Use provider-agnostic type - EF will map it appropriately for SQL Server/SQLite
+        // Use G format for compact representation while maintaining precision
         modelBuilder.Entity<ProductPhoto>()
             .Property(p => p.VectorEmbedding)
             .HasConversion(
-                v => v == null ? null : string.Join(",", v.Select(f => f.ToString("R"))),
+                v => v == null ? null : string.Join(",", v.Select(f => f.ToString("G"))),
                 v => v == null ? null : v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(float.Parse).ToArray());
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
