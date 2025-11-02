@@ -8,7 +8,7 @@ namespace MyMarketManager.Data.Processing;
 
 /// <summary>
 /// Handler that fetches product photos without vector embeddings and generates embeddings.
-/// This can be instantiated multiple times with different configurations for different sources
+/// Can be registered multiple times with different configurations for different sources
 /// (e.g., product photos, delivery photos, etc.).
 /// </summary>
 public class ImageVectorizationHandler : IWorkItemHandler<ImageVectorizationWorkItem>
@@ -16,26 +16,16 @@ public class ImageVectorizationHandler : IWorkItemHandler<ImageVectorizationWork
     private readonly MyMarketManagerDbContext _context;
     private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator;
     private readonly ILogger<ImageVectorizationHandler> _logger;
-    private readonly string _name;
-    private readonly int _maxItems;
 
     public ImageVectorizationHandler(
         MyMarketManagerDbContext context,
         [FromKeyedServices("image")] IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
-        ILogger<ImageVectorizationHandler> logger,
-        string name = "ImageVectorization",
-        int maxItemsPerCycle = 10)
+        ILogger<ImageVectorizationHandler> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _embeddingGenerator = embeddingGenerator ?? throw new ArgumentNullException(nameof(embeddingGenerator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _name = name;
-        _maxItems = maxItemsPerCycle;
     }
-
-    public string Name => _name;
-
-    public int MaxItemsPerCycle => _maxItems;
 
     public async Task<IReadOnlyCollection<ImageVectorizationWorkItem>> FetchWorkItemsAsync(
         int maxItems, 

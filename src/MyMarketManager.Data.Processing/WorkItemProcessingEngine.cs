@@ -44,11 +44,34 @@ public class WorkItemProcessingEngine
     /// <summary>
     /// Registers a work item handler for processing.
     /// </summary>
-    public void RegisterHandler<TWorkItem>(Type handlerType) where TWorkItem : IWorkItem
+    public void RegisterHandler<TWorkItem>(
+        Type handlerType, 
+        string name, 
+        int maxItemsPerCycle, 
+        ProcessorPurpose purpose) where TWorkItem : IWorkItem
     {
-        _registrations.Add(new WorkItemHandlerRegistration<TWorkItem>(handlerType));
-        _logger.LogInformation("Registered handler: {HandlerType} for work item type {WorkItemType}", 
-            handlerType.Name, typeof(TWorkItem).Name);
+        _registrations.Add(new WorkItemHandlerRegistration<TWorkItem>(
+            handlerType, 
+            name, 
+            maxItemsPerCycle, 
+            purpose));
+        _logger.LogInformation(
+            "Registered handler: {HandlerType} as '{Name}' for work item type {WorkItemType} (Max: {MaxItems}, Purpose: {Purpose})", 
+            handlerType.Name, 
+            name,
+            typeof(TWorkItem).Name,
+            maxItemsPerCycle,
+            purpose);
+    }
+
+    /// <summary>
+    /// Gets all registered handler names by purpose.
+    /// </summary>
+    public IEnumerable<string> GetHandlerNamesByPurpose(ProcessorPurpose purpose)
+    {
+        return _registrations
+            .Where(r => r.GetPurpose() == purpose)
+            .Select(r => r.GetName());
     }
 
     /// <summary>
@@ -152,22 +175,32 @@ public class WorkItemProcessingEngine
     {
         Task FetchAndEnqueueAsync(IServiceProvider serviceProvider, ChannelWriter<WorkItemEnvelope> writer, ILogger logger, CancellationToken cancellationToken);
         int GetMaxItemsPerCycle();
+        string GetName();
+        ProcessorPurpose GetPurpose();
     }
 
     private class WorkItemHandlerRegistration<TWorkItem> : IWorkItemHandlerRegistration where TWorkItem : IWorkItem
     {
         private readonly Type _handlerType;
+        private readonly string _name;
+        private readonly int _maxItemsPerCycle;
+        private readonly ProcessorPurpose _purpose;
 
-        public WorkItemHandlerRegistration(Type handlerType)
+        public WorkItemHandlerRegistration(
+            Type handlerType, 
+            string name, 
+            int maxItemsPerCycle, 
+            ProcessorPurpose purpose)
         {
             _handlerType = handlerType;
+            _name = name;
+            _maxItemsPerCycle = maxItemsPerCycle;
+            _purpose = purpose;
         }
 
-        public int GetMaxItemsPerCycle()
-        {
-            // Default to 10, will be read from handler instance when fetching
-            return 10;
-        }
+        public int GetMaxItemsPerCycle() => _maxItemsPerCycle;
+        public string GetName() => _name;
+        public ProcessorPurpose GetPurpose() => _purpose;
 
         public async Task FetchAndEnqueueAsync(
             IServiceProvider serviceProvider, 
@@ -176,27 +209,26 @@ public class WorkItemProcessingEngine
             CancellationToken cancellationToken)
         {
             var handler = (IWorkItemHandler<TWorkItem>)serviceProvider.GetRequiredService(_handlerType);
-            var maxItems = handler.MaxItemsPerCycle;
 
-            logger.LogDebug("Fetching up to {MaxItems} items from handler {HandlerName}", maxItems, handler.Name);
+            logger.LogDebug("Fetching up to {MaxItems} items from handler '{Name}'", _maxItemsPerCycle, _name);
             
-            var workItems = await handler.FetchWorkItemsAsync(maxItems, cancellationToken);
+            var workItems = await handler.FetchWorkItemsAsync(_maxItemsPerCycle, cancellationToken);
 
-            if (workItems.Count > maxItems)
+            if (workItems.Count > _maxItemsPerCycle)
             {
                 logger.LogWarning(
-                    "Handler {HandlerName} returned {ActualCount} items but max is {MaxItems}. Truncating.",
-                    handler.Name, workItems.Count, maxItems);
-                workItems = workItems.Take(maxItems).ToList();
+                    "Handler '{Name}' returned {ActualCount} items but max is {MaxItems}. Truncating.",
+                    _name, workItems.Count, _maxItemsPerCycle);
+                workItems = workItems.Take(_maxItemsPerCycle).ToList();
             }
 
             if (workItems.Count > 0)
             {
-                logger.LogInformation("Handler {HandlerName} fetched {Count} work items", handler.Name, workItems.Count);
+                logger.LogInformation("Handler '{Name}' fetched {Count} work items", _name, workItems.Count);
 
                 foreach (var workItem in workItems)
                 {
-                    var envelope = new WorkItemEnvelope<TWorkItem>(handler.Name, _handlerType, workItem);
+                    var envelope = new WorkItemEnvelope<TWorkItem>(_name, _handlerType, workItem);
                     await writer.WriteAsync(envelope, cancellationToken);
                 }
             }

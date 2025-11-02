@@ -35,11 +35,6 @@ builder.Services.AddAzureComputerVisionEmbeddings(computerVisionEndpoint, comput
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
 
-// Add batch processor factory (for web scrapers, blob processors)
-builder.Services.AddScoped<BatchProcessingService>();
-builder.Services.AddBatchProcessorFactory()
-    .AddWebScraper<SheinWebScraper>("Shein");
-
 // Add unified work item processing system
 builder.Services.Configure<UnifiedBackgroundProcessingOptions>(options =>
 {
@@ -53,8 +48,14 @@ builder.Services.Configure<UnifiedBackgroundProcessingOptions>(options =>
 });
 
 builder.Services.AddWorkItemProcessing()
-    .AddHandler<StagingBatchHandler, StagingBatchWorkItem>()
-    .AddHandler<ImageVectorizationHandler, ImageVectorizationWorkItem>();
+    .AddHandler<SheinBatchHandler, StagingBatchWorkItem>(
+        name: "Shein",
+        maxItemsPerCycle: 5,
+        purpose: ProcessorPurpose.Ingestion)
+    .AddHandler<ImageVectorizationHandler, ImageVectorizationWorkItem>(
+        name: "ImageVectorization",
+        maxItemsPerCycle: 10,
+        purpose: ProcessorPurpose.Internal);
 
 builder.Services.AddHostedService<UnifiedBackgroundProcessingService>();
 
