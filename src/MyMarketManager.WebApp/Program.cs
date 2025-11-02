@@ -27,13 +27,27 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 // Add scraper services
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
+builder.Services.AddScoped<SheinWebScraper>();
 
-// Add ingestion services
-builder.Services.Configure<IngestionServiceOptions>(builder.Configuration.GetSection("IngestionService"));
-builder.Services.AddScoped<BatchProcessingService>();
-builder.Services.AddHostedService<IngestionService>();
-builder.Services.AddBatchProcessorFactory()
-    .AddWebScraper<SheinWebScraper>("Shein");
+// Add unified work item processing system
+builder.Services.Configure<UnifiedBackgroundProcessingOptions>(options =>
+{
+    // Read from existing config for backward compatibility
+    var ingestionConfig = builder.Configuration.GetSection("IngestionService");
+    var pollInterval = ingestionConfig.GetValue<TimeSpan?>("PollInterval");
+    if (pollInterval.HasValue)
+    {
+        options.PollInterval = pollInterval.Value;
+    }
+});
+
+builder.Services.AddWorkItemProcessing()
+    .AddHandler<SheinBatchHandler, StagingBatchWorkItem>(
+        name: "Shein",
+        maxItemsPerCycle: 5,
+        purpose: ProcessorPurpose.Ingestion);
+
+builder.Services.AddHostedService<UnifiedBackgroundProcessingService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
