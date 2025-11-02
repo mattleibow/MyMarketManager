@@ -37,9 +37,6 @@ public class UnifiedBackgroundProcessingService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // Initialize the engine with all registered handlers
-        _engine.Initialize();
-
         _logger.LogInformation("Unified background processing service started with {Interval} poll interval", 
             _options.PollInterval);
 

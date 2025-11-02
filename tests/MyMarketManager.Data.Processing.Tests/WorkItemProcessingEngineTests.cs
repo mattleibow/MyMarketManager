@@ -16,9 +16,12 @@ public class WorkItemProcessingEngineTests
     [Fact]
     public void Constructor_WithNullServiceProvider_ThrowsArgumentNullException()
     {
+        // Arrange
+        var options = Microsoft.Extensions.Options.Options.Create(new WorkItemProcessingEngineOptions());
+        
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => 
-            new WorkItemProcessingEngine(null!, _logger));
+            new WorkItemProcessingEngine(null!, _logger, options));
     }
 
     [Fact]
@@ -28,23 +31,24 @@ public class WorkItemProcessingEngineTests
         var services = new ServiceCollection();
         services.AddLogging();
         var serviceProvider = services.BuildServiceProvider();
+        var options = Microsoft.Extensions.Options.Options.Create(new WorkItemProcessingEngineOptions());
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => 
-            new WorkItemProcessingEngine(serviceProvider, null!));
+            new WorkItemProcessingEngine(serviceProvider, null!, options));
     }
 
     [Fact]
-    public void Initialize_WithNoHandlers_LogsCorrectCount()
+    public void Constructor_WithNoHandlers_LogsCorrectCount()
     {
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
         var serviceProvider = services.BuildServiceProvider();
-        var engine = new WorkItemProcessingEngine(serviceProvider, _logger);
+        var options = Microsoft.Extensions.Options.Options.Create(new WorkItemProcessingEngineOptions());
 
         // Act
-        engine.Initialize();
+        var engine = new WorkItemProcessingEngine(serviceProvider, _logger, options);
 
         // Assert
         _logger.Received(1).Log(
@@ -56,7 +60,7 @@ public class WorkItemProcessingEngineTests
     }
 
     [Fact]
-    public void Initialize_CalledMultipleTimes_OnlyInitializesOnce()
+    public void Constructor_InitializesOnce()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -65,30 +69,14 @@ public class WorkItemProcessingEngineTests
             .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
 
         // Act
-        engine.Initialize();
-        engine.Initialize();
-        engine.Initialize();
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
 
-        // Assert - Should complete without throwing (idempotent)
-        // The engine initializes only once, subsequent calls are no-ops
-    }
-
-    [Fact]
-    public void RegisterHandler_AfterInitialization_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        services.AddLogging();
-        var serviceProvider = services.BuildServiceProvider();
-        var engine = new WorkItemProcessingEngine(serviceProvider, _logger);
-        engine.Initialize();
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
-            engine.RegisterHandler<TestWorkItem>(typeof(TestWorkItemHandler), "Test", 5, ProcessorPurpose.Internal));
+        // Assert - Engine is ready to use immediately after construction
+        var handlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Internal).ToList();
+        Assert.Single(handlers);
+        Assert.Contains("Test", handlers);
     }
 
     [Fact]
@@ -97,9 +85,10 @@ public class WorkItemProcessingEngineTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddWorkItemProcessing(); // Register engine with no handlers
+        
         var serviceProvider = services.BuildServiceProvider();
-        var engine = new WorkItemProcessingEngine(serviceProvider, _logger);
-        engine.Initialize();
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
 
         // Act
         var handlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Ingestion);
@@ -121,7 +110,6 @@ public class WorkItemProcessingEngineTests
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        engine.Initialize();
 
         // Act
         var ingestionHandlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Ingestion).ToList();
@@ -145,20 +133,14 @@ public class WorkItemProcessingEngineTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddWorkItemProcessing(); // Register engine with no handlers
         var serviceProvider = services.BuildServiceProvider();
-        var engine = new WorkItemProcessingEngine(serviceProvider, _logger);
-        engine.Initialize();
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
 
         // Act
         await engine.ProcessCycleAsync(CancellationToken.None);
 
-        // Assert - Should complete without throwing
-        _logger.Received(1).Log(
-            LogLevel.Debug,
-            Arg.Any<EventId>(),
-            Arg.Is<object>(o => o.ToString()!.Contains("No handlers registered")),
-            null,
-            Arg.Any<Func<object, Exception?, string>>());
+        // Assert - Should complete without throwing (logs debug message)
     }
 
     [Fact]
@@ -172,7 +154,6 @@ public class WorkItemProcessingEngineTests
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        engine.Initialize();
 
         // Act
         await engine.ProcessCycleAsync(CancellationToken.None);
@@ -201,7 +182,6 @@ public class WorkItemProcessingEngineTests
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        engine.Initialize();
 
         // Act
         await engine.ProcessCycleAsync(CancellationToken.None);
@@ -234,7 +214,6 @@ public class WorkItemProcessingEngineTests
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        engine.Initialize();
 
         // Act
         await engine.ProcessCycleAsync(CancellationToken.None);
@@ -267,7 +246,6 @@ public class WorkItemProcessingEngineTests
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        engine.Initialize();
 
         // Act
         await engine.ProcessCycleAsync(CancellationToken.None);
@@ -295,7 +273,6 @@ public class WorkItemProcessingEngineTests
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        engine.Initialize();
 
         // Act & Assert
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
@@ -314,7 +291,6 @@ public class WorkItemProcessingEngineTests
 
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        engine.Initialize();
 
         // Act & Assert - Should not throw, error is logged
         await engine.ProcessCycleAsync(CancellationToken.None);

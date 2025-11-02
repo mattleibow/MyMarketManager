@@ -61,57 +61,18 @@ public static class WorkItemProcessingExtensions
             // Register the handler
             Services.AddScoped<THandler>();
 
-            // Register it with the engine
-            Services.AddSingleton<IConfigureWorkItemProcessingEngine>(sp =>
-                new ConfigureWorkItemProcessingEngine<TWorkItem>(
-                    typeof(THandler), 
-                    name, 
-                    maxItemsPerCycle, 
+            // Register handler configuration using IOptions pattern
+            Services.Configure<WorkItemProcessingEngineOptions>(options =>
+            {
+                options.Registrations.Add(new WorkItemProcessingEngineOptions.HandlerRegistration(
+                    typeof(THandler),
+                    typeof(TWorkItem),
+                    name,
+                    maxItemsPerCycle,
                     purpose));
+            });
 
             return this;
-        }
-    }
-
-    // Helper interface for configuration
-    private interface IConfigureWorkItemProcessingEngine
-    {
-        void Configure(WorkItemProcessingEngine engine);
-    }
-
-    private class ConfigureWorkItemProcessingEngine<TWorkItem> : IConfigureWorkItemProcessingEngine 
-        where TWorkItem : IWorkItem
-    {
-        private readonly Type _handlerType;
-        private readonly string _name;
-        private readonly int _maxItemsPerCycle;
-        private readonly ProcessorPurpose _purpose;
-
-        public ConfigureWorkItemProcessingEngine(
-            Type handlerType, 
-            string name, 
-            int maxItemsPerCycle, 
-            ProcessorPurpose purpose)
-        {
-            _handlerType = handlerType;
-            _name = name;
-            _maxItemsPerCycle = maxItemsPerCycle;
-            _purpose = purpose;
-        }
-
-        public void Configure(WorkItemProcessingEngine engine)
-        {
-            engine.RegisterHandler<TWorkItem>(_handlerType, _name, _maxItemsPerCycle, _purpose);
-        }
-    }
-
-    // Called internally to configure the engine with all registered handlers
-    internal static void ConfigureEngine(IServiceProvider serviceProvider, WorkItemProcessingEngine engine)
-    {
-        var configurators = serviceProvider.GetServices<IConfigureWorkItemProcessingEngine>();
-        foreach (var configurator in configurators)
-        {
-            configurator.Configure(engine);
         }
     }
 }

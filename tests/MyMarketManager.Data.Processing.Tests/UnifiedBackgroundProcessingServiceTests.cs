@@ -28,9 +28,9 @@ public class UnifiedBackgroundProcessingServiceTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddWorkItemProcessing();
         var serviceProvider = services.BuildServiceProvider();
-        var logger = Substitute.For<ILogger<WorkItemProcessingEngine>>();
-        var engine = new WorkItemProcessingEngine(serviceProvider, logger);
+        var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
         var options = Options.Create(new UnifiedBackgroundProcessingOptions());
 
         // Act & Assert
@@ -39,35 +39,23 @@ public class UnifiedBackgroundProcessingServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_InitializesEngine()
+    public void Constructor_RegistersHandlers()
     {
         // Arrange
-        var initialized = false;
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddSingleton<TestInitializationTracker>(sp => new TestInitializationTracker { OnInitialize = () => initialized = true });
         services.AddWorkItemProcessing()
-            .AddHandler<TrackedTestWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
+            .AddHandler<TestWorkItemHandler, TestWorkItem>("Test", 5, ProcessorPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
+
+        // Act - Engine initialization happens during GetRequiredService
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        var logger = Substitute.For<ILogger<UnifiedBackgroundProcessingService>>();
-        var options = Options.Create(new UnifiedBackgroundProcessingOptions
-        {
-            PollInterval = TimeSpan.FromMilliseconds(10)
-        });
 
-        var service = new UnifiedBackgroundProcessingService(engine, logger, options);
-        var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromMilliseconds(50));
-
-        // Act
-        await service.StartAsync(CancellationToken.None);
-        await Task.Delay(100);
-        await service.StopAsync(CancellationToken.None);
-
-        // Assert - Service should have called Initialize
-        Assert.True(initialized);
+        // Assert - Engine should have handler registered and ready to use
+        var handlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Internal).ToList();
+        Assert.Single(handlers);
+        Assert.Contains("Test", handlers);
     }
 
     [Fact]

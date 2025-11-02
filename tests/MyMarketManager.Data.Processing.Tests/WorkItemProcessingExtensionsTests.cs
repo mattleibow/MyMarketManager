@@ -168,7 +168,6 @@ public class WorkItemProcessingExtensionsTests
         // Assert
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        engine.Initialize();
 
         var ingestionHandlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Ingestion).ToList();
         var internalHandlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Internal).ToList();
@@ -215,7 +214,6 @@ public class WorkItemProcessingExtensionsTests
         // Assert
         var serviceProvider = services.BuildServiceProvider();
         var engine = serviceProvider.GetRequiredService<WorkItemProcessingEngine>();
-        engine.Initialize();
 
         var internalHandlers = engine.GetHandlerNamesByPurpose(ProcessorPurpose.Internal).ToList();
         Assert.Single(internalHandlers);

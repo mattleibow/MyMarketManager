@@ -1,8 +1,24 @@
 using System.Threading.Channels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace MyMarketManager.Data.Processing;
+
+/// <summary>
+/// Configuration options for the WorkItemProcessingEngine.
+/// </summary>
+public class WorkItemProcessingEngineOptions
+{
+    internal List<HandlerRegistration> Registrations { get; } = new();
+
+    internal record HandlerRegistration(
+        Type HandlerType,
+        Type WorkItemType,
+        string Name,
+        int MaxItemsPerCycle,
+        ProcessorPurpose Purpose);
+}
 
 /// <summary>
 /// Central processing engine that orchestrates work item processing using System.Threading.Channels.
@@ -17,52 +33,53 @@ public class WorkItemProcessingEngine
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<WorkItemProcessingEngine> _logger;
     private readonly List<IWorkItemHandlerRegistration> _registrations = new();
-    private volatile bool _initialized = false;
 
     public WorkItemProcessingEngine(
         IServiceProvider serviceProvider,
-        ILogger<WorkItemProcessingEngine> logger)
+        ILogger<WorkItemProcessingEngine> logger,
+        IOptions<WorkItemProcessingEngineOptions> options)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    /// <summary>
-    /// Initializes the engine with all registered handlers.
-    /// Should be called once during startup.
-    /// </summary>
-    public void Initialize()
-    {
-        if (_initialized)
-            return;
-
-        WorkItemProcessingExtensions.ConfigureEngine(_serviceProvider, this);
-        _initialized = true;
+        
+        ArgumentNullException.ThrowIfNull(options);
+        
+        // Register all handlers from options
+        foreach (var registration in options.Value.Registrations)
+        {
+            RegisterHandlerInternal(
+                registration.HandlerType,
+                registration.WorkItemType,
+                registration.Name,
+                registration.MaxItemsPerCycle,
+                registration.Purpose);
+        }
+        
         _logger.LogInformation("WorkItemProcessingEngine initialized with {Count} handlers", _registrations.Count);
     }
 
-    /// <summary>
-    /// Registers a work item handler for processing.
-    /// </summary>
-    public void RegisterHandler<TWorkItem>(
-        Type handlerType, 
-        string name, 
-        int maxItemsPerCycle, 
-        ProcessorPurpose purpose) where TWorkItem : IWorkItem
+    private void RegisterHandlerInternal(
+        Type handlerType,
+        Type workItemType,
+        string name,
+        int maxItemsPerCycle,
+        ProcessorPurpose purpose)
     {
-        if (_initialized)
-            throw new InvalidOperationException("Cannot register handlers after engine has been initialized");
-
-        _registrations.Add(new WorkItemHandlerRegistration<TWorkItem>(
-            handlerType, 
-            name, 
-            maxItemsPerCycle, 
-            purpose));
-        _logger.LogInformation(
-            "Registered handler: {HandlerType} as '{Name}' for work item type {WorkItemType} (Max: {MaxItems}, Purpose: {Purpose})", 
-            handlerType.Name, 
+        var registrationType = typeof(WorkItemHandlerRegistration<>).MakeGenericType(workItemType);
+        var registration = (IWorkItemHandlerRegistration)Activator.CreateInstance(
+            registrationType,
+            handlerType,
             name,
-            typeof(TWorkItem).Name,
+            maxItemsPerCycle,
+            purpose)!;
+        
+        _registrations.Add(registration);
+        
+        _logger.LogInformation(
+            "Registered handler: {HandlerType} as '{Name}' for work item type {WorkItemType} (Max: {MaxItems}, Purpose: {Purpose})",
+            handlerType.Name,
+            name,
+            workItemType.Name,
             maxItemsPerCycle,
             purpose);
     }
