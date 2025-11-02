@@ -10,8 +10,10 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="9.5.1" />
+    <PackageReference Include="Azure.AI.Vision.ImageAnalysis" Version="1.0.0" />
     <PackageReference Include="HotChocolate.AspNetCore" Version="15.1.10" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="9.10.1" />
     <PackageReference Include="StrawberryShake.Transport.InMemory" Version="15.1.10" />
   </ItemGroup>
 
@@ -20,6 +22,7 @@
     <ProjectReference Include="..\MyMarketManager.Data\MyMarketManager.Data.csproj" />
     <ProjectReference Include="..\MyMarketManager.GraphQL.Client\MyMarketManager.GraphQL.Client.csproj" />
     <ProjectReference Include="..\MyMarketManager.Scrapers\MyMarketManager.Scrapers.csproj" />
+    <ProjectReference Include="..\MyMarketManager.AI\MyMarketManager.AI.csproj" />
   </ItemGroup>
 
 </Project>

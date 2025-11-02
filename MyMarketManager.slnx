@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/MyMarketManager.AI/MyMarketManager.AI.csproj" />
     <Project Path="src/MyMarketManager.AppHost/MyMarketManager.AppHost.csproj" />
     <Project Path="src/MyMarketManager.GraphQL.Client/MyMarketManager.GraphQL.Client.csproj" />
     <Project Path="src/MyMarketManager.ServiceDefaults/MyMarketManager.ServiceDefaults.csproj" />
@@ -11,6 +12,7 @@
     <Project Path="src/MyMarketManager.SheinCollector/MyMarketManager.SheinCollector.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/MyMarketManager.AI.Tests/MyMarketManager.AI.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Components.Tests/MyMarketManager.Components.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Data.Processing.Tests/MyMarketManager.Data.Processing.Tests.csproj" />
     <Project Path="tests/MyMarketManager.Data.Tests/MyMarketManager.Data.Tests.csproj" />

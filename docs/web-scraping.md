@@ -74,12 +74,15 @@ The scraper extracts structured JSON embedded in the HTML rather than parsing DO
 
 ## Usage
 
-Scrapers integrate with the staging batch workflow:
+Scrapers integrate with the staging batch and background processing workflow:
 
 1. Cookie file captured by client app (e.g., MAUI SheinCollector)
 2. Call `scraper.StartScrapingAsync(supplierId, cookieFile)`
 3. Scraper creates and populates `StagingBatch` with `StagingPurchaseOrder` entities
-4. Staging data reviewed and imported separately
+4. Background processing system picks up queued batches
+5. Staging data reviewed and imported separately
+
+See [Background Processing](background-processing.md) for details on how scrapers are integrated into the processing pipeline.
 
 ## Implementing New Scrapers
 
@@ -87,10 +90,79 @@ To add a supplier scraper:
 
 1. Create class extending `WebScraper`
 2. Implement abstract methods for URLs and parsing
-3. Add unit tests with HTML fixtures
-4. Register scraper in DI container
+3. Create a handler extending `IWorkItemHandler<StagingBatchWorkItem>` (see example below)
+4. Add unit tests with HTML fixtures
+5. Register scraper and handler in DI container
 
-The base class handles all orchestration, error handling, and database persistence.
+Example handler for a new scraper:
+
+```csharp
+public class YocoBatchHandler : IWorkItemHandler<StagingBatchWorkItem>
+{
+    private readonly MyMarketManagerDbContext _context;
+    private readonly YocoWebScraper _scraper;
+    private readonly ILogger<YocoBatchHandler> _logger;
+
+    public YocoBatchHandler(
+        MyMarketManagerDbContext context,
+        YocoWebScraper scraper,
+        ILogger<YocoBatchHandler> logger)
+    {
+        _context = context;
+        _scraper = scraper;
+        _logger = logger;
+    }
+
+    public async Task<IReadOnlyCollection<StagingBatchWorkItem>> FetchWorkItemsAsync(
+        int maxItems, 
+        CancellationToken cancellationToken)
+    {
+        var batches = await _context.StagingBatches
+            .Where(b => b.Status == ProcessingStatus.Queued && b.BatchProcessorName == "Yoco")
+            .OrderBy(b => b.StartedAt)
+            .Take(maxItems)
+            .ToListAsync(cancellationToken);
+
+        return batches.Select(b => new StagingBatchWorkItem(b)).ToList();
+    }
+
+    public async Task ProcessAsync(StagingBatchWorkItem workItem, CancellationToken cancellationToken)
+    {
+        var batch = workItem.Batch;
+        
+        try
+        {
+            await _scraper.ProcessBatchAsync(batch, cancellationToken);
+            batch.Status = ProcessingStatus.Completed;
+            batch.CompletedAt = DateTimeOffset.UtcNow;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing Yoco batch {BatchId}", batch.Id);
+            batch.Status = ProcessingStatus.Failed;
+            batch.ErrorMessage = ex.Message;
+        }
+        
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+}
+```
+
+Then register in `Program.cs`:
+
+```csharp
+builder.Services.AddScoped<YocoWebScraper>();
+
+builder.Services.AddWorkItemProcessing()
+    .AddHandler<YocoBatchHandler, StagingBatchWorkItem>(
+        name: "Yoco",
+        maxItemsPerCycle: 5,
+        purpose: ProcessorPurpose.Ingestion);
+```
+
+The base `WebScraper` class handles all orchestration, error handling, and database persistence. Your handler integrates it into the background processing system.
+
+For complete details on handlers, see [Background Processing](background-processing.md).
 
 ## Testing
 
