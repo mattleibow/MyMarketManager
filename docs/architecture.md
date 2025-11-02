@@ -88,7 +88,7 @@ See [Data Model](data-model.md) for complete entity documentation.
 
 ## Background Processing Architecture
 
-The application uses a Channel-based work item processing system for asynchronous background tasks like web scraping and data cleanup.
+The application uses a Channel-based work item processing system for asynchronous background tasks like web scraping, data cleanup, and image vectorization.
 
 ### Key Components
 
@@ -105,7 +105,34 @@ The application uses a Channel-based work item processing system for asynchronou
 - Easy to add new processors without creating new services
 - Handlers categorized by purpose (Ingestion/Internal/Export) for UI filtering
 
+### Built-in Handlers
+
+- **SheinBatchHandler** - Processes web scraping batches (Ingestion)
+- **ImageVectorizationHandler** - Generates AI embeddings for product photos (Internal)
+
 See [Background Processing](background-processing.md) for detailed architecture and how to create new handlers.
+
+## Image Vectorization Architecture
+
+The application uses Azure Computer Vision AI to generate vector embeddings for product images, enabling similarity search and semantic search capabilities.
+
+### Key Components
+
+- **MyMarketManager.AI** - Azure Computer Vision embedding generators using Microsoft.Extensions.AI
+  - `ImageEmbeddingGenerator` - Generates 1024-dimensional vectors from image URLs
+  - `TextEmbeddingGenerator` - Generates vectors from text for semantic search
+- **MyMarketManager.Processing.AI** - Image vectorization background handler
+  - `ImageVectorizationHandler` - Processes photos and stores embeddings
+  - `ImageVectorizationWorkItem` - Work item for a single photo
+
+### Integration
+
+Image vectorization integrates with the background processing system:
+- Handler automatically processes photos without embeddings
+- Runs every 5 minutes, processing up to 10 images per cycle
+- Stores 1024-dimensional vectors in ProductPhoto entity as comma-separated strings
+
+See [Image Vectorization](image-vectorization.md) for detailed architecture and configuration.
 
 ## Web Scraping Architecture
 

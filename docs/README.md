@@ -21,6 +21,7 @@ Resources for developers working on MyMarketManager:
 - **[GraphQL Client](graphql-client.md)** - Client library usage, service registration, and examples
 - **[Web Scraping](web-scraping.md)** - Web scraping infrastructure for data ingestion from supplier websites
 - **[Background Processing](background-processing.md)** - Asynchronous work item processing system (web scraping, cleanup)
+- **[Image Vectorization](image-vectorization.md)** - AI-powered image embeddings for similarity search
 
 ## Reference
 
