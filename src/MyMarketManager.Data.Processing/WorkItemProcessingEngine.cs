@@ -17,7 +17,7 @@ public class WorkItemProcessingEngine
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<WorkItemProcessingEngine> _logger;
     private readonly List<IWorkItemHandlerRegistration> _registrations = new();
-    private bool _initialized = false;
+    private volatile bool _initialized = false;
 
     public WorkItemProcessingEngine(
         IServiceProvider serviceProvider,
@@ -50,6 +50,9 @@ public class WorkItemProcessingEngine
         int maxItemsPerCycle, 
         ProcessorPurpose purpose) where TWorkItem : IWorkItem
     {
+        if (_initialized)
+            throw new InvalidOperationException("Cannot register handlers after engine has been initialized");
+
         _registrations.Add(new WorkItemHandlerRegistration<TWorkItem>(
             handlerType, 
             name, 

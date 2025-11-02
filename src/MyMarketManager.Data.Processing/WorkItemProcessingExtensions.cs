@@ -55,10 +55,8 @@ public static class WorkItemProcessingExtensions
             where THandler : class, IWorkItemHandler<TWorkItem>
             where TWorkItem : IWorkItem
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Handler name cannot be null or empty", nameof(name));
-            if (maxItemsPerCycle < 1)
-                throw new ArgumentException("Max items per cycle must be at least 1", nameof(maxItemsPerCycle));
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(name);
+            ArgumentOutOfRangeException.ThrowIfLessThan(maxItemsPerCycle, 1);
 
             // Register the handler
             Services.AddScoped<THandler>();
