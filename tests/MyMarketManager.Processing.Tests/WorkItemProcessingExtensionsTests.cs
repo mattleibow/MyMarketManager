@@ -6,7 +6,7 @@ namespace MyMarketManager.Processing.Tests;
 public class WorkItemProcessingExtensionsTests
 {
     [Fact]
-    public void AddWorkItemProcessing_RegistersEngine()
+    public void AddWorkItemProcessing_RegistersProcessingService()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -19,8 +19,8 @@ public class WorkItemProcessingExtensionsTests
         // Assert
         Assert.NotNull(builder);
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetService<WorkItemProcessingService>();
-        Assert.NotNull(engine);
+        var processingService = serviceProvider.GetService<WorkItemProcessingService>();
+        Assert.NotNull(processingService);
     }
 
     [Fact]
@@ -167,11 +167,11 @@ public class WorkItemProcessingExtensionsTests
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
-        var ingestionHandlers = engine.GetHandlers(WorkItemHandlerPurpose.Ingestion).ToList();
-        var internalHandlers = engine.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
-        var exportHandlers = engine.GetHandlers(WorkItemHandlerPurpose.Export).ToList();
+        var ingestionHandlers = processingService.GetHandlers(WorkItemHandlerPurpose.Ingestion).ToList();
+        var internalHandlers = processingService.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
+        var exportHandlers = processingService.GetHandlers(WorkItemHandlerPurpose.Export).ToList();
 
         Assert.Single(ingestionHandlers);
         Assert.Contains("Ingestion", ingestionHandlers);
@@ -213,9 +213,9 @@ public class WorkItemProcessingExtensionsTests
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
-        var internalHandlers = engine.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
+        var internalHandlers = processingService.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
         Assert.Single(internalHandlers);
         Assert.Contains("Test", internalHandlers);
     }

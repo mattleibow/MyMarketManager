@@ -6,14 +6,14 @@ namespace MyMarketManager.Processing;
 
 /// <summary>
 /// Unified background service that orchestrates all work item processing.
-/// Uses the WorkItemProcessingEngine with Channel-based queuing.
+/// Uses the WorkItemProcessingService with Channel-based queuing.
 /// </summary>
 public class BackgroundProcessingService(
-    WorkItemProcessingService engine,
+    WorkItemProcessingService processingService,
     ILogger<BackgroundProcessingService> logger,
     IOptions<BackgroundProcessingOptions> options) : BackgroundService
 {
-    private readonly WorkItemProcessingService _engine = engine ?? throw new ArgumentNullException(nameof(engine));
+    private readonly WorkItemProcessingService _processingService = processingService ?? throw new ArgumentNullException(nameof(processingService));
     private readonly ILogger<BackgroundProcessingService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly BackgroundProcessingOptions _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
 
@@ -26,7 +26,7 @@ public class BackgroundProcessingService(
         {
             try
             {
-                await _engine.ProcessCycleAsync(stoppingToken);
+                await _processingService.ProcessCycleAsync(stoppingToken);
             }
             catch (Exception ex)
             {

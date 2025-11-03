@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace MyMarketManager.Processing;
 
 /// <summary>
-/// Central processing engine that orchestrates work item processing using System.Threading.Channels.
+/// Central processing service that orchestrates work item processing using System.Threading.Channels.
 /// Features:
 /// - Each registered handler fetches its own work items
 /// - Bounded channels prevent memory issues
