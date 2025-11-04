@@ -5,6 +5,7 @@
     <Project Path="src/MyMarketManager.Data/MyMarketManager.Data.csproj" />
     <Project Path="src/MyMarketManager.GraphQL.Client/MyMarketManager.GraphQL.Client.csproj" />
     <Project Path="src/MyMarketManager.Processing/MyMarketManager.Processing.csproj" />
+    <Project Path="src/MyMarketManager.Processing.Handlers/MyMarketManager.Processing.Handlers.csproj" />
     <Project Path="src/MyMarketManager.Scrapers.Core/MyMarketManager.Scrapers.Core.csproj" />
     <Project Path="src/MyMarketManager.Scrapers/MyMarketManager.Scrapers.csproj" />
     <Project Path="src/MyMarketManager.ServiceDefaults/MyMarketManager.ServiceDefaults.csproj" />

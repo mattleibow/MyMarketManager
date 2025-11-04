@@ -7,6 +7,7 @@ using MyMarketManager.GraphQL.Client;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Shein;
 using MyMarketManager.Processing;
+using MyMarketManager.Processing.Handlers;
 using MyMarketManager.AI;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,20 +40,17 @@ builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSectio
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
 builder.Services.AddScoped<SheinWebScraper>();
 
-var processingBuilder = builder.Services.AddBackgroundProcessing(builder.Configuration.GetSection("BackgroundProcessing"))
+// Add background processing handlers
+// Always register handlers to avoid runtime errors - they will gracefully handle missing dependencies
+builder.Services.AddBackgroundProcessing(builder.Configuration.GetSection("BackgroundProcessing"))
     .AddHandler<SheinBatchHandler>(
         name: "Shein",
         maxItemsPerCycle: 5,
-        purpose: WorkItemHandlerPurpose.Ingestion);
-
-// Only register image vectorization handler if Azure AI is configured
-if (!string.IsNullOrEmpty(computerVisionEndpoint) && !string.IsNullOrEmpty(computerVisionApiKey))
-{
-    processingBuilder.AddHandler<ImageVectorizationHandler>(
-        name: "ImageVectorization",
+        purpose: WorkItemHandlerPurpose.Ingestion)
+    .AddHandler<ProductPhotoImageVectorizationHandler>(
+        name: "ProductPhotoImageVectorization",
         maxItemsPerCycle: 10,
         purpose: WorkItemHandlerPurpose.Internal);
-}
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

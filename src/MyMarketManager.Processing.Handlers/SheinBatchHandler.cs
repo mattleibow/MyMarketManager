@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyMarketManager.Data;
 using MyMarketManager.Data.Enums;
-using MyMarketManager.Processing;
+using MyMarketManager.Scrapers.Shein;
 
-namespace MyMarketManager.Scrapers.Shein;
+namespace MyMarketManager.Processing.Handlers;
 
 /// <summary>
 /// Handler that fetches and processes Shein staging batches.
