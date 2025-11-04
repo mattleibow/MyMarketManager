@@ -2,7 +2,7 @@ namespace MyMarketManager.Processing;
 
 /// <summary>
 /// Non-generic base interface for work item handlers.
-/// This is used internally by the engine to work with handlers without knowing their specific types.
+/// This is used internally by the processing service to work with handlers without knowing their specific types.
 /// </summary>
 public interface IWorkItemHandler
 {

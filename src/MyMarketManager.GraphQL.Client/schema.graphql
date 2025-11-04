@@ -8,7 +8,7 @@ type Query {
   productById(id: UUID!): Product
   purchaseOrders: [PurchaseOrderDto!]!
   purchaseOrderById(id: UUID!): PurchaseOrderDetailDto
-  availableScrapers(batchType: StagingBatchType!): [String!]!
+  availableIngestionProcessors: [String!]!
   stagingBatches: [StagingBatchDto!]!
   stagingBatchById(id: UUID!): StagingBatchDetailDto
   suppliers: [SupplierOption!]!
@@ -21,6 +21,15 @@ type Mutation {
   submitCookies(input: SubmitCookiesInput!): SubmitCookiesPayload!
 }
 
+input CreateProductInput {
+  sku: String
+  name: String!
+  description: String
+  quality: ProductQuality!
+  notes: String
+  stockOnHand: Int!
+}
+
 type SupplierOption {
   id: UUID!
   name: String!
@@ -28,7 +37,6 @@ type SupplierOption {
 
 type StagingBatchDetailDto {
   id: UUID!
-  batchType: StagingBatchType!
   batchProcessorName: String
   supplierId: UUID
   supplierName: String
@@ -42,7 +50,6 @@ type StagingBatchDetailDto {
 
 type StagingBatchDto {
   id: UUID!
-  batchType: StagingBatchType!
   batchProcessorName: String
   supplierId: UUID
   supplierName: String
@@ -53,11 +60,6 @@ type StagingBatchDto {
   errorMessage: String
   orderCount: Int!
   itemCount: Int!
-}
-
-enum StagingBatchType {
-  WEB_SCRAPE
-  BLOB_UPLOAD
 }
 
 type PurchaseOrderDetailDto {
@@ -110,15 +112,6 @@ type Product {
   isDeleted: Boolean!
 }
 
-input CreateProductInput {
-  sku: String
-  name: String!
-  description: String
-  quality: ProductQuality!
-  notes: String
-  stockOnHand: Int!
-}
-
 input UpdateProductInput {
   sku: String
   name: String!
@@ -139,52 +132,6 @@ input SubmitCookiesInput {
   supplierId: UUID!
   processorName: String!
   cookieJson: String!
-}
-
-type StagingSaleItem {
-  stagingSaleId: UUID!
-  stagingSale: StagingSale!
-  productId: UUID
-  product: Product
-  productDescription: String!
-  saleDate: DateTime!
-  price: Decimal!
-  quantity: Int!
-  marketEventName: String
-  rawData: String!
-  isImported: Boolean!
-  status: CandidateStatus!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
-
-type StagingPurchaseOrderItem {
-  stagingPurchaseOrderId: UUID!
-  stagingPurchaseOrder: StagingPurchaseOrder!
-  productId: UUID
-  product: Product
-  supplierId: UUID
-  supplier: Supplier
-  purchaseOrderItemId: UUID
-  purchaseOrderItem: PurchaseOrderItem
-  supplierReference: String
-  supplierProductUrl: String
-  name: String!
-  description: String
-  quantity: Int!
-  listedUnitPrice: Decimal!
-  actualUnitPrice: Decimal!
-  rawData: String!
-  isImported: Boolean!
-  status: CandidateStatus!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
 }
 
 type ReconciledSale {
@@ -298,6 +245,104 @@ enum ProcessingStatus {
 "The `DateTime` scalar represents an ISO-8601 compliant date time type."
 scalar DateTime
 
+type StagingPurchaseOrderItem {
+  stagingPurchaseOrderId: UUID!
+  stagingPurchaseOrder: StagingPurchaseOrder!
+  productId: UUID
+  product: Product
+  supplierId: UUID
+  supplier: Supplier
+  purchaseOrderItemId: UUID
+  purchaseOrderItem: PurchaseOrderItem
+  supplierReference: String
+  supplierProductUrl: String
+  name: String!
+  description: String
+  quantity: Int!
+  listedUnitPrice: Decimal!
+  actualUnitPrice: Decimal!
+  rawData: String!
+  isImported: Boolean!
+  status: CandidateStatus!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type StagingSaleItem {
+  stagingSaleId: UUID!
+  stagingSale: StagingSale!
+  productId: UUID
+  product: Product
+  productDescription: String!
+  saleDate: DateTime!
+  price: Decimal!
+  quantity: Int!
+  marketEventName: String
+  rawData: String!
+  isImported: Boolean!
+  status: CandidateStatus!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type StagingSale {
+  stagingBatchId: UUID!
+  stagingBatch: StagingBatch!
+  saleDate: DateTime!
+  rawData: String!
+  isImported: Boolean!
+  items: [StagingSaleItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+enum CandidateStatus {
+  PENDING
+  LINKED
+  IGNORED
+}
+
+type Supplier {
+  name: String!
+  websiteUrl: String
+  contactInfo: String
+  purchaseOrders: [PurchaseOrder!]!
+  stagingBatches: [StagingBatch!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+type StagingPurchaseOrder {
+  stagingBatchId: UUID!
+  stagingBatch: StagingBatch!
+  purchaseOrderId: UUID
+  purchaseOrder: PurchaseOrder
+  supplierReference: String
+  orderDate: DateTime!
+  rawData: String!
+  isImported: Boolean!
+  status: ProcessingStatus!
+  errorMessage: String
+  items: [StagingPurchaseOrderItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
 type PurchaseOrder {
   supplierId: UUID!
   supplier: Supplier!
@@ -346,60 +391,7 @@ type MarketEvent {
   isDeleted: Boolean!
 }
 
-type Supplier {
-  name: String!
-  websiteUrl: String
-  contactInfo: String
-  purchaseOrders: [PurchaseOrder!]!
-  stagingBatches: [StagingBatch!]!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
-
-type StagingPurchaseOrder {
-  stagingBatchId: UUID!
-  stagingBatch: StagingBatch!
-  purchaseOrderId: UUID
-  purchaseOrder: PurchaseOrder
-  supplierReference: String
-  orderDate: DateTime!
-  rawData: String!
-  isImported: Boolean!
-  status: ProcessingStatus!
-  errorMessage: String
-  items: [StagingPurchaseOrderItem!]!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
-
-enum CandidateStatus {
-  PENDING
-  LINKED
-  IGNORED
-}
-
-type StagingSale {
-  stagingBatchId: UUID!
-  stagingBatch: StagingBatch!
-  saleDate: DateTime!
-  rawData: String!
-  isImported: Boolean!
-  items: [StagingSaleItem!]!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
-
 type StagingBatch {
-  batchType: StagingBatchType!
   batchProcessorName: String
   supplierId: UUID
   supplier: Supplier

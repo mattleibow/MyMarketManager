@@ -4,16 +4,16 @@ using Microsoft.Extensions.DependencyInjection;
 namespace MyMarketManager.Processing;
 
 /// <summary>
-/// Extension methods for registering work item handlers and the processing engine.
+/// Extension methods for registering work item handlers and the processing service.
 /// </summary>
 public static class Extensions
 {
     /// <summary>
-    /// Adds the work item processing engine and returns a builder for registering handlers.
+    /// Adds the work item processing service and returns a builder for registering handlers.
     /// </summary>
     public static IBackgroundProcessingBuilder AddBackgroundProcessing(this IServiceCollection services)
     {
-        // Register the engine as singleton (shared across all scopes)
+        // Register the processing service as singleton (shared across all scopes)
         services.AddSingleton<WorkItemProcessingService>();
 
         // Register the unified background processing service
@@ -23,7 +23,7 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Adds the work item processing engine and returns a builder for registering handlers.
+    /// Adds the work item processing service and returns a builder for registering handlers.
     /// </summary>
     public static IBackgroundProcessingBuilder AddBackgroundProcessing(this IServiceCollection services, IConfiguration config)
     {
@@ -34,7 +34,7 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Adds the work item processing engine and returns a builder for registering handlers.
+    /// Adds the work item processing service and returns a builder for registering handlers.
     /// </summary>
     public static IBackgroundProcessingBuilder AddBackgroundProcessing(this IServiceCollection services, Action<BackgroundProcessingOptions> configureOptions)
     {

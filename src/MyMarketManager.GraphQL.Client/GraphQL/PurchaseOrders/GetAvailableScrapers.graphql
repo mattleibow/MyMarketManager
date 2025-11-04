@@ -1,3 +1,0 @@
-query GetAvailableScrapers($batchType: StagingBatchType!) {
-  availableScrapers(batchType: $batchType)
-}

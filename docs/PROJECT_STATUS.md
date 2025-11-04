@@ -121,7 +121,7 @@
 - ✅ StagingSaleItem - Staged sale items
 
 **Enums** (4):
-- ✅ ProcessingStatus, CandidateStatus, ProductQuality, StagingBatchType
+- ✅ ProcessingStatus, CandidateStatus, ProductQuality
 
 **Audit Support**:
 - ✅ Soft delete (IsDeleted)

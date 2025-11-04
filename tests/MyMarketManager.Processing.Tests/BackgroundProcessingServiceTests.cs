@@ -10,7 +10,7 @@ namespace MyMarketManager.Processing.Tests;
 public class BackgroundProcessingServiceTests
 {
     [Fact]
-    public void Constructor_WithNullEngine_ThrowsArgumentNullException()
+    public void Constructor_WithNullProcessingService_ThrowsArgumentNullException()
     {
         // Arrange
         var logger = Substitute.For<ILogger<BackgroundProcessingService>>();
@@ -29,12 +29,12 @@ public class BackgroundProcessingServiceTests
         services.AddLogging();
         services.AddBackgroundProcessing();
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
         var options = Options.Create(new BackgroundProcessingOptions());
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new BackgroundProcessingService(engine, null!, options));
+            new BackgroundProcessingService(processingService, null!, options));
     }
 
     [Fact]
@@ -48,11 +48,11 @@ public class BackgroundProcessingServiceTests
         
         var serviceProvider = services.BuildServiceProvider();
 
-        // Act - Engine initialization happens during GetRequiredService
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        // Act - Initialization happens during GetRequiredService
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
-        // Assert - Engine should have handler registered and ready to use
-        var handlers = engine.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
+        // Assert - Should have handler registered and ready to use
+        var handlers = processingService.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
         Assert.Single(handlers);
         Assert.Contains("Test", handlers);
     }
@@ -69,14 +69,14 @@ public class BackgroundProcessingServiceTests
             .AddHandler<TrackedProcessingWorkItemHandler>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
         var logger = Substitute.For<ILogger<BackgroundProcessingService>>();
         var options = Options.Create(new BackgroundProcessingOptions
         {
             PollInterval = TimeSpan.FromMilliseconds(10)
         });
 
-        var service = new BackgroundProcessingService(engine, logger, options);
+        var service = new BackgroundProcessingService(processingService, logger, options);
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMilliseconds(100));
 
@@ -101,14 +101,14 @@ public class BackgroundProcessingServiceTests
             .AddHandler<FailingFetchWorkItemHandler>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
         var logger = Substitute.For<ILogger<BackgroundProcessingService>>();
         var options = Options.Create(new BackgroundProcessingOptions
         {
             PollInterval = TimeSpan.FromMilliseconds(20)
         });
 
-        var service = new BackgroundProcessingService(engine, logger, options);
+        var service = new BackgroundProcessingService(processingService, logger, options);
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMilliseconds(100));
 
@@ -131,14 +131,14 @@ public class BackgroundProcessingServiceTests
             .AddHandler<TestWorkItemHandler>("Test", 5, WorkItemHandlerPurpose.Internal);
         
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
         var logger = Substitute.For<ILogger<BackgroundProcessingService>>();
         var options = Options.Create(new BackgroundProcessingOptions
         {
             PollInterval = TimeSpan.FromMilliseconds(10)
         });
 
-        var service = new BackgroundProcessingService(engine, logger, options);
+        var service = new BackgroundProcessingService(processingService, logger, options);
 
         // Act
         await service.StartAsync(CancellationToken.None);

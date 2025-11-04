@@ -135,9 +135,9 @@ Get available handlers by purpose:
 
 ```csharp
 public IEnumerable<string> GetAvailableScrapers(
-    [Service] WorkItemProcessingService engine)
+    [Service] WorkItemProcessingService processingService)
 {
-    return engine.GetHandlers(WorkItemHandlerPurpose.Ingestion);
+    return processingService.GetHandlers(WorkItemHandlerPurpose.Ingestion);
 }
 ```
 

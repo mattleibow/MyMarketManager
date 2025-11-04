@@ -1,7 +1,6 @@
 query GetStagingBatches {
   stagingBatches {
     id
-    batchType
     batchProcessorName
     supplierId
     supplierName

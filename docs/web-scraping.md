@@ -43,7 +43,7 @@ The system has two main projects:
 - `UpdateStagingPurchaseOrderAsync(stagingOrder, order)` - Maps scraped data to staging entity
 
 **Scraping Workflow (provided by base class):**
-1. Creates `StagingBatch` with `BatchType.WebScrape`
+1. Creates `StagingBatch`
 2. Creates scraping session with cookies
 3. Fetches orders list page
 4. Parses order summaries (async enumerable)

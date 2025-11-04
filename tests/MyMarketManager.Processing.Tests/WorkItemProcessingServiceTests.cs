@@ -48,7 +48,7 @@ public class WorkItemProcessingServiceTests
         var options = Microsoft.Extensions.Options.Options.Create(new WorkItemProcessingServiceOptions());
 
         // Act
-        var engine = new WorkItemProcessingService(serviceProvider, _logger, options);
+        var processingService = new WorkItemProcessingService(serviceProvider, _logger, options);
 
         // Assert
         _logger.Received(1).Log(
@@ -71,10 +71,10 @@ public class WorkItemProcessingServiceTests
         var serviceProvider = services.BuildServiceProvider();
 
         // Act
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
-        // Assert - Engine is ready to use immediately after construction
-        var handlers = engine.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
+        // Assert - Is ready to use immediately after construction
+        var handlers = processingService.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
         Assert.Single(handlers);
         Assert.Contains("Test", handlers);
     }
@@ -85,13 +85,13 @@ public class WorkItemProcessingServiceTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddBackgroundProcessing(); // Register engine with no handlers
+        services.AddBackgroundProcessing(); // Register processingService with no handlers
         
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
         // Act
-        var handlers = engine.GetHandlers(WorkItemHandlerPurpose.Ingestion);
+        var handlers = processingService.GetHandlers(WorkItemHandlerPurpose.Ingestion);
 
         // Assert
         Assert.Empty(handlers);
@@ -109,12 +109,12 @@ public class WorkItemProcessingServiceTests
             .AddHandler<ThirdTestWorkItemHandler>("Handler3", 15, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
         // Act
-        var ingestionHandlers = engine.GetHandlers(WorkItemHandlerPurpose.Ingestion).ToList();
-        var internalHandlers = engine.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
-        var exportHandlers = engine.GetHandlers(WorkItemHandlerPurpose.Export).ToList();
+        var ingestionHandlers = processingService.GetHandlers(WorkItemHandlerPurpose.Ingestion).ToList();
+        var internalHandlers = processingService.GetHandlers(WorkItemHandlerPurpose.Internal).ToList();
+        var exportHandlers = processingService.GetHandlers(WorkItemHandlerPurpose.Export).ToList();
 
         // Assert
         Assert.Equal(2, ingestionHandlers.Count);
@@ -133,12 +133,12 @@ public class WorkItemProcessingServiceTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddBackgroundProcessing(); // Register engine with no handlers
+        services.AddBackgroundProcessing(); // Register processingService with no handlers
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
         // Act
-        await engine.ProcessCycleAsync(CancellationToken.None);
+        await processingService.ProcessCycleAsync(CancellationToken.None);
 
         // Assert - Should complete without throwing (logs debug message)
     }
@@ -153,10 +153,10 @@ public class WorkItemProcessingServiceTests
             .AddHandler<TestWorkItemHandler>("Test", 5, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
         // Act
-        await engine.ProcessCycleAsync(CancellationToken.None);
+        await processingService.ProcessCycleAsync(CancellationToken.None);
 
         // Assert - Should complete without throwing
     }
@@ -181,10 +181,10 @@ public class WorkItemProcessingServiceTests
             .AddHandler<TrackingTestWorkItemHandler>("Test", 10, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
         // Act
-        await engine.ProcessCycleAsync(CancellationToken.None);
+        await processingService.ProcessCycleAsync(CancellationToken.None);
 
         // Assert
         Assert.Equal(3, processedItems.Count);
@@ -213,10 +213,10 @@ public class WorkItemProcessingServiceTests
             .AddHandler<AnotherTrackingTestWorkItemHandler>("Handler2", 10, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
         // Act
-        await engine.ProcessCycleAsync(CancellationToken.None);
+        await processingService.ProcessCycleAsync(CancellationToken.None);
 
         // Assert
         Assert.Equal(2, processedItems1.Count);
@@ -245,10 +245,10 @@ public class WorkItemProcessingServiceTests
             .AddHandler<TrackingTestWorkItemHandler>("Test", 3, WorkItemHandlerPurpose.Internal); // Max 3 items
 
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
         // Act
-        await engine.ProcessCycleAsync(CancellationToken.None);
+        await processingService.ProcessCycleAsync(CancellationToken.None);
 
         // Assert
         Assert.Equal(3, processedItems.Count); // Should only process 3, not 5
@@ -272,11 +272,11 @@ public class WorkItemProcessingServiceTests
             .AddHandler<TrackingTestWorkItemHandler>("Test", 10, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
         // Act & Assert
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
-            await engine.ProcessCycleAsync(cts.Token));
+            await processingService.ProcessCycleAsync(cts.Token));
     }
 
     [Fact]
@@ -290,10 +290,10 @@ public class WorkItemProcessingServiceTests
             .AddHandler<FailingTestWorkItemHandler>("Test", 10, WorkItemHandlerPurpose.Internal);
 
         var serviceProvider = services.BuildServiceProvider();
-        var engine = serviceProvider.GetRequiredService<WorkItemProcessingService>();
+        var processingService = serviceProvider.GetRequiredService<WorkItemProcessingService>();
 
         // Act & Assert - Should not throw, error is logged
-        await engine.ProcessCycleAsync(CancellationToken.None);
+        await processingService.ProcessCycleAsync(CancellationToken.None);
     }
 
     // Test helper classes

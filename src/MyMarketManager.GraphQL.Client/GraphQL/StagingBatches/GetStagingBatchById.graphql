@@ -1,7 +1,6 @@
 query GetStagingBatchById($id: UUID!) {
   stagingBatchById(id: $id) {
     id
-    batchType
     batchProcessorName
     supplierId
     supplierName
