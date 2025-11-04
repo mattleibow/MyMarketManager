@@ -39,15 +39,20 @@ builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSectio
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
 builder.Services.AddScoped<SheinWebScraper>();
 
-builder.Services.AddBackgroundProcessing(builder.Configuration.GetSection("BackgroundProcessing"))
+var processingBuilder = builder.Services.AddBackgroundProcessing(builder.Configuration.GetSection("BackgroundProcessing"))
     .AddHandler<SheinBatchHandler>(
         name: "Shein",
         maxItemsPerCycle: 5,
-        purpose: WorkItemHandlerPurpose.Ingestion)
-    .AddHandler<ImageVectorizationHandler>(
+        purpose: WorkItemHandlerPurpose.Ingestion);
+
+// Only register image vectorization handler if Azure AI is configured
+if (!string.IsNullOrEmpty(computerVisionEndpoint) && !string.IsNullOrEmpty(computerVisionApiKey))
+{
+    processingBuilder.AddHandler<ImageVectorizationHandler>(
         name: "ImageVectorization",
         maxItemsPerCycle: 10,
         purpose: WorkItemHandlerPurpose.Internal);
+}
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
