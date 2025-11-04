@@ -77,7 +77,6 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         {
             Id = Guid.NewGuid(),
             SupplierId = supplier.Id,
-            BatchType = StagingBatchType.WebScrape,
             Status = ProcessingStatus.Started,
             FileContents = "{}", // Empty JSON for mock cookies
             CreatedAt = DateTimeOffset.UtcNow
@@ -92,7 +91,6 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         var batches = Context.StagingBatches.ToList();
         Assert.Single(batches);
         Assert.Equal(supplier.Id, batches[0].SupplierId);
-        Assert.Equal(StagingBatchType.WebScrape, batches[0].BatchType);
 
         // Verify orders were scraped
         var orders = Context.StagingPurchaseOrders.ToList();
@@ -132,7 +130,6 @@ public class SheinWebScraperTests(ITestOutputHelper outputHelper) : WebScraperTe
         {
             Id = Guid.NewGuid(),
             SupplierId = supplier.Id,
-            BatchType = StagingBatchType.WebScrape,
             Status = ProcessingStatus.Started,
             FileContents = LoadFixture("cookies.shein.json"),
             CreatedAt = DateTimeOffset.UtcNow

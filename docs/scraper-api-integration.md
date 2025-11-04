@@ -52,7 +52,6 @@ public async Task<Guid> SubmitCookiesForScraping(
     {
         Id = Guid.NewGuid(),
         SupplierId = supplierId,
-        BatchType = StagingBatchType.WebScrape,
         FileContents = JsonSerializer.Serialize(cookies),
         Status = ProcessingStatus.Started
     };

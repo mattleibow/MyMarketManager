@@ -9,9 +9,9 @@ namespace MyMarketManager.WebApp.GraphQL;
 public class PurchaseOrderIngestionQueries
 {
     /// <summary>
-    /// Get available scrapers (ingestion processors)
+    /// Get available ingestion processors
     /// </summary>
-    public IEnumerable<string> GetAvailableScrapers(
+    public IEnumerable<string> GetAvailableIngestionProcessors(
         [Service] WorkItemProcessingService processingService)
     {
         return processingService.GetHandlers(WorkItemHandlerPurpose.Ingestion);

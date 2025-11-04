@@ -62,7 +62,7 @@ await scraper.StartScrapingAsync(supplierId, cookies, cancellationToken);
 ## How It Works
 
 The scraper:
-1. Creates a `StagingBatch` with `BatchType.WebScrape`
+1. Creates a `StagingBatch`
 2. Fetches `https://shein.com/user/orders/list` with cookies
 3. Extracts `gbRawData` JSON from HTML and parses order numbers
 4. For each order:

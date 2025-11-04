@@ -21,8 +21,9 @@ public class SheinBatchHandler(
 
     public async Task<IReadOnlyCollection<SheinWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
     {
-        // Fetch queued Shein batches from database
+        // Fetch queued Shein batches from database (no tracking needed - we reload in ProcessAsync)
         var queuedBatches = await _context.StagingBatches
+            .AsNoTracking()
             .Where(b => b.Status == ProcessingStatus.Queued && b.BatchProcessorName == "Shein")
             .Include(b => b.Supplier)
             .OrderBy(b => b.StartedAt)
@@ -38,7 +39,16 @@ public class SheinBatchHandler(
 
     public async Task ProcessAsync(SheinWorkItem workItem, CancellationToken cancellationToken)
     {
-        var batch = workItem.Batch;
+        // Reload the batch from the context to ensure it's tracked
+        var batch = await _context.StagingBatches
+            .Include(b => b.Supplier)
+            .FirstOrDefaultAsync(b => b.Id == workItem.Batch.Id, cancellationToken);
+
+        if (batch == null)
+        {
+            _logger.LogWarning("Batch {BatchId} not found, skipping", workItem.Batch.Id);
+            return;
+        }
 
         try
         {

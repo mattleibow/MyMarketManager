@@ -38,12 +38,12 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="scraperSelect" class="form-label">Scraper</label>
-                    <select id="scraperSelect" class="form-select" @bind="selectedScraper" disabled="@submitting">
-                        <option value="">-- Select a scraper --</option>
-                        @foreach (var scraper in availableScrapers)
+                    <label for="scraperSelect" class="form-label">Ingestion Processor</label>
+                    <select id="scraperSelect" class="form-select" @bind="selectedProcessor" disabled="@submitting">
+                        <option value="">-- Select an ingestion processor --</option>
+                        @foreach (var processor in availableIngestionProcessors)
                         {
-                            <option value="@scraper">@scraper</option>
+                            <option value="@processor">@processor</option>
                         }
                     </select>
                     <div class="form-text">Choose the web scraper to use for this supplier</div>
@@ -119,9 +119,9 @@
 
 @code {
     private List<SupplierOption> suppliers = new();
-    private List<string> availableScrapers = new();
+    private List<string> availableIngestionProcessors = new();
     private Guid? selectedSupplierId;
-    private string? selectedScraper;
+    private string? selectedProcessor;
     private string cookieJson = string.Empty;
     private bool submitting;
     private string? errorMessage;
@@ -159,11 +159,11 @@
     {
         try
         {
-            var result = await GraphQLClient.GetAvailableScrapers.ExecuteAsync(MyMarketManager.GraphQL.Client.StagingBatchType.WebScrape);
+            var result = await GraphQLClient.GetAvailableIngestionProcessors.ExecuteAsync();
             
-            if (result.Data?.AvailableScrapers != null)
+            if (result.Data?.AvailableIngestionProcessors != null)
             {
-                availableScrapers = result.Data.AvailableScrapers.ToList();
+                availableIngestionProcessors = result.Data.AvailableIngestionProcessors.ToList();
             }
         }
         catch (Exception ex)
@@ -205,7 +205,7 @@
     private bool CanSubmit()
     {
         return selectedSupplierId.HasValue
-            && !string.IsNullOrWhiteSpace(selectedScraper)
+            && !string.IsNullOrWhiteSpace(selectedProcessor)
             && !submitting
             && IsValidJson(cookieJson);
     }
@@ -224,7 +224,7 @@
             // Submit via GraphQL mutation
             var result = await GraphQLClient.SubmitCookies.ExecuteAsync(
                 selectedSupplierId!.Value,
-                selectedScraper!,
+                selectedProcessor!,
                 cookieJson);
 
             if (result.Data?.SubmitCookies != null)
@@ -241,7 +241,7 @@
                     // Reset form
                     cookieJson = string.Empty;
                     selectedSupplierId = null;
-                    selectedScraper = null;
+                    selectedProcessor = null;
                 }
                 else
                 {
