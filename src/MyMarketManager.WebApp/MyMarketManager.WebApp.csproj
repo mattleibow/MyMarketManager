@@ -16,10 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MyMarketManager.ServiceDefaults\MyMarketManager.ServiceDefaults.csproj" />
     <ProjectReference Include="..\MyMarketManager.Data\MyMarketManager.Data.csproj" />
     <ProjectReference Include="..\MyMarketManager.GraphQL.Client\MyMarketManager.GraphQL.Client.csproj" />
+    <ProjectReference Include="..\MyMarketManager.Processing\MyMarketManager.Processing.csproj" />
     <ProjectReference Include="..\MyMarketManager.Scrapers\MyMarketManager.Scrapers.csproj" />
+    <ProjectReference Include="..\MyMarketManager.ServiceDefaults\MyMarketManager.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

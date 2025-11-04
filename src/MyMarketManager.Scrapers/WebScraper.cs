@@ -4,7 +4,6 @@ using Microsoft.Extensions.Options;
 using MyMarketManager.Data;
 using MyMarketManager.Data.Entities;
 using MyMarketManager.Data.Enums;
-using MyMarketManager.Data.Processing;
 using MyMarketManager.Scrapers.Core;
 
 namespace MyMarketManager.Scrapers;
@@ -17,7 +16,7 @@ public abstract class WebScraper(
     MyMarketManagerDbContext context,
     ILogger logger,
     IOptions<ScraperConfiguration> configuration,
-    IWebScraperSessionFactory sessionFactory) : IBatchProcessor
+    IWebScraperSessionFactory sessionFactory)
 {
     protected MyMarketManagerDbContext Context { get; } = context;
 

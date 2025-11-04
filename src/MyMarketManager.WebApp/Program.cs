@@ -6,7 +6,7 @@ using MyMarketManager.WebApp.Services;
 using MyMarketManager.GraphQL.Client;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Shein;
-using MyMarketManager.Data.Processing;
+using MyMarketManager.Processing;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,13 +27,13 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 // Add scraper services
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
+builder.Services.AddScoped<SheinWebScraper>();
 
-// Add ingestion services
-builder.Services.Configure<IngestionServiceOptions>(builder.Configuration.GetSection("IngestionService"));
-builder.Services.AddScoped<BatchProcessingService>();
-builder.Services.AddHostedService<IngestionService>();
-builder.Services.AddBatchProcessorFactory()
-    .AddWebScraper<SheinWebScraper>("Shein");
+builder.Services.AddBackgroundProcessing(builder.Configuration.GetSection("BackgroundProcessing"))
+    .AddHandler<SheinBatchHandler>(
+        name: "Shein",
+        maxItemsPerCycle: 5,
+        purpose: WorkItemHandlerPurpose.Ingestion);
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

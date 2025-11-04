@@ -80,7 +80,6 @@ public class PurchaseOrderIngestionMutations
             var batch = new StagingBatch
             {
                 Id = Guid.NewGuid(),
-                BatchType = StagingBatchType.WebScrape,
                 BatchProcessorName = input.ProcessorName,
                 SupplierId = input.SupplierId,
                 StartedAt = DateTimeOffset.UtcNow,

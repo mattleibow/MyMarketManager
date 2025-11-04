@@ -38,7 +38,6 @@
                         <thead>
                             <tr>
                                 <th>Started</th>
-                                <th>Batch Type</th>
                                 <th>Processor</th>
                                 <th>Supplier</th>
                                 <th>Status</th>
@@ -54,11 +53,6 @@
                             {
                                 <tr style="cursor: pointer;" @onclick="() => ViewBatch(batch.Id)">
                                     <td>@batch.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                                    <td>
-                                        <span class="badge bg-info">
-                                            @batch.BatchType
-                                        </span>
-                                    </td>
                                     <td>@(batch.BatchProcessorName ?? "-")</td>
                                     <td>@(batch.SupplierName ?? "-")</td>
                                     <td>

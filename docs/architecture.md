@@ -86,9 +86,30 @@ Entities are grouped into two categories:
 
 See [Data Model](data-model.md) for complete entity documentation.
 
+## Background Processing Architecture
+
+The application uses a Channel-based work item processing system for asynchronous background tasks like web scraping and data cleanup.
+
+### Key Components
+
+- **BackgroundProcessingService** - Single `BackgroundService` that runs on a timer
+- **WorkItemProcessingService** - Manages handler registrations, coordinates fetch/process cycles
+- **IWorkItemHandler<T>** - Interface for handlers that fetch and process work items
+- **System.Threading.Channels** - Bounded queues for fair scheduling and starvation prevention
+
+### Benefits
+
+- Single background service replaces multiple independent services
+- Fair scheduling prevents any handler from monopolizing resources
+- Bounded channels with backpressure control
+- Easy to add new processors without creating new services
+- Handlers categorized by purpose (Ingestion/Internal/Export) for UI filtering
+
+See [Background Processing](background-processing.md) for detailed architecture and how to create new handlers.
+
 ## Web Scraping Architecture
 
-The web scraping system extracts order data from supplier websites for import into the application.
+The web scraping system extracts order data from supplier websites for import into the application. It integrates with the background processing system.
 
 ### Scraper Projects
 
@@ -100,14 +121,14 @@ The web scraping system extracts order data from supplier websites for import in
 
 1. **Cookie Capture**: MAUI app captures browser cookies during authenticated session
 2. **Cookie Submission**: Cookies sent to server and stored in `StagingBatch.FileContents`
-3. **Scraping Execution**: Background service creates scraper and processes batch
+3. **Background Processing**: Work item handlers fetch queued batches and process them
 4. **Data Extraction**: Scraper fetches order pages and parses HTML/JSON
 5. **Staging Storage**: Extracted data stored in `StagingPurchaseOrder` entities
 6. **Review & Import**: Staging data reviewed and imported separately
 
-Scrapers use template method pattern - base `WebScraper` class provides orchestration, concrete implementations (e.g., `SheinWebScraper`) handle supplier-specific parsing.
+Scrapers use template method pattern - base `WebScraper` class provides orchestration, concrete implementations (e.g., `SheinWebScraper`) handle supplier-specific parsing. Each scraper has a corresponding handler (e.g., `SheinBatchHandler`) that integrates it into the background processing system.
 
-See [Web Scraping](web-scraping.md) for detailed architecture.
+See [Web Scraping](web-scraping.md) and [Background Processing](background-processing.md) for detailed architecture.
 
 ## Request Flow
 

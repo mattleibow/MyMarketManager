@@ -1,5 +1,4 @@
-using MyMarketManager.Data.Enums;
-using MyMarketManager.Data.Processing;
+using MyMarketManager.Processing;
 
 namespace MyMarketManager.WebApp.GraphQL;
 
@@ -10,12 +9,11 @@ namespace MyMarketManager.WebApp.GraphQL;
 public class PurchaseOrderIngestionQueries
 {
     /// <summary>
-    /// Get available scrapers for a batch type
+    /// Get available ingestion processors
     /// </summary>
-    public IEnumerable<string> GetAvailableScrapers(
-        StagingBatchType batchType,
-        [Service] IBatchProcessorFactory factory)
+    public IEnumerable<string> GetAvailableIngestionProcessors(
+        [Service] WorkItemProcessingService processingService)
     {
-        return factory.GetAvailableProcessors(batchType);
+        return processingService.GetHandlers(WorkItemHandlerPurpose.Ingestion);
     }
 }

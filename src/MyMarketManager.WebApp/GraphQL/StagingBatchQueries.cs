@@ -25,7 +25,6 @@ public class StagingBatchQueries
             .OrderByDescending(sb => sb.StartedAt)
             .Select(sb => new StagingBatchDto(
                 sb.Id,
-                sb.BatchType,
                 sb.BatchProcessorName,
                 sb.SupplierId,
                 sb.Supplier != null ? sb.Supplier.Name : null,
@@ -60,7 +59,6 @@ public class StagingBatchQueries
 
         return new StagingBatchDetailDto(
             batch.Id,
-            batch.BatchType,
             batch.BatchProcessorName,
             batch.SupplierId,
             batch.Supplier?.Name,
@@ -85,7 +83,6 @@ public class StagingBatchQueries
 /// </summary>
 public record StagingBatchDto(
     Guid Id,
-    MyMarketManager.Data.Enums.StagingBatchType BatchType,
     string? BatchProcessorName,
     Guid? SupplierId,
     string? SupplierName,
@@ -102,7 +99,6 @@ public record StagingBatchDto(
 /// </summary>
 public record StagingBatchDetailDto(
     Guid Id,
-    MyMarketManager.Data.Enums.StagingBatchType BatchType,
     string? BatchProcessorName,
     Guid? SupplierId,
     string? SupplierName,
