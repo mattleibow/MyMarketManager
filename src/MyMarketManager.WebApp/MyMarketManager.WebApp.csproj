@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MyMarketManager.AI\MyMarketManager.AI.csproj" />
     <ProjectReference Include="..\MyMarketManager.Data\MyMarketManager.Data.csproj" />
     <ProjectReference Include="..\MyMarketManager.GraphQL.Client\MyMarketManager.GraphQL.Client.csproj" />
     <ProjectReference Include="..\MyMarketManager.Processing\MyMarketManager.Processing.csproj" />

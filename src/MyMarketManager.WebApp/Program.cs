@@ -7,6 +7,7 @@ using MyMarketManager.GraphQL.Client;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Shein;
 using MyMarketManager.Processing;
+using MyMarketManager.AI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,15 @@ builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 builder.Services.AddScoped<DbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
+// Add Azure Computer Vision embedding generators as keyed services
+// Configuration comes from Aspire-provisioned resources or appsettings
+var computerVisionEndpoint = builder.Configuration.GetConnectionString("ai-foundry") ?? builder.Configuration["AzureAI:Endpoint"] ?? "";
+var computerVisionApiKey = builder.Configuration["AzureAI:ApiKey"] ?? "";
+if (!string.IsNullOrEmpty(computerVisionEndpoint) && !string.IsNullOrEmpty(computerVisionApiKey))
+{
+    builder.Services.AddAzureComputerVisionEmbeddings(computerVisionEndpoint, computerVisionApiKey);
+}
+
 // Add scraper services
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddScoped<IWebScraperSessionFactory, WebScraperSessionFactory>();
@@ -33,7 +43,11 @@ builder.Services.AddBackgroundProcessing(builder.Configuration.GetSection("Backg
     .AddHandler<SheinBatchHandler>(
         name: "Shein",
         maxItemsPerCycle: 5,
-        purpose: WorkItemHandlerPurpose.Ingestion);
+        purpose: WorkItemHandlerPurpose.Ingestion)
+    .AddHandler<ImageVectorizationHandler>(
+        name: "ImageVectorization",
+        maxItemsPerCycle: 10,
+        purpose: WorkItemHandlerPurpose.Internal);
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
