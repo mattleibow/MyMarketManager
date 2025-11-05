@@ -36,13 +36,14 @@ public class MyMarketManagerDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // Configure ProductPhoto VectorEmbedding
-        // Store as comma-separated string in SQL Server
-        modelBuilder.Entity<ProductPhoto>()
+        // Store as comma-separated string
+        // TODO: use proper vector type when supported in EF Core / database provider
+        var embeddingCol = modelBuilder.Entity<ProductPhoto>()
             .Property(p => p.VectorEmbedding)
             .HasConversion(
                 v => v == null ? null : string.Join(",", v.Select(f => f.ToString("R"))),
                 v => v == null ? null : v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(float.Parse).ToArray())
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType(Database.IsSqlServer() ? "nvarchar(max)" : "text");
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
