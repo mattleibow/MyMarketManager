@@ -26,10 +26,10 @@ else
 }
 
 // Add Azure AI Foundry for image and text embeddings (optional)
-// Only add if configuration exists to avoid CI/CD issues
-var aiFoundryEndpoint = builder.Configuration["AzureAI:Endpoint"];
+// Control via UseAzureAIFoundry configuration setting (default: true in production, false in development)
+var useAzureAIFoundry = builder.Configuration.GetValue("UseAzureAIFoundry", true);
 IResourceBuilder<IResourceWithConnectionString>? aiFoundry = null;
-if (!string.IsNullOrEmpty(aiFoundryEndpoint))
+if (useAzureAIFoundry)
 {
     aiFoundry = builder.AddAzureAIFoundry("ai-foundry");
 }
