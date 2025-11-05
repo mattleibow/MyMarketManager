@@ -12,7 +12,7 @@ using MyMarketManager.Data;
 namespace MyMarketManager.Data.Migrations
 {
     [DbContext(typeof(MyMarketManagerDbContext))]
-    [Migration("20251105010712_AddProductImageVectorization")]
+    [Migration("20251104024141_AddProductImageVectorization")]
     partial class AddProductImageVectorization
     {
         /// <inheritdoc />

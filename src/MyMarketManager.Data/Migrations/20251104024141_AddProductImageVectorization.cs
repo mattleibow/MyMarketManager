@@ -13,7 +13,7 @@ namespace MyMarketManager.Data.Migrations
             migrationBuilder.AddColumn<string>(
                 name: "VectorEmbedding",
                 table: "ProductPhotos",
-                type: "TEXT",
+                type: "nvarchar(max)",
                 nullable: true);
         }
 
