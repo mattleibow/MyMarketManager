@@ -34,6 +34,12 @@ if (!string.IsNullOrEmpty(computerVisionEndpoint) && !string.IsNullOrEmpty(compu
 {
     builder.Services.AddAzureComputerVisionEmbeddings(computerVisionEndpoint, computerVisionApiKey);
 }
+else
+{
+    // Register no-op embedding generators to allow app to start without Azure AI
+    // Operations will throw if attempted, preventing data corruption
+    builder.Services.AddNoOpEmbeddingGenerators();
+}
 
 // Add scraper services
 builder.Services.Configure<ScraperConfiguration>(builder.Configuration.GetSection("Scraper"));

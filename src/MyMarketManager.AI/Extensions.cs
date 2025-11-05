@@ -55,4 +55,22 @@ public static class Extensions
 
         return services;
     }
+
+    /// <summary>
+    /// Adds no-op embedding generators when Azure AI is not configured.
+    /// This allows the app to start without Azure AI credentials, but operations will throw
+    /// an exception if attempted. Useful for development and CI environments.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddNoOpEmbeddingGenerators(this IServiceCollection services)
+    {
+        var noOp = new NoOpEmbeddingGenerator();
+
+        // Register the same no-op instance for both image and text keys
+        services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>("image", noOp);
+        services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>("text", noOp);
+
+        return services;
+    }
 }

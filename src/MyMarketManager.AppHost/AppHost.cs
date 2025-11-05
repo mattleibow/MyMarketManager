@@ -25,13 +25,23 @@ else
     database = sqlServer.AddDatabase("database");
 }
 
-// Add Azure AI Foundry for image and text embeddings
-var aiFoundry = builder.AddAzureAIFoundry("ai-foundry");
+// Add Azure AI Foundry for image and text embeddings (optional)
+// Only add if configuration exists to avoid CI/CD issues
+var aiFoundryEndpoint = builder.Configuration["AzureAI:Endpoint"];
+IResourceBuilder<IResourceWithConnectionString>? aiFoundry = null;
+if (!string.IsNullOrEmpty(aiFoundryEndpoint))
+{
+    aiFoundry = builder.AddAzureAIFoundry("ai-foundry");
+}
 
-builder.AddProject<Projects.MyMarketManager_WebApp>("webapp")
+var webApp = builder.AddProject<Projects.MyMarketManager_WebApp>("webapp")
     .WithReference(database)
-    .WithReference(aiFoundry)
     .WaitFor(database);
+
+if (aiFoundry != null)
+{
+    webApp.WithReference(aiFoundry);
+}
 
 builder.Build().Run();
 
