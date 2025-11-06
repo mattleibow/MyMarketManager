@@ -8,15 +8,15 @@ namespace MyMarketManager.Processing.Handlers;
 /// Provides common functionality for generating and storing vector embeddings for images.
 /// Derived classes specify what images to fetch and how to store the embeddings.
 /// </summary>
-/// <typeparam name="TWorkItem">The type of work item containing the image to vectorize.</typeparam>
+/// <typeparam name="TWorkItem">The type of work item - must inherit from ImageVectorizationWorkItem.</typeparam>
 public abstract class ImageVectorizationHandler<TWorkItem> : IWorkItemHandler<TWorkItem> 
-    where TWorkItem : IWorkItem
+    where TWorkItem : ImageVectorizationWorkItem
 {
-    private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator;
+    private readonly IEmbeddingGenerator<DataContent, Embedding<float>> _embeddingGenerator;
     private readonly ILogger _logger;
 
     protected ImageVectorizationHandler(
-        IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
+        IEmbeddingGenerator<DataContent, Embedding<float>> embeddingGenerator,
         ILogger logger)
     {
         _embeddingGenerator = embeddingGenerator ?? throw new ArgumentNullException(nameof(embeddingGenerator));
@@ -34,15 +34,15 @@ public abstract class ImageVectorizationHandler<TWorkItem> : IWorkItemHandler<TW
     /// </summary>
     public async Task ProcessAsync(TWorkItem workItem, CancellationToken cancellationToken)
     {
-        var imageUrl = GetImageUrl(workItem);
-        var imageId = workItem.Id;
-
         try
         {
-            _logger.LogInformation("Vectorizing image {ImageId} - {Url}", imageId, imageUrl);
+            _logger.LogInformation("Vectorizing image {ImageId} - {Url}", workItem.Id, workItem.ImageUrl);
+
+            // Create DataContent from image URL
+            var imageContent = new DataContent(new Uri(workItem.ImageUrl));
 
             // Generate vector embedding
-            var result = await _embeddingGenerator.GenerateAsync([imageUrl], cancellationToken: cancellationToken);
+            var result = await _embeddingGenerator.GenerateAsync([imageContent], cancellationToken: cancellationToken);
             var embedding = result.FirstOrDefault();
 
             if (embedding != null)
@@ -52,28 +52,25 @@ public abstract class ImageVectorizationHandler<TWorkItem> : IWorkItemHandler<TW
 
                 _logger.LogInformation(
                     "Successfully vectorized image {ImageId}. Vector dimensions: {Dimensions}",
-                    imageId, embedding.Vector.Length);
+                    workItem.Id, embedding.Vector.Length);
             }
             else
             {
-                _logger.LogWarning("No embedding generated for image {ImageId}", imageId);
+                _logger.LogWarning("No embedding generated for image {ImageId}", workItem.Id);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to vectorize image {ImageId}", imageId);
+            _logger.LogError(ex, "Failed to vectorize image {ImageId}", workItem.Id);
             throw;
         }
     }
 
     /// <summary>
-    /// Gets the image URL from the work item.
-    /// </summary>
-    protected abstract string GetImageUrl(TWorkItem workItem);
-
-    /// <summary>
     /// Stores the generated embedding.
     /// Derived classes implement this to save the embedding to their specific storage.
+    /// The work item's entity is already tracked in this scope's DbContext.
     /// </summary>
     protected abstract Task StoreEmbeddingAsync(TWorkItem workItem, float[] embedding, CancellationToken cancellationToken);
 }
+

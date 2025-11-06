@@ -1,3 +1,4 @@
+using Aspire.Hosting.Azure;
 using Microsoft.Extensions.Configuration;
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -25,22 +26,17 @@ else
     database = sqlServer.AddDatabase("database");
 }
 
-// Add Azure AI Foundry for image and text embeddings (optional)
-// Control via UseAzureAIFoundry configuration setting (default: true in production, false in development)
-var useAzureAIFoundry = builder.Configuration.GetValue("UseAzureAIFoundry", true);
-IResourceBuilder<IResourceWithConnectionString>? aiFoundry = null;
-if (useAzureAIFoundry)
-{
-    aiFoundry = builder.AddAzureAIFoundry("ai-foundry");
-}
-
 var webApp = builder.AddProject<Projects.MyMarketManager_WebApp>("webapp")
     .WithReference(database)
     .WaitFor(database);
 
-if (aiFoundry != null)
+if (builder.GetDevConfig("UseAzureAIFoundry", true))
 {
-    webApp.WithReference(aiFoundry);
+    var ai = builder.AddAzureAIFoundry("ai-foundry");
+
+    var embedding = ai.AddDeployment("ai-embedding", AIFoundryModel.Cohere.CohereEmbedV3English);
+
+    webApp.WithReference(embedding);
 }
 
 builder.Build().Run();
@@ -54,4 +50,9 @@ static class Extensions
         string.IsNullOrEmpty(value)
             ? null
             : value;
+
+    public static bool GetDevConfig(this IDistributedApplicationBuilder builder, string key, bool defaultValue) =>
+        builder.ExecutionContext.IsPublishMode
+            ? defaultValue
+            : builder.Configuration.GetValue(key, defaultValue);
 }

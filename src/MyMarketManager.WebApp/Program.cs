@@ -26,19 +26,18 @@ builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
 builder.Services.AddScoped<DbContextMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
-// Add Azure Computer Vision embedding generators as keyed services
-// Configuration comes from Aspire-provisioned resources or appsettings
-var computerVisionEndpoint = builder.Configuration.GetConnectionString("ai-foundry") ?? builder.Configuration["AzureAI:Endpoint"] ?? "";
-var computerVisionApiKey = builder.Configuration["AzureAI:ApiKey"] ?? "";
-if (!string.IsNullOrEmpty(computerVisionEndpoint) && !string.IsNullOrEmpty(computerVisionApiKey))
+// Add Azure AI Foundry embedding generators (if configured)
+if (builder.Configuration.GetConnectionString("ai-embedding") is { } embeddingConnectionString)
 {
-    builder.Services.AddAzureComputerVisionEmbeddings(computerVisionEndpoint, computerVisionApiKey);
+    // Registers IEmbeddingGenerator<string, Embedding<float>> for text
+    // and IEmbeddingGenerator<DataContent, Embedding<float>> for images
+    builder.Services.AddAzureAIFoundryEmbeddings(embeddingConnectionString);
 }
 else
 {
     // Register no-op embedding generators to allow app to start without Azure AI
     // Operations will throw if attempted, preventing data corruption
-    builder.Services.AddNoOpEmbeddingGenerators();
+    builder.Services.AddNoOpEmbeddingGenerator();
 }
 
 // Add scraper services

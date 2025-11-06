@@ -3,22 +3,20 @@ using Microsoft.Extensions.AI;
 namespace MyMarketManager.AI;
 
 /// <summary>
-/// A no-op embedding generator that throws when used.
-/// This is registered when Azure AI services are not configured,
-/// allowing the app to start but preventing actual embedding operations.
+/// No-op embedding generator that throws when Azure AI services are not configured.
 /// </summary>
-public class NoOpEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
+public class NoOpEmbeddingGenerator<TInput> : IEmbeddingGenerator<TInput, Embedding<float>>
 {
-    public EmbeddingGeneratorMetadata Metadata => new("NoOp", null, "none");
+    public EmbeddingGeneratorMetadata Metadata => new("NoOp", null, null);
 
     public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
-        IEnumerable<string> values,
+        IEnumerable<TInput> values,
         EmbeddingGenerationOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         throw new InvalidOperationException(
             "Azure AI embedding services are not configured. " +
-            "Please provide Azure AI Foundry endpoint and API key in configuration.");
+            "Please provide Azure AI Foundry connection string in configuration.");
     }
 
     public object? GetService(Type serviceType, object? serviceKey = null)
@@ -28,6 +26,6 @@ public class NoOpEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<floa
 
     public void Dispose()
     {
-        // No resources to dispose
+        // Nothing to dispose
     }
 }

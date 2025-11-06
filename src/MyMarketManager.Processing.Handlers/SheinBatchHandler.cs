@@ -15,65 +15,50 @@ public class SheinBatchHandler(
     SheinWebScraper scraper,
     ILogger<SheinBatchHandler> logger) : IWorkItemHandler<SheinWorkItem>
 {
-    private readonly MyMarketManagerDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
-    private readonly SheinWebScraper _scraper = scraper ?? throw new ArgumentNullException(nameof(scraper));
-    private readonly ILogger<SheinBatchHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
     public async Task<IReadOnlyCollection<SheinWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken)
     {
-        // Fetch queued Shein batches from database (no tracking needed - we reload in ProcessAsync)
-        var queuedBatches = await _context.StagingBatches
-            .AsNoTracking()
+        // Fetch queued Shein batches from database
+        var queuedBatches = await context.StagingBatches
             .Where(b => b.Status == ProcessingStatus.Queued && b.BatchProcessorName == "Shein")
             .Include(b => b.Supplier)
             .OrderBy(b => b.StartedAt)
             .Take(maxItems)
             .ToListAsync(cancellationToken);
 
-        _logger.LogDebug("Found {Count} queued Shein staging batches", queuedBatches.Count);
+        logger.LogDebug("Found {Count} queued Shein staging batches", queuedBatches.Count);
 
-        return queuedBatches
-            .Select(b => new SheinWorkItem(b))
-            .ToList();
+        return [.. queuedBatches.Select(b => new SheinWorkItem(b))];
     }
 
     public async Task ProcessAsync(SheinWorkItem workItem, CancellationToken cancellationToken)
     {
-        // Reload the batch from the context to ensure it's tracked
-        var batch = await _context.StagingBatches
-            .Include(b => b.Supplier)
-            .FirstOrDefaultAsync(b => b.Id == workItem.Batch.Id, cancellationToken);
-
-        if (batch == null)
-        {
-            _logger.LogWarning("Batch {BatchId} not found, skipping", workItem.Batch.Id);
-            return;
-        }
+        // Entity is already tracked in this scope's DbContext from FetchNextAsync
+        var batch = workItem.Batch;
 
         try
         {
-            _logger.LogInformation(
+            logger.LogInformation(
                 "Processing Shein batch {BatchId}",
                 batch.Id);
 
-            await _scraper.ProcessBatchAsync(batch, cancellationToken);
+            await scraper.ProcessBatchAsync(batch, cancellationToken);
 
             // Mark as complete
             batch.Status = ProcessingStatus.Completed;
             batch.CompletedAt = DateTimeOffset.UtcNow;
 
-            await _context.SaveChangesAsync(cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Successfully processed Shein batch {BatchId}", batch.Id);
+            logger.LogInformation("Successfully processed Shein batch {BatchId}", batch.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing Shein batch {BatchId}", batch.Id);
+            logger.LogError(ex, "Error processing Shein batch {BatchId}", batch.Id);
 
             batch.Status = ProcessingStatus.Failed;
             batch.ErrorMessage = ex.Message;
 
-            await _context.SaveChangesAsync(cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
         }
     }
 }

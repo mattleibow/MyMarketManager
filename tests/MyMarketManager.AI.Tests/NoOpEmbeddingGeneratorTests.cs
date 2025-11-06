@@ -9,7 +9,7 @@ public class NoOpEmbeddingGeneratorTests
     public void NoOpEmbeddingGenerator_HasCorrectMetadata()
     {
         // Arrange
-        var generator = new NoOpEmbeddingGenerator();
+        var generator = new NoOpEmbeddingGenerator<string>();
 
         // Act
         var metadata = generator.GetService<EmbeddingGeneratorMetadata>();
@@ -23,7 +23,7 @@ public class NoOpEmbeddingGeneratorTests
     public async Task NoOpEmbeddingGenerator_GenerateAsync_ThrowsInvalidOperationException()
     {
         // Arrange
-        var generator = new NoOpEmbeddingGenerator();
+        var generator = new NoOpEmbeddingGenerator<string>();
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -36,7 +36,7 @@ public class NoOpEmbeddingGeneratorTests
     public void NoOpEmbeddingGenerator_Dispose_DoesNotThrow()
     {
         // Arrange
-        var generator = new NoOpEmbeddingGenerator();
+        var generator = new NoOpEmbeddingGenerator<string>();
 
         // Act & Assert (should not throw)
         generator.Dispose();

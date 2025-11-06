@@ -1,76 +1,94 @@
+using Azure.AI.Inference;
+using Azure.Core;
+using Azure.Core.Pipeline;
+using Azure.Identity;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MyMarketManager.AI;
 
 /// <summary>
-/// Extension methods for registering Azure Computer Vision embedding generators.
+/// Extension methods for registering Azure AI Foundry embedding generators.
 /// </summary>
 public static class Extensions
 {
-    private const string HttpClientName = "AzureComputerVisionEmbedding";
-
     /// <summary>
-    /// Adds Azure Computer Vision embedding generators as keyed services.
+    /// Adds Azure AI Foundry embedding generators using a connection string with role-based authentication.
+    /// Registers both image and text embedding generators using appropriate client types.
     /// </summary>
     /// <param name="services">The service collection.</param>
-    /// <param name="endpoint">Azure Computer Vision endpoint URL.</param>
-    /// <param name="apiKey">Azure Computer Vision API key.</param>
-    /// <param name="modelVersion">Model version to use (default: 2023-04-15 for multilingual support).</param>
+    /// <param name="connectionString">Azure AI Foundry connection string (format: Endpoint=https://...;EndpointAIInference=https://...;Deployment=model-name).</param>
     /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddAzureComputerVisionEmbeddings(
+    public static IServiceCollection AddAzureAIFoundryEmbeddings(
         this IServiceCollection services,
-        string endpoint,
-        string apiKey,
-        string modelVersion = "2023-04-15")
+        string connectionString)
     {
-        // Register a single named HttpClient with proper configuration
-        services.AddHttpClient(HttpClientName, client =>
-        {
-            client.BaseAddress = new Uri(endpoint);
-            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
-            client.Timeout = TimeSpan.FromSeconds(100);
-        })
-        .SetHandlerLifetime(TimeSpan.FromMinutes(5));
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
 
-        // Register image embedding generator as keyed service with key "image"
-        services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>("image", (sp, key) =>
+        var (endpoint, modelName) = ParseConnectionString(connectionString);
+        var credential = new DefaultAzureCredential();
+        var clientOptions = new AzureAIInferenceClientOptions();
+        var tokenPolicy = new BearerTokenAuthenticationPolicy(credential, ["https://cognitiveservices.azure.com/.default"]);
+
+        clientOptions.AddPolicy(tokenPolicy, HttpPipelinePosition.PerRetry);
+
+        // Register text embedding generator using EmbeddingsClient
+        services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(sp =>
         {
-            var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-            return new ImageEmbeddingGenerator(
-                httpClientFactory,
-                HttpClientName,
-                modelVersion);
+            var client = new EmbeddingsClient(new Uri(endpoint), credential, clientOptions);
+            return client.AsIEmbeddingGenerator(modelName);
         });
 
-        // Register text embedding generator as keyed service with key "text"
-        services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>("text", (sp, key) =>
+        // Register image embedding generator using ImageEmbeddingsClient
+        services.AddSingleton<IEmbeddingGenerator<DataContent, Embedding<float>>>(sp =>
         {
-            var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-            return new TextEmbeddingGenerator(
-                httpClientFactory,
-                HttpClientName,
-                modelVersion);
+            var client = new ImageEmbeddingsClient(new Uri(endpoint), credential, clientOptions);
+            return client.AsIEmbeddingGenerator(modelName);
         });
 
         return services;
     }
 
     /// <summary>
-    /// Adds no-op embedding generators when Azure AI is not configured.
+    /// Adds a no-op embedding generator when Azure AI is not configured.
     /// This allows the app to start without Azure AI credentials, but operations will throw
     /// an exception if attempted. Useful for development and CI environments.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddNoOpEmbeddingGenerators(this IServiceCollection services)
+    public static IServiceCollection AddNoOpEmbeddingGenerator(this IServiceCollection services)
     {
-        var noOp = new NoOpEmbeddingGenerator();
-
-        // Register the same no-op instance for both image and text keys
-        services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>("image", noOp);
-        services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>("text", noOp);
-
+        services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(new NoOpEmbeddingGenerator<string>());
+        services.AddSingleton<IEmbeddingGenerator<DataContent, Embedding<float>>>(new NoOpEmbeddingGenerator<DataContent>());
         return services;
+    }
+
+    private static (string endpoint, string modelName) ParseConnectionString(string connectionString)
+    {
+        var parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
+        string? endpointAIInference = null;
+        string? deployment = null;
+
+        foreach (var part in parts)
+        {
+            var keyValue = part.Split('=', 2);
+            if (keyValue.Length != 2) continue;
+
+            var key = keyValue[0].Trim();
+            var value = keyValue[1].Trim();
+
+            if (key.Equals("EndpointAIInference", StringComparison.OrdinalIgnoreCase))
+                endpointAIInference = value;
+            else if (key.Equals("Deployment", StringComparison.OrdinalIgnoreCase))
+                deployment = value;
+        }
+
+        if (string.IsNullOrEmpty(endpointAIInference))
+            throw new ArgumentException("Connection string must contain an 'EndpointAIInference' value.", nameof(connectionString));
+        if (string.IsNullOrEmpty(deployment))
+            throw new ArgumentException("Connection string must contain a 'Deployment' value.", nameof(connectionString));
+
+        return (endpointAIInference, deployment);
     }
 }
