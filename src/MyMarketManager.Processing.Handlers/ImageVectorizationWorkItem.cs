@@ -1,3 +1,7 @@
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Http;
+using Microsoft.Extensions.Logging;
+
 namespace MyMarketManager.Processing.Handlers;
 
 /// <summary>
@@ -6,13 +10,16 @@ namespace MyMarketManager.Processing.Handlers;
 /// </summary>
 public abstract class ImageVectorizationWorkItem : IWorkItem
 {
-    protected ImageVectorizationWorkItem(Guid id, string imageUrl)
+    protected ImageVectorizationWorkItem(Guid id, string imageUrl, string mimeType)
     {
         Id = id;
         ImageUrl = imageUrl ?? throw new ArgumentNullException(nameof(imageUrl));
+        MimeType = mimeType ?? throw new ArgumentNullException(nameof(mimeType));
     }
 
     public Guid Id { get; }
     
     public string ImageUrl { get; }
+    
+    public string MimeType { get; }
 }

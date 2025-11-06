@@ -103,8 +103,8 @@ public class DbContextMigrator(
                     Notes = "Popular item, restock frequently",
                     Photos =
                     [
-                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/TSHIRT-001-Black.png" },
-                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/TSHIRT-001-Blue.png" }
+                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/TSHIRT-001-Black.png", MimeType = "image/png" },
+                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/TSHIRT-001-Blue.png", MimeType = "image/png" }
                     ]
                 },
                 new Product
@@ -117,7 +117,7 @@ public class DbContextMigrator(
                     Notes = "Premium quality denim",
                     Photos =
                     [
-                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/JEANS-002.png" }
+                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/JEANS-002.png", MimeType = "image/png" }
                     ]
                 },
                 new Product
@@ -129,7 +129,7 @@ public class DbContextMigrator(
                     Notes = "Check battery life before selling",
                     Photos =
                     [
-                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/Earbuds.png" }
+                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/Earbuds.png", MimeType = "image/png" }
                     ]
                 },
                 new Product
@@ -142,7 +142,7 @@ public class DbContextMigrator(
                     Notes = "Handle with care during transport",
                     Photos =
                     [
-                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/PLANT-004.png" }
+                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/PLANT-004.png", MimeType = "image/png" }
                     ]
                 },
                 new Product

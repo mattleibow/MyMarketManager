@@ -1,4 +1,5 @@
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 
 namespace MyMarketManager.Processing.Handlers;
@@ -14,13 +15,16 @@ public abstract class ImageVectorizationHandler<TWorkItem> : IWorkItemHandler<TW
 {
     private readonly IEmbeddingGenerator<DataContent, Embedding<float>> _embeddingGenerator;
     private readonly ILogger _logger;
+    private readonly HttpClient _httpClient;
 
     protected ImageVectorizationHandler(
         IEmbeddingGenerator<DataContent, Embedding<float>> embeddingGenerator,
+        IHttpClientFactory httpClientFactory,
         ILogger logger)
     {
         _embeddingGenerator = embeddingGenerator ?? throw new ArgumentNullException(nameof(embeddingGenerator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _httpClient = httpClientFactory?.CreateClient() ?? throw new ArgumentNullException(nameof(httpClientFactory));
     }
 
     /// <summary>
@@ -38,8 +42,11 @@ public abstract class ImageVectorizationHandler<TWorkItem> : IWorkItemHandler<TW
         {
             _logger.LogInformation("Vectorizing image {ImageId} - {Url}", workItem.Id, workItem.ImageUrl);
 
-            // Create DataContent from image URL
-            var imageContent = new DataContent(new Uri(workItem.ImageUrl));
+            // Download the image
+            var imageBytes = await _httpClient.GetByteArrayAsync(workItem.ImageUrl, cancellationToken);
+            
+            // Create DataContent from byte array with MIME type from entity
+            var imageContent = new DataContent(imageBytes, workItem.MimeType);
 
             // Generate vector embedding
             var result = await _embeddingGenerator.GenerateAsync([imageContent], cancellationToken: cancellationToken);

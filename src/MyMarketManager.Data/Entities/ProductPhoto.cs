@@ -14,6 +14,12 @@ public class ProductPhoto : EntityBase
     public string Url { get; set; } = string.Empty;
     
     /// <summary>
+    /// MIME type of the image (e.g., image/jpeg, image/png).
+    /// </summary>
+    [Required]
+    public string MimeType { get; set; } = "image/jpeg";
+    
+    /// <summary>
     /// Caption describing the image (user-provided or AI-generated).
     /// </summary>
     public string? Caption { get; set; }

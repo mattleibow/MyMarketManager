@@ -11,8 +11,9 @@ namespace MyMarketManager.Processing.Handlers;
 public class ProductPhotoImageVectorizationHandler(
     MyMarketManagerDbContext context,
     IEmbeddingGenerator<DataContent, Embedding<float>> embeddingGenerator,
+    IHttpClientFactory httpClientFactory,
     ILogger<ProductPhotoImageVectorizationHandler> logger)
-    : ImageVectorizationHandler<ProductPhotoImageVectorizationWorkItem>(embeddingGenerator, logger)
+    : ImageVectorizationHandler<ProductPhotoImageVectorizationWorkItem>(embeddingGenerator, httpClientFactory, logger)
 {
     public override async Task<IReadOnlyCollection<ProductPhotoImageVectorizationWorkItem>> FetchNextAsync(
         int maxItems,
