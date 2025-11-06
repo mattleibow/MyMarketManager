@@ -100,7 +100,12 @@ public class DbContextMigrator(
                     Description = "100% cotton, comfortable fit, multiple colors available",
                     Quality = ProductQuality.Good,
                     StockOnHand = 25,
-                    Notes = "Popular item, restock frequently"
+                    Notes = "Popular item, restock frequently",
+                    Photos =
+                    [
+                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/TSHIRT-001-Black.png" },
+                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/TSHIRT-001-Blue.png" }
+                    ]
                 },
                 new Product
                 {
@@ -109,7 +114,11 @@ public class DbContextMigrator(
                     Description = "Classic blue denim jeans, various sizes",
                     Quality = ProductQuality.Excellent,
                     StockOnHand = 15,
-                    Notes = "Premium quality denim"
+                    Notes = "Premium quality denim",
+                    Photos =
+                    [
+                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/JEANS-002.png" }
+                    ]
                 },
                 new Product
                 {
@@ -117,7 +126,11 @@ public class DbContextMigrator(
                     Description = "Bluetooth wireless earbuds with charging case",
                     Quality = ProductQuality.Good,
                     StockOnHand = 8,
-                    Notes = "Check battery life before selling"
+                    Notes = "Check battery life before selling",
+                    Photos =
+                    [
+                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/Earbuds.png" }
+                    ]
                 },
                 new Product
                 {
@@ -126,7 +139,11 @@ public class DbContextMigrator(
                     Description = "Low-maintenance succulent in decorative pot",
                     Quality = ProductQuality.Fair,
                     StockOnHand = 12,
-                    Notes = "Handle with care during transport"
+                    Notes = "Handle with care during transport",
+                    Photos =
+                    [
+                        new ProductPhoto { Url = "https://raw.githubusercontent.com/mattleibow/MyMarketManager/refs/heads/main/assets/seeding/PLANT-004.png" }
+                    ]
                 },
                 new Product
                 {
