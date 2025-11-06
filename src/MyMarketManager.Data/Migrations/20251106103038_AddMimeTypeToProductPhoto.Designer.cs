@@ -12,7 +12,7 @@ using MyMarketManager.Data;
 namespace MyMarketManager.Data.Migrations
 {
     [DbContext(typeof(MyMarketManagerDbContext))]
-    [Migration("20251106083530_AddMimeTypeToProductPhoto")]
+    [Migration("20251106103038_AddMimeTypeToProductPhoto")]
     partial class AddMimeTypeToProductPhoto
     {
         /// <inheritdoc />
@@ -191,6 +191,10 @@ namespace MyMarketManager.Data.Migrations
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
