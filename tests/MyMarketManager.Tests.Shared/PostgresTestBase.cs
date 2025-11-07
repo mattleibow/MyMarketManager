@@ -4,12 +4,12 @@ using MyMarketManager.Data;
 namespace MyMarketManager.Tests.Shared;
 
 /// <summary>
-/// Base class for integration tests using a real SQL Server instance in Docker.
+/// Base class for integration tests using a real PostgreSQL instance in Docker.
 /// Requires Docker to be running on the machine.
 /// </summary>
-public abstract class SqlServerTestBase(ITestOutputHelper outputHelper, bool createSchema) : IAsyncLifetime
+public abstract class PostgresTestBase(ITestOutputHelper outputHelper, bool createSchema) : IAsyncLifetime
 {
-    private readonly SqlServerHelper _sqlServer = new(outputHelper);
+    private readonly PostgresHelper _postgres = new(outputHelper);
 
     protected MyMarketManagerDbContext Context { get; private set; } = null!;
 
@@ -17,10 +17,10 @@ public abstract class SqlServerTestBase(ITestOutputHelper outputHelper, bool cre
 
     public virtual async ValueTask InitializeAsync()
     {
-        var connectionString = await _sqlServer.ConnectAsync();
+        var connectionString = await _postgres.ConnectAsync();
 
         var options = new DbContextOptionsBuilder<MyMarketManagerDbContext>()
-            .UseSqlServer(connectionString)
+            .UseNpgsql(connectionString)
             .Options;
 
         Context = new MyMarketManagerDbContext(options);
@@ -36,7 +36,7 @@ public abstract class SqlServerTestBase(ITestOutputHelper outputHelper, bool cre
     {
         await Context.DisposeAsync();
 
-        await _sqlServer.DisconnectAsync();
+        await _postgres.DisconnectAsync();
     }
 
     protected async Task<bool> TableExistsAsync(string tableName)
@@ -45,8 +45,8 @@ public abstract class SqlServerTestBase(ITestOutputHelper outputHelper, bool cre
         {
             var sql = """
                 SELECT COUNT(*)
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_NAME = @tableName
+                FROM information_schema.tables
+                WHERE table_name = @tableName
                 """;
 
             var count = await Context.Database

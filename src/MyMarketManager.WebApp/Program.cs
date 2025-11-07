@@ -20,7 +20,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // Configure DbContext to use the connection string provided by Aspire
-builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
+builder.AddNpgsqlDbContext<MyMarketManagerDbContext>("database");
 
 // Add database migration as a hosted service (runs in all environments)
 builder.Services.AddScoped<DbContextMigrator>();

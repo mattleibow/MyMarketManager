@@ -36,15 +36,8 @@ public class MyMarketManagerDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure ProductPhoto VectorEmbedding
-        // Store as comma-separated string
-        // TODO: use proper vector type when supported in EF Core / database provider
-        modelBuilder.Entity<ProductPhoto>()
-            .Property(p => p.VectorEmbedding)
-            .HasConversion(
-                static v => v == null ? null : string.Join(",", v.Select(f => f.ToString("R", CultureInfo.InvariantCulture))),
-                static v => v == null ? null : v.Split(',').Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray())
-            .HasColumnType(Database.IsSqlServer() ? "nvarchar(max)" : "text");
+        // Enable pgvector extension
+        modelBuilder.HasPostgresExtension("vector");
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
