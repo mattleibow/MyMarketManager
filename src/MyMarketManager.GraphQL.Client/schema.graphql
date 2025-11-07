@@ -3,6 +3,21 @@ schema {
   mutation: Mutation
 }
 
+"Represents a product image stored for a product."
+type ProductPhoto {
+  "MIME type of the stored image, such as image\/jpeg or image\/png."
+  mimeType: String!
+  productId: UUID!
+  product: Product!
+  url: String!
+  caption: String
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
 type Query {
   products: [Product!]!
   productById(id: UUID!): Product
@@ -19,6 +34,84 @@ type Mutation {
   updateProduct(id: UUID! input: UpdateProductInput!): Product!
   deleteProduct(id: UUID!): Boolean!
   submitCookies(input: SubmitCookiesInput!): SubmitCookiesPayload!
+}
+
+scalar UUID
+
+type Product {
+  sku: String
+  name: String!
+  description: String
+  quality: ProductQuality!
+  notes: String
+  stockOnHand: Int!
+  photos: [ProductPhoto!]!
+  purchaseOrderItems: [PurchaseOrderItem!]!
+  deliveryItems: [DeliveryItem!]!
+  reconciledSales: [ReconciledSale!]!
+  stagingPurchaseOrderItems: [StagingPurchaseOrderItem!]!
+  stagingSaleItems: [StagingSaleItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+"The `DateTime` scalar represents an ISO-8601 compliant date time type."
+scalar DateTime
+
+type PurchaseOrderItem {
+  purchaseOrderId: UUID!
+  purchaseOrder: PurchaseOrder!
+  productId: UUID
+  product: Product
+  supplierReference: String
+  supplierProductUrl: String
+  name: String!
+  description: String
+  quantity: Int!
+  listedUnitPrice: Decimal!
+  actualUnitPrice: Decimal!
+  allocatedUnitOverhead: Decimal!
+  totalUnitCost: Decimal!
+  stagingPurchaseOrderItems: [StagingPurchaseOrderItem!]!
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+  isDeleted: Boolean!
+}
+
+enum ProductQuality {
+  UNKNOWN
+  TERRIBLE
+  POOR
+  FAIR
+  GOOD
+  EXCELLENT
+}
+
+input SubmitCookiesInput {
+  supplierId: UUID!
+  processorName: String!
+  cookieJson: String!
+}
+
+type SubmitCookiesPayload {
+  success: Boolean!
+  batchId: UUID
+  message: String
+  error: String
+}
+
+input UpdateProductInput {
+  sku: String
+  name: String!
+  description: String
+  quality: ProductQuality!
+  notes: String
+  stockOnHand: Int!
 }
 
 input CreateProductInput {
@@ -90,64 +183,6 @@ type PurchaseOrderDto {
   notes: String
 }
 
-scalar UUID
-
-type Product {
-  sku: String
-  name: String!
-  description: String
-  quality: ProductQuality!
-  notes: String
-  stockOnHand: Int!
-  photos: [ProductPhoto!]!
-  purchaseOrderItems: [PurchaseOrderItem!]!
-  deliveryItems: [DeliveryItem!]!
-  reconciledSales: [ReconciledSale!]!
-  stagingPurchaseOrderItems: [StagingPurchaseOrderItem!]!
-  stagingSaleItems: [StagingSaleItem!]!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
-
-input UpdateProductInput {
-  sku: String
-  name: String!
-  description: String
-  quality: ProductQuality!
-  notes: String
-  stockOnHand: Int!
-}
-
-type SubmitCookiesPayload {
-  success: Boolean!
-  batchId: UUID
-  message: String
-  error: String
-}
-
-input SubmitCookiesInput {
-  supplierId: UUID!
-  processorName: String!
-  cookieJson: String!
-}
-
-type ReconciledSale {
-  productId: UUID!
-  product: Product!
-  marketEventId: UUID!
-  marketEvent: MarketEvent!
-  quantity: Int!
-  salePrice: Decimal!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
-
 type DeliveryItem {
   deliveryId: UUID!
   delivery: Delivery!
@@ -163,87 +198,19 @@ type DeliveryItem {
   isDeleted: Boolean!
 }
 
-type PurchaseOrderItem {
-  purchaseOrderId: UUID!
-  purchaseOrder: PurchaseOrder!
-  productId: UUID
-  product: Product
-  supplierReference: String
-  supplierProductUrl: String
-  name: String!
-  description: String
-  quantity: Int!
-  listedUnitPrice: Decimal!
-  actualUnitPrice: Decimal!
-  allocatedUnitOverhead: Decimal!
-  totalUnitCost: Decimal!
-  stagingPurchaseOrderItems: [StagingPurchaseOrderItem!]!
-  id: UUID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  deletedAt: DateTime
-  isDeleted: Boolean!
-}
-
-type ProductPhoto {
+type ReconciledSale {
   productId: UUID!
   product: Product!
-  url: String!
-  caption: String
+  marketEventId: UUID!
+  marketEvent: MarketEvent!
+  quantity: Int!
+  salePrice: Decimal!
   id: UUID!
   createdAt: DateTime!
   updatedAt: DateTime!
   deletedAt: DateTime
   isDeleted: Boolean!
 }
-
-enum ProductQuality {
-  UNKNOWN
-  TERRIBLE
-  POOR
-  FAIR
-  GOOD
-  EXCELLENT
-}
-
-type PurchaseOrderItemDto {
-  id: UUID!
-  productId: UUID
-  productName: String
-  supplierReference: String
-  supplierProductUrl: String
-  name: String!
-  description: String
-  quantity: Int!
-  listedUnitPrice: Decimal!
-  actualUnitPrice: Decimal!
-  allocatedUnitOverhead: Decimal!
-  totalUnitCost: Decimal!
-}
-
-"The `Decimal` scalar type represents a decimal floating-point number."
-scalar Decimal
-
-type StagingPurchaseOrderDto {
-  id: UUID!
-  supplierReference: String
-  orderDate: DateTime!
-  status: ProcessingStatus!
-  isImported: Boolean!
-  errorMessage: String
-  itemCount: Int!
-}
-
-enum ProcessingStatus {
-  QUEUED
-  STARTED
-  COMPLETED
-  FAILED
-  CANCELLED
-}
-
-"The `DateTime` scalar represents an ISO-8601 compliant date time type."
-scalar DateTime
 
 type StagingPurchaseOrderItem {
   stagingPurchaseOrderId: UUID!
@@ -343,19 +310,12 @@ type StagingPurchaseOrder {
   isDeleted: Boolean!
 }
 
-type PurchaseOrder {
-  supplierId: UUID!
-  supplier: Supplier!
-  orderDate: DateTime!
-  status: ProcessingStatus!
-  shippingFees: Decimal!
-  importFees: Decimal!
-  insuranceFees: Decimal!
-  additionalFees: Decimal!
+type MarketEvent {
+  name: String!
+  date: DateTime!
+  location: String
   notes: String
-  items: [PurchaseOrderItem!]!
-  deliveries: [Delivery!]!
-  stagingPurchaseOrders: [StagingPurchaseOrder!]!
+  reconciledSales: [ReconciledSale!]!
   id: UUID!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -378,12 +338,55 @@ type Delivery {
   isDeleted: Boolean!
 }
 
-type MarketEvent {
+type PurchaseOrderItemDto {
+  id: UUID!
+  productId: UUID
+  productName: String
+  supplierReference: String
+  supplierProductUrl: String
   name: String!
-  date: DateTime!
-  location: String
+  description: String
+  quantity: Int!
+  listedUnitPrice: Decimal!
+  actualUnitPrice: Decimal!
+  allocatedUnitOverhead: Decimal!
+  totalUnitCost: Decimal!
+}
+
+type StagingPurchaseOrderDto {
+  id: UUID!
+  supplierReference: String
+  orderDate: DateTime!
+  status: ProcessingStatus!
+  isImported: Boolean!
+  errorMessage: String
+  itemCount: Int!
+}
+
+enum ProcessingStatus {
+  QUEUED
+  STARTED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+"The `Decimal` scalar type represents a decimal floating-point number."
+scalar Decimal
+
+type PurchaseOrder {
+  supplierId: UUID!
+  supplier: Supplier!
+  orderDate: DateTime!
+  status: ProcessingStatus!
+  shippingFees: Decimal!
+  importFees: Decimal!
+  insuranceFees: Decimal!
+  additionalFees: Decimal!
   notes: String
-  reconciledSales: [ReconciledSale!]!
+  items: [PurchaseOrderItem!]!
+  deliveries: [Delivery!]!
+  stagingPurchaseOrders: [StagingPurchaseOrder!]!
   id: UUID!
   createdAt: DateTime!
   updatedAt: DateTime!

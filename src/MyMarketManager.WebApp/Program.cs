@@ -2,6 +2,7 @@ using MyMarketManager.Data;
 using MyMarketManager.Data.Services;
 using MyMarketManager.WebApp.Components;
 using MyMarketManager.WebApp.GraphQL;
+using MyMarketManager.WebApp.GraphQL.Types;
 using MyMarketManager.WebApp.Services;
 using MyMarketManager.GraphQL.Client;
 using MyMarketManager.Scrapers;
@@ -9,6 +10,9 @@ using MyMarketManager.Scrapers.Shein;
 using MyMarketManager.Processing;
 using MyMarketManager.Processing.Handlers;
 using MyMarketManager.AI;
+using Pgvector.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +24,16 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // Configure DbContext to use the connection string provided by Aspire
-builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
+builder.AddNpgsqlDbContext<MyMarketManagerDbContext>("database",
+    configureDbContextOptions: dbContextOptions =>
+    {
+        dbContextOptions.UseNpgsql(npgsqlOptions =>
+        {
+            npgsqlOptions.UseVector();
+        });
+        // Use custom model cache key factory to support different database providers
+        dbContextOptions.ReplaceService<IModelCacheKeyFactory, MyMarketManagerModelCacheKeyFactory>();
+    });
 
 // Add database migration as a hosted service (runs in all environments)
 builder.Services.AddScoped<DbContextMigrator>();
@@ -62,6 +75,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // Add GraphQL server with HotChocolate first
 builder.Services
     .AddGraphQLServer()
+    .AddType<ProductPhotoType>()
     .AddQueryType(d => d.Name("Query"))
         .AddTypeExtension<ProductQueries>()
         .AddTypeExtension<PurchaseOrderQueries>()

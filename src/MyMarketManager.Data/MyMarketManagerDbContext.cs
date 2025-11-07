@@ -1,6 +1,9 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using MyMarketManager.Data.Entities;
+using Pgvector;
+using Pgvector.EntityFrameworkCore;
 
 namespace MyMarketManager.Data;
 
@@ -36,15 +39,26 @@ public class MyMarketManagerDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure ProductPhoto VectorEmbedding
-        // Store as comma-separated string
-        // TODO: use proper vector type when supported in EF Core / database provider
-        modelBuilder.Entity<ProductPhoto>()
-            .Property(p => p.VectorEmbedding)
-            .HasConversion(
-                static v => v == null ? null : string.Join(",", v.Select(f => f.ToString("R", CultureInfo.InvariantCulture))),
-                static v => v == null ? null : v.Split(',').Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray())
-            .HasColumnType(Database.IsSqlServer() ? "nvarchar(max)" : "text");
+        // Configure database-specific features
+        if (Database.IsNpgsql())
+        {
+            // Enable pgvector extension for PostgreSQL
+            modelBuilder.HasPostgresExtension("vector");
+            
+            // Configure Vector embedding with converter for PostgreSQL
+            modelBuilder.Entity<ProductPhoto>()
+                .Property(p => p.VectorEmbedding)
+                .HasColumnType("vector(1024)")
+                .HasConversion(
+                    v => v == null ? null : new Vector(v),
+                    v => v == null ? null : v.ToArray());
+        }
+        else if (Database.IsSqlite())
+        {
+            // Ignore Vector property in SQLite as it doesn't support vector types
+            modelBuilder.Entity<ProductPhoto>()
+                .Ignore(p => p.VectorEmbedding);
+        }
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {

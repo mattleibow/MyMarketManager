@@ -39,6 +39,7 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
+                        <th style="width: 80px;">Photo</th>
                         <th>SKU</th>
                         <th>Name</th>
                         <th>Quality</th>
@@ -50,6 +51,20 @@
                     @foreach (var product in productItems)
                     {
                         <tr>
+                            <td class="align-middle">
+                                @{ var firstPhoto = product.Photos.FirstOrDefault(); }
+                                @if (firstPhoto != null)
+                                {
+                                    <img src="@firstPhoto.Url"
+                                         class="img-thumbnail"
+                                         alt="@GetPhotoAltText(firstPhoto, product)"
+                                         style="width: 60px; height: 60px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">No photo</span>
+                                }
+                            </td>
                             <td>
                                 @if (!string.IsNullOrEmpty(product.Sku))
                                 {
@@ -267,5 +282,15 @@
             ProductQuality.Terrible => "bg-dark",
             _ => "bg-secondary"
         };
+    }
+
+    private static string GetPhotoAltText(IGetProducts_Products_Photos photo, IGetProducts_Products product)
+    {
+        if (!string.IsNullOrWhiteSpace(photo.Caption))
+        {
+            return photo.Caption;
+        }
+
+        return $"{product.Name} photo";
     }
 }

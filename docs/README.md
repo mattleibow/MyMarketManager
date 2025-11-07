@@ -22,6 +22,8 @@ Resources for developers working on MyMarketManager:
 - **[Web Scraping](web-scraping.md)** - Web scraping infrastructure for data ingestion from supplier websites
 - **[Background Processing](background-processing.md)** - Asynchronous work item processing system (web scraping, cleanup)
 
+**GraphQL workflow reminder:** Update the running server first, then download the schema before touching client `.graphql` files or running `dotnet graphql generate`.
+
 ## Reference
 
 Detailed technical documentation:

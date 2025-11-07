@@ -15,7 +15,9 @@ public class ProductQueries
     /// </summary>
     public IQueryable<Product> GetProducts(MyMarketManagerDbContext context)
     {
-        return context.Products.OrderBy(p => p.Name);
+        return context.Products
+            .Include(p => p.Photos)
+            .OrderBy(p => p.Name);
     }
 
     /// <summary>

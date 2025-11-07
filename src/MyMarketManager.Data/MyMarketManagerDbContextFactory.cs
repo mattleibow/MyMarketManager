@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Pgvector.EntityFrameworkCore;
 
 namespace MyMarketManager.Data;
 
@@ -8,7 +9,8 @@ public class MyMarketManagerDbContextFactory : IDesignTimeDbContextFactory<MyMar
     public MyMarketManagerDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<MyMarketManagerDbContext>()
-            .UseSqlServer("Data Source=dummy");
+            .UseNpgsql("Host=dummy;Database=dummy;Username=dummy;Password=dummy",
+                o => o.UseVector());
 
         return new MyMarketManagerDbContext(optionsBuilder.Options);
     }

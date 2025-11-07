@@ -27,7 +27,8 @@ public class ProductPhoto : EntityBase
     /// <summary>
     /// 1024-dimensional vector embedding from Azure AI Foundry multimodal embeddings.
     /// Used for image similarity search and semantic search.
-    /// Stored as comma-separated string in SQL Server, ignored in SQLite.
+    /// Stored using pgvector extension in PostgreSQL for efficient similarity search.
+    /// Ignored in SQLite databases.
     /// </summary>
     public float[]? VectorEmbedding { get; set; }
 }
