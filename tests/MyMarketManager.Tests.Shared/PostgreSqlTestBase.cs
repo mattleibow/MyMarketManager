@@ -1,15 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data;
+using Pgvector.EntityFrameworkCore;
 
 namespace MyMarketManager.Tests.Shared;
 
 /// <summary>
-/// Base class for integration tests using a real SQL Server instance in Docker.
+/// Base class for integration tests using a real PostgreSQL instance with pgvector in Docker.
 /// Requires Docker to be running on the machine.
 /// </summary>
-public abstract class SqlServerTestBase(ITestOutputHelper outputHelper, bool createSchema) : IAsyncLifetime
+public abstract class PostgreSqlTestBase(ITestOutputHelper outputHelper, bool createSchema) : IAsyncLifetime
 {
-    private readonly SqlServerHelper _sqlServer = new(outputHelper);
+    private readonly PostgreSqlHelper _postgreSql = new(outputHelper);
 
     protected MyMarketManagerDbContext Context { get; private set; } = null!;
 
@@ -17,10 +18,13 @@ public abstract class SqlServerTestBase(ITestOutputHelper outputHelper, bool cre
 
     public virtual async ValueTask InitializeAsync()
     {
-        var connectionString = await _sqlServer.ConnectAsync();
+        var connectionString = await _postgreSql.ConnectAsync();
 
         var options = new DbContextOptionsBuilder<MyMarketManagerDbContext>()
-            .UseSqlServer(connectionString)
+            .UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.UseVector();
+            })
             .Options;
 
         Context = new MyMarketManagerDbContext(options);
@@ -36,7 +40,7 @@ public abstract class SqlServerTestBase(ITestOutputHelper outputHelper, bool cre
     {
         await Context.DisposeAsync();
 
-        await _sqlServer.DisconnectAsync();
+        await _postgreSql.DisconnectAsync();
     }
 
     protected async Task<bool> TableExistsAsync(string tableName)
@@ -45,12 +49,12 @@ public abstract class SqlServerTestBase(ITestOutputHelper outputHelper, bool cre
         {
             var sql = """
                 SELECT COUNT(*)
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_NAME = @tableName
+                FROM information_schema.tables
+                WHERE table_name = @p0
                 """;
 
             var count = await Context.Database
-                .SqlQueryRaw<int>(sql, tableName)
+                .SqlQueryRaw<int>(sql, tableName.ToLower())
                 .FirstOrDefaultAsync(Cancel);
 
             return count > 0;

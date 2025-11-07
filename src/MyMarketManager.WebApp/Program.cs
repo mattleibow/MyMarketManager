@@ -7,6 +7,8 @@ using MyMarketManager.GraphQL.Client;
 using MyMarketManager.Scrapers;
 using MyMarketManager.Scrapers.Shein;
 using MyMarketManager.Processing;
+using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,8 +19,20 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Configure DbContext to use the connection string provided by Aspire
-builder.AddSqlServerDbContext<MyMarketManagerDbContext>("database");
+// Configure DbContext using standard EF Core registration with pgvector support
+var connectionString = builder.Configuration.GetConnectionString("database") 
+    ?? throw new InvalidOperationException("Connection string 'database' not found.");
+
+builder.Services.AddDbContextPool<MyMarketManagerDbContext>(options =>
+{
+    options.UseNpgsql(connectionString, npgsqlOptions =>
+    {
+        npgsqlOptions.UseVector();
+    });
+});
+
+// Enrich with Aspire features (health checks, logging, telemetry)
+builder.EnrichNpgsqlDbContext<MyMarketManagerDbContext>();
 
 // Add database migration as a hosted service (runs in all environments)
 builder.Services.AddScoped<DbContextMigrator>();

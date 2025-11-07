@@ -7,13 +7,13 @@ This document describes the data layer implementation in MyMarketManager, includ
 The MyMarketManager.Data project is a .NET 10 class library that provides:
 - Entity Framework Core entities representing the domain model
 - Database context configuration
-- EF Core migrations for SQL Server / Azure SQL
+- EF Core migrations for PostgreSQL with pgvector extension
 
 ## Technology Stack
 
 - **.NET 10.0**: Target framework
 - **Entity Framework Core 9.0**: ORM for data access
-- **SQL Server**: Database provider (compatible with Azure SQL)
+- **PostgreSQL with pgvector**: Database provider with vector similarity search support
 
 ## Project Structure
 
@@ -94,13 +94,18 @@ When running through Aspire (recommended), migrations are applied automatically 
 When you make changes to entities:
 
 ```bash
-dotnet ef migrations add YourMigrationName --project src/MyMarketManager.Data
+dotnet ef migrations add YourMigrationName --project src/MyMarketManager.Data --startup-project src/MyMarketManager.WebApp
 ```
 
 This will generate:
 - A new migration file in `Migrations/`
 - An `Up()` method with SQL to apply changes
 - A `Down()` method to revert changes
+
+**Note on Vector Columns**: Due to limitations in Pgvector.EntityFrameworkCore 0.2.2, vector columns need special handling. When adding vector columns:
+1. Create the migration without the vector property configured in DbContext
+2. Manually add the vector column to the migration with type `vector(dimension)`
+3. Configure the property as `.Ignore()` in OnModelCreating until a newer version of the package is available
 
 ### Removing a Migration
 
@@ -121,10 +126,10 @@ dotnet ef migrations script --project src/MyMarketManager.Data
 ## DbContext Configuration
 
 The `MyMarketManagerDbContext` is registered in the WebApp's `Program.cs` using Aspire's database integration. The connection string is managed by Aspire and points to:
-- Local SQL Server container in development
-- Azure SQL Database in production
+- Local PostgreSQL container with pgvector in development
+- Azure Database for PostgreSQL (or other PostgreSQL hosting) in production
 
-See `src/MyMarketManager.WebApp/Program.cs` for the actual configuration.
+The DbContext uses the pgvector extension for vector similarity search on product images. See `src/MyMarketManager.WebApp/Program.cs` for the actual configuration.
 
 ## Best Practices
 
@@ -177,11 +182,11 @@ For bulk operations, consider:
 
 ## Testing
 
-For comprehensive testing documentation including platform-specific SQL Server provisioning (LocalDB on Windows, Testcontainers on Linux), see the **[Testing Guide](testing.md)**.
+For comprehensive testing documentation including platform-specific PostgreSQL provisioning using Testcontainers, see the **[Testing Guide](testing.md)**.
 
-The Data project includes test base classes in `tests/MyMarketManager.Data.Tests`:
+The Data project includes test base classes in `tests/MyMarketManager.Tests.Shared`:
 - `SqliteTestBase` - Fast in-memory database tests  
-- `SqlServerTestBase` - SQL Server-specific functionality tests
+- `PostgreSqlTestBase` - PostgreSQL-specific functionality tests with pgvector support
 
 See [Testing Guide - Writing Tests](testing.md#writing-tests) for examples and best practices.
 
@@ -205,15 +210,11 @@ dotnet ef migrations add FixModelChanges --project src/MyMarketManager.Data
 
 ### Connection Issues
 
-**Problem:** "Cannot connect to SQL Server"
+**Problem:** "Cannot connect to PostgreSQL"
 
 **Solution:** 
-1. **Development environment**:
-   - **Windows**: Check Docker container status in Aspire Dashboard
-   - **Linux**: Ensure Docker Desktop is running
-2. **Test environment**:
-   - **Windows**: Verify LocalDB is installed: `sqllocaldb info`
-   - **Linux**: Verify Docker is running and user has Docker permissions
+1. **Development environment**: Check Docker container status in Aspire Dashboard
+2. **Test environment**: Verify Docker is running and user has Docker permissions
 3. Check connection string in configuration
 4. See [Testing Guide - Troubleshooting](testing.md#troubleshooting) for detailed platform-specific solutions
 
