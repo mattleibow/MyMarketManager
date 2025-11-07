@@ -9,7 +9,7 @@ using NSubstitute.ExceptionExtensions;
 namespace MyMarketManager.Data.Tests.Services;
 
 [Trait(TestCategories.Key, TestCategories.Values.Database)]
-public class DbContextMigratorTests(ITestOutputHelper outputHelper, bool createSchema = false) : SqlServerTestBase(outputHelper, createSchema)
+public class DbContextMigratorTests(ITestOutputHelper outputHelper, bool createSchema = false) : PostgreSqlTestBase(outputHelper, createSchema)
 {
     private readonly ILogger<DbContextMigrator> _logger = outputHelper.ToLogger<DbContextMigrator>();
     private readonly IHostEnvironment _mockEnvironment = Substitute.For<IHostEnvironment>();

@@ -35,6 +35,12 @@ public class MyMarketManagerDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Configure ProductPhoto VectorEmbedding for PostgreSQL with pgvector
+        // The column type is configured manually in the migration
+        modelBuilder.Entity<ProductPhoto>()
+            .Property(p => p.VectorEmbedding)
+            .HasColumnType("vector(1024)");
+
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             var clrType = entityType.ClrType;
