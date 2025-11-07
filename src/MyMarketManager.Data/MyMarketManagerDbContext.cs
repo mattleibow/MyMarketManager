@@ -36,8 +36,18 @@ public class MyMarketManagerDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Enable pgvector extension
-        modelBuilder.HasPostgresExtension("vector");
+        // Enable pgvector extension for PostgreSQL
+        if (Database.IsNpgsql())
+        {
+            modelBuilder.HasPostgresExtension("vector");
+        }
+
+        // Ignore VectorEmbedding for SQLite since it doesn't support pgvector
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+        {
+            modelBuilder.Entity<ProductPhoto>()
+                .Ignore(p => p.VectorEmbedding);
+        }
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {

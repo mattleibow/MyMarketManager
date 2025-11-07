@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MyMarketManager.Data;
+using Pgvector.EntityFrameworkCore;
 
 namespace MyMarketManager.Tests.Shared;
 
@@ -20,7 +21,7 @@ public abstract class PostgresTestBase(ITestOutputHelper outputHelper, bool crea
         var connectionString = await _postgres.ConnectAsync();
 
         var options = new DbContextOptionsBuilder<MyMarketManagerDbContext>()
-            .UseNpgsql(connectionString)
+            .UseNpgsql(connectionString, o => o.UseVector())
             .Options;
 
         Context = new MyMarketManagerDbContext(options);

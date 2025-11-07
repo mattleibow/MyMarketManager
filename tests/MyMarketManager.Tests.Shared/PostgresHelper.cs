@@ -21,7 +21,6 @@ public class PostgresHelper(ITestOutputHelper outputHelper)
         // Use Testcontainers with pgvector support
         _postgresContainer = new PostgreSqlBuilder()
             .WithImage("pgvector/pgvector:pg17")
-            .WithCommand("postgres", "-c", "max_connections=200")
             .Build();
 
         await _postgresContainer.StartAsync(TestContext.Current.CancellationToken);
