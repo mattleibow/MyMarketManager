@@ -13,30 +13,37 @@ public class ProductPhotoImageVectorizationHandler(
     IEmbeddingGenerator<DataContent, Embedding<float>> embeddingGenerator,
     IHttpClientFactory httpClientFactory,
     ILogger<ProductPhotoImageVectorizationHandler> logger)
-    : ImageVectorizationHandler<ProductPhotoImageVectorizationWorkItem>(embeddingGenerator, httpClientFactory, logger)
+    : ImageVectorizationHandler<UriWorkItem>(embeddingGenerator, httpClientFactory, logger)
 {
-    public override async Task<IReadOnlyCollection<ProductPhotoImageVectorizationWorkItem>> FetchNextAsync(
+    public override async Task<IReadOnlyCollection<UriWorkItem>> FetchNextAsync(
         int maxItems,
         CancellationToken cancellationToken)
     {
-        // Fetch photos without vector embeddings
+        // Fetch photos without vector embeddings (no tracking - just IDs, URLs, and MIME types)
         var pendingPhotos = await context.ProductPhotos
+            .AsNoTracking()
             .Where(p => p.VectorEmbedding == null)
             .Take(maxItems)
+            .Select(p => new UriWorkItem(p.Id, p.Url, p.MimeType))
             .ToListAsync(cancellationToken);
 
-        return [.. pendingPhotos.Select(p => new ProductPhotoImageVectorizationWorkItem(p))];
+        return pendingPhotos;
     }
 
     protected override async Task StoreEmbeddingAsync(
-        ProductPhotoImageVectorizationWorkItem workItem,
+        Guid imageId,
         float[] embedding,
         CancellationToken cancellationToken)
     {
-        // Entity is already tracked in this scope's DbContext from FetchNextAsync
-        workItem.Photo.VectorEmbedding = embedding;
+        // Reload the entity to ensure it's tracked in the current DbContext
+        var photo = await context.ProductPhotos.FindAsync([imageId], cancellationToken);
 
+        if (photo is null)
+        {
+            throw new InvalidOperationException($"ProductPhoto {imageId} not found");
+        }
+
+        photo.VectorEmbedding = embedding;
         await context.SaveChangesAsync(cancellationToken);
     }
 }
-

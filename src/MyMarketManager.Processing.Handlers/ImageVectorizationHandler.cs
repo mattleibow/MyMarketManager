@@ -1,5 +1,4 @@
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 
 namespace MyMarketManager.Processing.Handlers;
@@ -9,9 +8,9 @@ namespace MyMarketManager.Processing.Handlers;
 /// Provides common functionality for generating and storing vector embeddings for images.
 /// Derived classes specify what images to fetch and how to store the embeddings.
 /// </summary>
-/// <typeparam name="TWorkItem">The type of work item - must inherit from ImageVectorizationWorkItem.</typeparam>
-public abstract class ImageVectorizationHandler<TWorkItem> : IWorkItemHandler<TWorkItem> 
-    where TWorkItem : ImageVectorizationWorkItem
+/// <typeparam name="TWorkItem">The type of work item - must inherit from UriWorkItem.</typeparam>
+public abstract class ImageVectorizationHandler<TWorkItem> : IWorkItemHandler<TWorkItem>
+    where TWorkItem : UriWorkItem
 {
     private readonly IEmbeddingGenerator<DataContent, Embedding<float>> _embeddingGenerator;
     private readonly ILogger _logger;
@@ -30,22 +29,24 @@ public abstract class ImageVectorizationHandler<TWorkItem> : IWorkItemHandler<TW
     /// <summary>
     /// Fetches the next batch of work items to process.
     /// Derived classes implement this to query their specific data source.
+    /// Should use AsNoTracking() since entities won't be reused across scopes.
     /// </summary>
     public abstract Task<IReadOnlyCollection<TWorkItem>> FetchNextAsync(int maxItems, CancellationToken cancellationToken);
 
     /// <summary>
     /// Processes a single work item by generating and storing the vector embedding.
+    /// Each work item is processed in its own scope with its own DbContext.
     /// </summary>
     public async Task ProcessAsync(TWorkItem workItem, CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogInformation("Vectorizing image {ImageId} - {Url}", workItem.Id, workItem.ImageUrl);
+            _logger.LogInformation("Vectorizing image {ImageId} - {Url}", workItem.Id, workItem.Uri);
 
             // Download the image
-            var imageBytes = await _httpClient.GetByteArrayAsync(workItem.ImageUrl, cancellationToken);
-            
-            // Create DataContent from byte array with MIME type from entity
+            var imageBytes = await _httpClient.GetByteArrayAsync(workItem.Uri, cancellationToken);
+
+            // Create DataContent from byte array with MIME type from work item
             var imageContent = new DataContent(imageBytes, workItem.MimeType);
 
             // Generate vector embedding
@@ -55,7 +56,7 @@ public abstract class ImageVectorizationHandler<TWorkItem> : IWorkItemHandler<TW
             if (embedding != null)
             {
                 // Store vector
-                await StoreEmbeddingAsync(workItem, embedding.Vector.ToArray(), cancellationToken);
+                await StoreEmbeddingAsync(workItem.Id, embedding.Vector.ToArray(), cancellationToken);
 
                 _logger.LogInformation(
                     "Successfully vectorized image {ImageId}. Vector dimensions: {Dimensions}",
@@ -76,8 +77,7 @@ public abstract class ImageVectorizationHandler<TWorkItem> : IWorkItemHandler<TW
     /// <summary>
     /// Stores the generated embedding.
     /// Derived classes implement this to save the embedding to their specific storage.
-    /// The work item's entity is already tracked in this scope's DbContext.
+    /// Implementation should reload the entity from DbContext to ensure proper tracking.
     /// </summary>
-    protected abstract Task StoreEmbeddingAsync(TWorkItem workItem, float[] embedding, CancellationToken cancellationToken);
+    protected abstract Task StoreEmbeddingAsync(Guid imageId, float[] embedding, CancellationToken cancellationToken);
 }
-
