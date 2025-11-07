@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using MyMarketManager.Data;
+using Pgvector;
 
 namespace MyMarketManager.Processing.Handlers;
 
@@ -43,7 +44,7 @@ public class ProductPhotoImageVectorizationHandler(
             throw new InvalidOperationException($"ProductPhoto {imageId} not found");
         }
 
-        photo.VectorEmbedding = embedding;
+        photo.VectorEmbedding = new Vector(embedding);
         await context.SaveChangesAsync(cancellationToken);
     }
 }

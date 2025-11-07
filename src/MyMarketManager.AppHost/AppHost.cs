@@ -12,18 +12,16 @@ if (builder.GetDevConfig("UseDatabaseConnectionString") is { } connStr)
 }
 else
 {
-    // Create SQL Server container for normal operation
-    var sqlServer = builder.AddAzureSqlServer("sql")
-        .RunAsContainer(container =>
-        {
-            container.WithImageTag("2022-latest");
-            container.WithLifetime(ContainerLifetime.Persistent);
+    // Create PostgreSQL container for normal operation
+    var postgres = builder.AddPostgres("postgres")
+        .WithImage("pgvector/pgvector")
+        .WithImageTag("pg17")
+        .WithLifetime(ContainerLifetime.Persistent);
 
-            if (builder.Configuration.GetValue("UseVolumes", true))
-                container.WithDataVolume();
-        });
+    if (builder.Configuration.GetValue("UseVolumes", true))
+        postgres.WithDataVolume();
 
-    database = sqlServer.AddDatabase("database");
+    database = postgres.AddDatabase("database");
 }
 
 var webApp = builder.AddProject<Projects.MyMarketManager_WebApp>("webapp")

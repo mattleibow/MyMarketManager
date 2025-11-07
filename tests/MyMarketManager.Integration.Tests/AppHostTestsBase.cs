@@ -8,7 +8,7 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
 {
     protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(60);
 
-    private readonly SqlServerHelper _sqlServer = new(outputHelper);
+    private readonly PostgresHelper _postgres = new(outputHelper);
 
     protected DistributedApplication App { get; private set; } = null!;
 
@@ -16,7 +16,7 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
 
     public virtual async ValueTask InitializeAsync()
     {
-        var connectionString = await _sqlServer.ConnectAsync();
+        var connectionString = await _postgres.ConnectAsync();
 
         // Pass the connection string to AppHost
         var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(
@@ -62,9 +62,9 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
             await App.DisposeAsync();
         }
 
-        if (_sqlServer is not null)
+        if (_postgres is not null)
         {
-            await _sqlServer.DisconnectAsync();
+            await _postgres.DisconnectAsync();
         }
     }
 }
