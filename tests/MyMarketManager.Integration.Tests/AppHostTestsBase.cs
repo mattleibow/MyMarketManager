@@ -22,6 +22,7 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
         var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(
             [
                 "UseVolumes=False",
+                "UseAzureAIFoundry=False",
                 $"UseDatabaseConnectionString={connectionString}"
             ],
             Cancel);
