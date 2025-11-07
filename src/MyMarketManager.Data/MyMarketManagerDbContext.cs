@@ -36,10 +36,11 @@ public class MyMarketManagerDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // Configure ProductPhoto VectorEmbedding for PostgreSQL with pgvector
-        // The column type is configured manually in the migration
+        // Note: Due to limitations in Pgvector.EntityFrameworkCore 0.2.2, we ignore this property in EF Core.
+        // The vector column exists in the database (created via migration) for future use.
+        // For full vector support, upgrade to a newer version of Pgvector.EntityFrameworkCore when available.
         modelBuilder.Entity<ProductPhoto>()
-            .Property(p => p.VectorEmbedding)
-            .HasColumnType("vector(1024)");
+            .Ignore(p => p.VectorEmbedding);
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
