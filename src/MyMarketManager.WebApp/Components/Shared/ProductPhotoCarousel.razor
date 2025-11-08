@@ -3,6 +3,7 @@
 <div class="product-photo-carousel">
     @if (HasPhotos)
     {
+        <div class="d-flex flex-column gap-3">
         <div id="@CarouselId" class="carousel slide" data-bs-ride="false">
             @if (PhotoList.Count > 1)
             {
@@ -26,7 +27,7 @@
                 {
                     var photo = PhotoList[index];
                     var cssClass = index == 0 ? "carousel-item active" : "carousel-item";
-                    <div class="@cssClass">
+                    <div class="@cssClass position-relative">
                         <img src="@photo.Url" class="d-block w-100" alt="@GetPhotoAltText(photo, index)" />
                         @if (!string.IsNullOrWhiteSpace(photo.Caption))
                         {
@@ -49,6 +50,20 @@
                     <span class="visually-hidden">Next</span>
                 </button>
             }
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button"
+                    class="btn btn-outline-danger"
+                    @onclick="HandleActivePhotoDelete"
+                    disabled="@(!HasPhotos)">
+                <i class="bi bi-trash me-2"></i>
+                Delete photo
+            </button>
+            <button type="button" class="btn btn-outline-primary" @onclick="HandleUploadClick">
+                <i class="bi bi-upload me-2"></i>
+                Upload new photo
+            </button>
+        </div>
         </div>
     }
     else
@@ -76,6 +91,9 @@
     [Parameter]
     public EventCallback OnUploadRequested { get; set; }
 
+    [Parameter]
+    public EventCallback<System.Guid> OnDeleteRequested { get; set; }
+
     private readonly string generatedCarouselId = $"product-photo-carousel-{Guid.NewGuid():N}";
 
     private string CarouselId => Id ?? generatedCarouselId;
@@ -92,6 +110,32 @@
         }
 
         return Task.CompletedTask;
+    }
+
+    private Task HandleDeleteClick(System.Guid photoId)
+    {
+        if (OnDeleteRequested.HasDelegate)
+        {
+            return OnDeleteRequested.InvokeAsync(photoId);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task HandleActivePhotoDelete()
+    {
+        if (!HasPhotos)
+        {
+            return Task.CompletedTask;
+        }
+
+        var activePhoto = PhotoList.FirstOrDefault();
+        if (activePhoto is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return HandleDeleteClick(activePhoto.Id);
     }
 
     private static string GetPhotoAltText(ProductPhotoDisplayModel photo, int index)

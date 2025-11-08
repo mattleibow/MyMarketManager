@@ -105,7 +105,8 @@
             </div>
             <div class="card-body">
                 <ProductPhotoCarousel Photos="@productPhotos"
-                                      OnUploadRequested="HandlePhotoUploadRequested" />
+                                      OnUploadRequested="HandlePhotoUploadRequested"
+                                      OnDeleteRequested="HandlePhotoDeleteRequested" />
             </div>
         </div>
 
@@ -148,7 +149,7 @@
     private bool saving = false;
     private bool showForm = true;
     private string? errorMessage;
-    private IReadOnlyList<ProductPhotoCarousel.ProductPhotoDisplayModel> productPhotos = Array.Empty<ProductPhotoCarousel.ProductPhotoDisplayModel>();
+    private List<ProductPhotoCarousel.ProductPhotoDisplayModel> productPhotos = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -175,6 +176,8 @@
                 StockOnHand = 0,
                 Name = string.Empty
             };
+
+            productPhotos = new List<ProductPhotoCarousel.ProductPhotoDisplayModel>();
         }
     }
 
@@ -204,25 +207,9 @@
             StockOnHand = p.StockOnHand
         };
 
-        if (p.Photos is { Count: > 0 })
-        {
-            var items = new List<ProductPhotoCarousel.ProductPhotoDisplayModel>(p.Photos.Count);
-            foreach (var photo in p.Photos)
-            {
-                if (photo is null)
-                {
-                    continue;
-                }
-
-                items.Add(new ProductPhotoCarousel.ProductPhotoDisplayModel(photo.Id, photo.Url, photo.Caption, photo.MimeType));
-            }
-
-            productPhotos = items;
-        }
-        else
-        {
-            productPhotos = Array.Empty<ProductPhotoCarousel.ProductPhotoDisplayModel>();
-        }
+        productPhotos = p.Photos
+            .Select(photo => new ProductPhotoCarousel.ProductPhotoDisplayModel(photo!.Id, photo.Url, photo.Caption))
+            .ToList();
     }
 
     private async Task SaveProduct()
@@ -307,6 +294,25 @@
         if (ProductId.HasValue)
         {
             Logger.LogInformation("Photo upload requested for product {ProductId}", ProductId.Value);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task HandlePhotoDeleteRequested(Guid photoId)
+    {
+        if (ProductId.HasValue)
+        {
+            Logger.LogInformation("Photo delete requested for product {ProductId} and photo {PhotoId}", ProductId.Value, photoId);
+        }
+        else
+        {
+            Logger.LogInformation("Photo delete requested for pending product photo {PhotoId}", photoId);
+        }
+
+        if (productPhotos.RemoveAll(photo => photo.Id == photoId) > 0)
+        {
+            StateHasChanged();
         }
 
         return Task.CompletedTask;
