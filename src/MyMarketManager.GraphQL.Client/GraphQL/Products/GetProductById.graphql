@@ -7,5 +7,11 @@ query GetProductById($id: UUID!) {
     quality
     notes
     stockOnHand
+    photos {
+      id
+      url
+      caption
+      mimeType
+    }
   }
 }

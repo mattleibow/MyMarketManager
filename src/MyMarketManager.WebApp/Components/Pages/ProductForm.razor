@@ -99,6 +99,16 @@
     </div>
 
     <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Product Photos</h5>
+            </div>
+            <div class="card-body">
+                <ProductPhotoCarousel Photos="@productPhotos"
+                                      OnUploadRequested="HandlePhotoUploadRequested" />
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">Quality Guide</h5>
@@ -138,6 +148,7 @@
     private bool saving = false;
     private bool showForm = true;
     private string? errorMessage;
+    private IReadOnlyList<ProductPhotoCarousel.ProductPhotoDisplayModel> productPhotos = Array.Empty<ProductPhotoCarousel.ProductPhotoDisplayModel>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -192,6 +203,26 @@
             Notes = p.Notes,
             StockOnHand = p.StockOnHand
         };
+
+        if (p.Photos is { Count: > 0 })
+        {
+            var items = new List<ProductPhotoCarousel.ProductPhotoDisplayModel>(p.Photos.Count);
+            foreach (var photo in p.Photos)
+            {
+                if (photo is null)
+                {
+                    continue;
+                }
+
+                items.Add(new ProductPhotoCarousel.ProductPhotoDisplayModel(photo.Id, photo.Url, photo.Caption, photo.MimeType));
+            }
+
+            productPhotos = items;
+        }
+        else
+        {
+            productPhotos = Array.Empty<ProductPhotoCarousel.ProductPhotoDisplayModel>();
+        }
     }
 
     private async Task SaveProduct()
@@ -269,6 +300,16 @@
     private void Cancel()
     {
         Navigation.NavigateTo("/products");
+    }
+
+    private Task HandlePhotoUploadRequested()
+    {
+        if (ProductId.HasValue)
+        {
+            Logger.LogInformation("Photo upload requested for product {ProductId}", ProductId.Value);
+        }
+
+        return Task.CompletedTask;
     }
 
     // Form model class for data binding

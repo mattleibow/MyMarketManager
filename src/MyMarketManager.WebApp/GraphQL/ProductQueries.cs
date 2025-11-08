@@ -28,6 +28,8 @@ public class ProductQueries
         MyMarketManagerDbContext context,
         CancellationToken cancellationToken)
     {
-        return await context.Products.FindAsync(new object[] { id }, cancellationToken);
+        return await context.Products
+            .Include(p => p.Photos)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 }
