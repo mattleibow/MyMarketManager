@@ -100,12 +100,10 @@ public class WorkItemProcessingService
     {
         var fetchTasks = new List<Task>();
 
-        using var scope = _serviceProvider.CreateScope();
-
         foreach (var registration in _registrations)
         {
             // Fetch from each handler in parallel
-            var task = FetchAndEnqueueAsync(registration, scope.ServiceProvider, writer, cancellationToken);
+            var task = FetchAndEnqueueAsync(registration, writer, cancellationToken);
             fetchTasks.Add(task);
         }
 
@@ -114,11 +112,12 @@ public class WorkItemProcessingService
 
     private async Task FetchAndEnqueueAsync(
         WorkItemHandlerRegistration registration,
-        IServiceProvider serviceProvider,
         ChannelWriter<WorkItemEnvelope> writer,
         CancellationToken cancellationToken)
     {
-        var handler = (IWorkItemHandler)serviceProvider.GetRequiredService(registration.HandlerType);
+        using var scope = _serviceProvider.CreateScope();
+
+        var handler = (IWorkItemHandler)scope.ServiceProvider.GetRequiredService(registration.HandlerType);
 
         _logger.LogDebug("Fetching up to {MaxItems} items from handler '{Name}'", registration.MaxItemsPerCycle, registration.Name);
 

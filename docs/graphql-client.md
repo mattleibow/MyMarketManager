@@ -189,19 +189,24 @@ Generate client code when:
 
 ### Generation Steps
 
-```bash
-# 1. Navigate to the client project
-cd src/MyMarketManager.GraphQL.Client
+1. Update the HotChocolate server (entities/resolvers/types) and ensure it builds.
+2. Start the app via Aspire AppHost so the `/graphql` endpoint reflects the new schema.
+3. In a new terminal, navigate to the client project directory:
+    ```bash
+    cd src/MyMarketManager.GraphQL.Client
+    ```
+4. Download the refreshed schema (replace the port with the value printed by AppHost):
+    ```bash
+    dotnet graphql download https://localhost:7075/graphql
+    ```
+5. Generate the client code:
+    ```bash
+    dotnet graphql generate
+    ```
 
-# 2. (Optional) Update schema if server changed
-#    Requires the app to be running first
-dotnet graphql download https://localhost:7075/graphql
+**Order enforcement:** Do not add new fields to client `.graphql` files or run `dotnet graphql generate` until steps 1-3 are complete and the downloaded schema shows those fields.
 
-# 3. Generate the client code
-dotnet graphql generate
-```
-
-**Note:** The schema is cached locally after download. Only update it when the GraphQL server schema actually changes (new queries, mutations, or types).
+**Important:** Never modify the client `.graphql` files or generated code before the server schema is updated and running. The schema download step must succeed before regenerating the client.
 
 ## Testing
 

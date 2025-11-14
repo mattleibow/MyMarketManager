@@ -159,11 +159,15 @@ Query methods should return `IQueryable<T>` for efficient database queries. Muta
 **Location:** `src/MyMarketManager.GraphQL.Client/`
 
 **Workflow:**
-1. Define GraphQL operation in a `.graphql` file in the `GraphQL/` directory
-2. Generate typed client code with `dotnet graphql generate`
-3. Use the generated operation through `IMyMarketManagerClient`
+1. Update the HotChocolate server and run the AppHost so the `/graphql` endpoint reflects the change.
+2. Download the refreshed schema (replace the port with the one emitted by AppHost): `dotnet graphql download https://localhost:7075/graphql`
+3. Define or update the `.graphql` operation in the `GraphQL/` directory.
+4. Generate typed client code with `dotnet graphql generate`.
+5. Use the generated operation through `IMyMarketManagerClient`.
 
-**Note:** If the server schema has changed, download the updated schema first with `dotnet graphql download https://localhost:7075/graphql`.
+**Order enforcement:** Do not add new fields to client `.graphql` files or run `dotnet graphql generate` until steps 1-3 are complete and the downloaded schema shows those fields.
+
+**Important:** Never adjust the client operations or generated code until the running server exposes the desired schema. Schema download must succeed before regenerating the client.
 
 See [GraphQL Client documentation](graphql-client.md) and the project's README for detailed instructions.
 

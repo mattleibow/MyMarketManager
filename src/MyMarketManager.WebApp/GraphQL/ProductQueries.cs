@@ -15,7 +15,9 @@ public class ProductQueries
     /// </summary>
     public IQueryable<Product> GetProducts(MyMarketManagerDbContext context)
     {
-        return context.Products.OrderBy(p => p.Name);
+        return context.Products
+            .Include(p => p.Photos)
+            .OrderBy(p => p.Name);
     }
 
     /// <summary>
@@ -26,6 +28,8 @@ public class ProductQueries
         MyMarketManagerDbContext context,
         CancellationToken cancellationToken)
     {
-        return await context.Products.FindAsync(new object[] { id }, cancellationToken);
+        return await context.Products
+            .Include(p => p.Photos)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 }

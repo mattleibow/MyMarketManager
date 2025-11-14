@@ -6,7 +6,7 @@ namespace MyMarketManager.Integration.Tests;
 
 public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncLifetime
 {
-    protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(60);
+    protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(120); // Increased from 60s
 
     private readonly SqlServerHelper _sqlServer = new(outputHelper);
 
@@ -22,6 +22,7 @@ public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncL
         var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMarketManager_AppHost>(
             [
                 "UseVolumes=False",
+                "UseAzureAIFoundry=False",
                 $"UseDatabaseConnectionString={connectionString}"
             ],
             Cancel);

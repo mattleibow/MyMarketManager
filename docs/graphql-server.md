@@ -158,6 +158,8 @@ Add methods to `ProductQueries.cs` in the `src/MyMarketManager.WebApp/GraphQL/` 
 
 Add methods to `ProductMutations.cs`. Define input types as C# records for strongly-typed parameters. Mutation methods should be async and return the modified entity or a boolean for success.
 
+**Client reminder:** After updating the server schema, run AppHost and download the schema before editing client `.graphql` files or running `dotnet graphql generate`.
+
 ## Schema Introspection
 
 The GraphQL schema supports full introspection, which is used by:

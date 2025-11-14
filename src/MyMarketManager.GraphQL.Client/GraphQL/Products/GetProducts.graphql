@@ -7,5 +7,11 @@ query GetProducts {
     quality
     notes
     stockOnHand
+    photos {
+      id
+      url
+      caption
+      mimeType
+    }
   }
 }

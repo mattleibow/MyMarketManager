@@ -104,9 +104,20 @@ dotnet ef migrations add <MigrationName> --project src/MyMarketManager.Data
 dotnet ef database update --project src/MyMarketManager.Data
 ```
 
-### GraphQL Client Code Generation
+### GraphQL Schema & Client Workflow
 
-The GraphQL client code is generated manually using the StrawberryShake CLI tools. To regenerate:
+The GraphQL schema is source-of-truth and must always be updated on the server first. Follow this exact order whenever schema changes are involved:
+
+1. Update the HotChocolate server (entities, resolvers, object types) and ensure it compiles.
+2. Run the application via Aspire AppHost so the new schema is exposed at the `/graphql` endpoint.
+3. Download the refreshed schema with `dotnet graphql download`.
+4. Regenerate the StrawberryShake client with `dotnet graphql generate`.
+5. Update UI/components to consume the new client types.
+**Order enforcement:** Do not add new fields to client `.graphql` files or run `dotnet graphql generate` until steps 1-3 are complete and the downloaded schema shows those fields.
+
+**Never modify the client query files or generated code before the server schema is updated and running.**
+
+To regenerate client code after the server is running:
 
 ```bash
 # 1. Start the AppHost first to run the GraphQL server

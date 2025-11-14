@@ -11,13 +11,30 @@ public class DatabaseMigrationService(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var scope = serviceProvider.CreateScope();
-        var migrator = scope.ServiceProvider.GetRequiredService<DbContextMigrator>();
+        try
+        {
+            using var scope = serviceProvider.CreateScope();
+            var migrator = scope.ServiceProvider.GetRequiredService<DbContextMigrator>();
 
-        logger.LogInformation("Starting database migration service...");
+            logger.LogInformation("Starting database migration service...");
 
-        await migrator.MigrateAsync(stoppingToken);
+            await migrator.MigrateAsync(stoppingToken);
 
-        logger.LogInformation("Database migration service completed.");
+            logger.LogInformation("Database migration service completed.");
+
+            // Keep the service alive until the application is shutting down
+            // This prevents the app from exiting after migration completes
+            await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when application is shutting down
+            logger.LogInformation("Database migration service shutting down.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unhandled error in database migration service.");
+            throw;
+        }
     }
 }

@@ -405,7 +405,7 @@ namespace MyMarketManager.GraphQL.Client
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
     public partial class GetProducts_Products_Product : global::System.IEquatable<GetProducts_Products_Product>, IGetProducts_Products_Product
     {
-        public GetProducts_Products_Product(global::System.Guid id, global::System.String? sku, global::System.String name, global::System.String? description, global::MyMarketManager.GraphQL.Client.ProductQuality quality, global::System.String? notes, global::System.Int32 stockOnHand)
+        public GetProducts_Products_Product(global::System.Guid id, global::System.String? sku, global::System.String name, global::System.String? description, global::MyMarketManager.GraphQL.Client.ProductQuality quality, global::System.String? notes, global::System.Int32 stockOnHand, global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.IGetProducts_Products_Photos> photos)
         {
             Id = id;
             Sku = sku;
@@ -414,6 +414,7 @@ namespace MyMarketManager.GraphQL.Client
             Quality = quality;
             Notes = notes;
             StockOnHand = stockOnHand;
+            Photos = photos;
         }
 
         public global::System.Guid Id { get; }
@@ -423,6 +424,7 @@ namespace MyMarketManager.GraphQL.Client
         public global::MyMarketManager.GraphQL.Client.ProductQuality Quality { get; }
         public global::System.String? Notes { get; }
         public global::System.Int32 StockOnHand { get; }
+        public global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.IGetProducts_Products_Photos> Photos { get; }
 
         public virtual global::System.Boolean Equals(GetProducts_Products_Product? other)
         {
@@ -441,7 +443,7 @@ namespace MyMarketManager.GraphQL.Client
                 return false;
             }
 
-            return (Id.Equals(other.Id)) && ((Sku is null && other.Sku is null) || Sku != null && Sku.Equals(other.Sku)) && Name.Equals(other.Name) && ((Description is null && other.Description is null) || Description != null && Description.Equals(other.Description)) && Quality.Equals(other.Quality) && ((Notes is null && other.Notes is null) || Notes != null && Notes.Equals(other.Notes)) && global::System.Object.Equals(StockOnHand, other.StockOnHand);
+            return (Id.Equals(other.Id)) && ((Sku is null && other.Sku is null) || Sku != null && Sku.Equals(other.Sku)) && Name.Equals(other.Name) && ((Description is null && other.Description is null) || Description != null && Description.Equals(other.Description)) && Quality.Equals(other.Quality) && ((Notes is null && other.Notes is null) || Notes != null && Notes.Equals(other.Notes)) && global::System.Object.Equals(StockOnHand, other.StockOnHand) && global::StrawberryShake.Internal.ComparisonHelper.SequenceEqual(Photos, other.Photos);
         }
 
         public override global::System.Boolean Equals(global::System.Object? obj)
@@ -488,6 +490,91 @@ namespace MyMarketManager.GraphQL.Client
                 }
 
                 hash ^= 397 * StockOnHand.GetHashCode();
+                foreach (var Photos_elm in Photos)
+                {
+                    hash ^= 397 * Photos_elm.GetHashCode();
+                }
+
+                return hash;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents a product image stored for a product.
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial class GetProducts_Products_Photos_ProductPhoto : global::System.IEquatable<GetProducts_Products_Photos_ProductPhoto>, IGetProducts_Products_Photos_ProductPhoto
+    {
+        public GetProducts_Products_Photos_ProductPhoto(global::System.Guid id, global::System.String url, global::System.String? caption, global::System.String mimeType)
+        {
+            Id = id;
+            Url = url;
+            Caption = caption;
+            MimeType = mimeType;
+        }
+
+        public global::System.Guid Id { get; }
+        public global::System.String Url { get; }
+        public global::System.String? Caption { get; }
+        /// <summary>
+        /// MIME type of the stored image, such as image/jpeg or image/png.
+        /// </summary>
+        public global::System.String MimeType { get; }
+
+        public virtual global::System.Boolean Equals(GetProducts_Products_Photos_ProductPhoto? other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (other.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return (Id.Equals(other.Id)) && Url.Equals(other.Url) && ((Caption is null && other.Caption is null) || Caption != null && Caption.Equals(other.Caption)) && MimeType.Equals(other.MimeType);
+        }
+
+        public override global::System.Boolean Equals(global::System.Object? obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return Equals((GetProducts_Products_Photos_ProductPhoto)obj);
+        }
+
+        public override global::System.Int32 GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 5;
+                hash ^= 397 * Id.GetHashCode();
+                hash ^= 397 * Url.GetHashCode();
+                if (Caption != null)
+                {
+                    hash ^= 397 * Caption.GetHashCode();
+                }
+
+                hash ^= 397 * MimeType.GetHashCode();
                 return hash;
             }
         }
@@ -509,10 +596,34 @@ namespace MyMarketManager.GraphQL.Client
         public global::MyMarketManager.GraphQL.Client.ProductQuality Quality { get; }
         public global::System.String? Notes { get; }
         public global::System.Int32 StockOnHand { get; }
+        public global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.IGetProducts_Products_Photos> Photos { get; }
     }
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
     public partial interface IGetProducts_Products_Product : IGetProducts_Products
+    {
+    }
+
+    /// <summary>
+    /// Represents a product image stored for a product.
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial interface IGetProducts_Products_Photos
+    {
+        public global::System.Guid Id { get; }
+        public global::System.String Url { get; }
+        public global::System.String? Caption { get; }
+        /// <summary>
+        /// MIME type of the stored image, such as image/jpeg or image/png.
+        /// </summary>
+        public global::System.String MimeType { get; }
+    }
+
+    /// <summary>
+    /// Represents a product image stored for a product.
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial interface IGetProducts_Products_Photos_ProductPhoto : IGetProducts_Products_Photos
     {
     }
 
@@ -826,7 +937,7 @@ namespace MyMarketManager.GraphQL.Client
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
     public partial class GetProductById_ProductById_Product : global::System.IEquatable<GetProductById_ProductById_Product>, IGetProductById_ProductById_Product
     {
-        public GetProductById_ProductById_Product(global::System.Guid id, global::System.String? sku, global::System.String name, global::System.String? description, global::MyMarketManager.GraphQL.Client.ProductQuality quality, global::System.String? notes, global::System.Int32 stockOnHand)
+        public GetProductById_ProductById_Product(global::System.Guid id, global::System.String? sku, global::System.String name, global::System.String? description, global::MyMarketManager.GraphQL.Client.ProductQuality quality, global::System.String? notes, global::System.Int32 stockOnHand, global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.IGetProductById_ProductById_Photos> photos)
         {
             Id = id;
             Sku = sku;
@@ -835,6 +946,7 @@ namespace MyMarketManager.GraphQL.Client
             Quality = quality;
             Notes = notes;
             StockOnHand = stockOnHand;
+            Photos = photos;
         }
 
         public global::System.Guid Id { get; }
@@ -844,6 +956,7 @@ namespace MyMarketManager.GraphQL.Client
         public global::MyMarketManager.GraphQL.Client.ProductQuality Quality { get; }
         public global::System.String? Notes { get; }
         public global::System.Int32 StockOnHand { get; }
+        public global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.IGetProductById_ProductById_Photos> Photos { get; }
 
         public virtual global::System.Boolean Equals(GetProductById_ProductById_Product? other)
         {
@@ -862,7 +975,7 @@ namespace MyMarketManager.GraphQL.Client
                 return false;
             }
 
-            return (Id.Equals(other.Id)) && ((Sku is null && other.Sku is null) || Sku != null && Sku.Equals(other.Sku)) && Name.Equals(other.Name) && ((Description is null && other.Description is null) || Description != null && Description.Equals(other.Description)) && Quality.Equals(other.Quality) && ((Notes is null && other.Notes is null) || Notes != null && Notes.Equals(other.Notes)) && global::System.Object.Equals(StockOnHand, other.StockOnHand);
+            return (Id.Equals(other.Id)) && ((Sku is null && other.Sku is null) || Sku != null && Sku.Equals(other.Sku)) && Name.Equals(other.Name) && ((Description is null && other.Description is null) || Description != null && Description.Equals(other.Description)) && Quality.Equals(other.Quality) && ((Notes is null && other.Notes is null) || Notes != null && Notes.Equals(other.Notes)) && global::System.Object.Equals(StockOnHand, other.StockOnHand) && global::StrawberryShake.Internal.ComparisonHelper.SequenceEqual(Photos, other.Photos);
         }
 
         public override global::System.Boolean Equals(global::System.Object? obj)
@@ -909,6 +1022,91 @@ namespace MyMarketManager.GraphQL.Client
                 }
 
                 hash ^= 397 * StockOnHand.GetHashCode();
+                foreach (var Photos_elm in Photos)
+                {
+                    hash ^= 397 * Photos_elm.GetHashCode();
+                }
+
+                return hash;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents a product image stored for a product.
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial class GetProductById_ProductById_Photos_ProductPhoto : global::System.IEquatable<GetProductById_ProductById_Photos_ProductPhoto>, IGetProductById_ProductById_Photos_ProductPhoto
+    {
+        public GetProductById_ProductById_Photos_ProductPhoto(global::System.Guid id, global::System.String url, global::System.String? caption, global::System.String mimeType)
+        {
+            Id = id;
+            Url = url;
+            Caption = caption;
+            MimeType = mimeType;
+        }
+
+        public global::System.Guid Id { get; }
+        public global::System.String Url { get; }
+        public global::System.String? Caption { get; }
+        /// <summary>
+        /// MIME type of the stored image, such as image/jpeg or image/png.
+        /// </summary>
+        public global::System.String MimeType { get; }
+
+        public virtual global::System.Boolean Equals(GetProductById_ProductById_Photos_ProductPhoto? other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (other.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return (Id.Equals(other.Id)) && Url.Equals(other.Url) && ((Caption is null && other.Caption is null) || Caption != null && Caption.Equals(other.Caption)) && MimeType.Equals(other.MimeType);
+        }
+
+        public override global::System.Boolean Equals(global::System.Object? obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return Equals((GetProductById_ProductById_Photos_ProductPhoto)obj);
+        }
+
+        public override global::System.Int32 GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 5;
+                hash ^= 397 * Id.GetHashCode();
+                hash ^= 397 * Url.GetHashCode();
+                if (Caption != null)
+                {
+                    hash ^= 397 * Caption.GetHashCode();
+                }
+
+                hash ^= 397 * MimeType.GetHashCode();
                 return hash;
             }
         }
@@ -930,10 +1128,34 @@ namespace MyMarketManager.GraphQL.Client
         public global::MyMarketManager.GraphQL.Client.ProductQuality Quality { get; }
         public global::System.String? Notes { get; }
         public global::System.Int32 StockOnHand { get; }
+        public global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.IGetProductById_ProductById_Photos> Photos { get; }
     }
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
     public partial interface IGetProductById_ProductById_Product : IGetProductById_ProductById
+    {
+    }
+
+    /// <summary>
+    /// Represents a product image stored for a product.
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial interface IGetProductById_ProductById_Photos
+    {
+        public global::System.Guid Id { get; }
+        public global::System.String Url { get; }
+        public global::System.String? Caption { get; }
+        /// <summary>
+        /// MIME type of the stored image, such as image/jpeg or image/png.
+        /// </summary>
+        public global::System.String MimeType { get; }
+    }
+
+    /// <summary>
+    /// Represents a product image stored for a product.
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial interface IGetProductById_ProductById_Photos_ProductPhoto : IGetProductById_ProductById_Photos
     {
     }
 
@@ -3131,6 +3353,13 @@ namespace MyMarketManager.GraphQL.Client
     ///     quality
     ///     notes
     ///     stockOnHand
+    ///     photos {
+    ///       __typename
+    ///       id
+    ///       url
+    ///       caption
+    ///       mimeType
+    ///     }
     ///   }
     /// }
     /// </code>
@@ -3238,11 +3467,57 @@ namespace MyMarketManager.GraphQL.Client
             0x6e,
             0x64,
             0x20,
+            0x70,
+            0x68,
+            0x6f,
+            0x74,
+            0x6f,
+            0x73,
+            0x20,
+            0x7b,
+            0x20,
+            0x5f,
+            0x5f,
+            0x74,
+            0x79,
+            0x70,
+            0x65,
+            0x6e,
+            0x61,
+            0x6d,
+            0x65,
+            0x20,
+            0x69,
+            0x64,
+            0x20,
+            0x75,
+            0x72,
+            0x6c,
+            0x20,
+            0x63,
+            0x61,
+            0x70,
+            0x74,
+            0x69,
+            0x6f,
+            0x6e,
+            0x20,
+            0x6d,
+            0x69,
+            0x6d,
+            0x65,
+            0x54,
+            0x79,
+            0x70,
+            0x65,
+            0x20,
+            0x7d,
+            0x20,
             0x7d,
             0x20,
             0x7d
         };
-        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "7c41213e956a827205c26ec08ec52d94");
+        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "e855d3d83b1f1da2d15ff163e4665774");
 
         public override global::System.String ToString()
         {
@@ -3267,6 +3542,13 @@ namespace MyMarketManager.GraphQL.Client
     ///     quality
     ///     notes
     ///     stockOnHand
+    ///     photos {
+    ///       __typename
+    ///       id
+    ///       url
+    ///       caption
+    ///       mimeType
+    ///     }
     ///   }
     /// }
     /// </code>
@@ -3350,6 +3632,13 @@ namespace MyMarketManager.GraphQL.Client
     ///     quality
     ///     notes
     ///     stockOnHand
+    ///     photos {
+    ///       __typename
+    ///       id
+    ///       url
+    ///       caption
+    ///       mimeType
+    ///     }
     ///   }
     /// }
     /// </code>
@@ -3917,6 +4206,13 @@ namespace MyMarketManager.GraphQL.Client
     ///     quality
     ///     notes
     ///     stockOnHand
+    ///     photos {
+    ///       __typename
+    ///       id
+    ///       url
+    ///       caption
+    ///       mimeType
+    ///     }
     ///   }
     /// }
     /// </code>
@@ -4051,11 +4347,57 @@ namespace MyMarketManager.GraphQL.Client
             0x6e,
             0x64,
             0x20,
+            0x70,
+            0x68,
+            0x6f,
+            0x74,
+            0x6f,
+            0x73,
+            0x20,
+            0x7b,
+            0x20,
+            0x5f,
+            0x5f,
+            0x74,
+            0x79,
+            0x70,
+            0x65,
+            0x6e,
+            0x61,
+            0x6d,
+            0x65,
+            0x20,
+            0x69,
+            0x64,
+            0x20,
+            0x75,
+            0x72,
+            0x6c,
+            0x20,
+            0x63,
+            0x61,
+            0x70,
+            0x74,
+            0x69,
+            0x6f,
+            0x6e,
+            0x20,
+            0x6d,
+            0x69,
+            0x6d,
+            0x65,
+            0x54,
+            0x79,
+            0x70,
+            0x65,
+            0x20,
+            0x7d,
+            0x20,
             0x7d,
             0x20,
             0x7d
         };
-        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "db6883dbe7eceb89564fe8e4407f2e40");
+        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "5ea50d4d36e15947631fd56f7bfbf651");
 
         public override global::System.String ToString()
         {
@@ -4080,6 +4422,13 @@ namespace MyMarketManager.GraphQL.Client
     ///     quality
     ///     notes
     ///     stockOnHand
+    ///     photos {
+    ///       __typename
+    ///       id
+    ///       url
+    ///       caption
+    ///       mimeType
+    ///     }
     ///   }
     /// }
     /// </code>
@@ -4173,6 +4522,13 @@ namespace MyMarketManager.GraphQL.Client
     ///     quality
     ///     notes
     ///     stockOnHand
+    ///     photos {
+    ///       __typename
+    ///       id
+    ///       url
+    ///       caption
+    ///       mimeType
+    ///     }
     ///   }
     /// }
     /// </code>
@@ -7174,7 +7530,38 @@ namespace MyMarketManager.GraphQL.Client.State
             IGetProducts_Products returnValue = default !;
             if (data.__typename.Equals("Product", global::System.StringComparison.Ordinal))
             {
-                returnValue = new GetProducts_Products_Product(data.Id ?? throw new global::System.ArgumentNullException(), data.Sku, data.Name ?? throw new global::System.ArgumentNullException(), data.Description, data.Quality ?? throw new global::System.ArgumentNullException(), data.Notes, data.StockOnHand ?? throw new global::System.ArgumentNullException());
+                returnValue = new GetProducts_Products_Product(data.Id ?? throw new global::System.ArgumentNullException(), data.Sku, data.Name ?? throw new global::System.ArgumentNullException(), data.Description, data.Quality ?? throw new global::System.ArgumentNullException(), data.Notes, data.StockOnHand ?? throw new global::System.ArgumentNullException(), MapNonNullableIGetProducts_Products_PhotosNonNullableArray(data.Photos ?? throw new global::System.ArgumentNullException(), snapshot));
+            }
+            else
+            {
+                throw new global::System.NotSupportedException();
+            }
+
+            return returnValue;
+        }
+
+        private global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.IGetProducts_Products_Photos> MapNonNullableIGetProducts_Products_PhotosNonNullableArray(global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.State.ProductPhotoData>? list, global::StrawberryShake.IEntityStoreSnapshot snapshot)
+        {
+            if (list is null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            var productPhotos = new global::System.Collections.Generic.List<global::MyMarketManager.GraphQL.Client.IGetProducts_Products_Photos>();
+            foreach (global::MyMarketManager.GraphQL.Client.State.ProductPhotoData child in list)
+            {
+                productPhotos.Add(MapNonNullableIGetProducts_Products_Photos(child, snapshot));
+            }
+
+            return productPhotos;
+        }
+
+        private global::MyMarketManager.GraphQL.Client.IGetProducts_Products_Photos MapNonNullableIGetProducts_Products_Photos(global::MyMarketManager.GraphQL.Client.State.ProductPhotoData data, global::StrawberryShake.IEntityStoreSnapshot snapshot)
+        {
+            IGetProducts_Products_Photos returnValue = default !;
+            if (data.__typename.Equals("ProductPhoto", global::System.StringComparison.Ordinal))
+            {
+                returnValue = new GetProducts_Products_Photos_ProductPhoto(data.Id ?? throw new global::System.ArgumentNullException(), data.Url ?? throw new global::System.ArgumentNullException(), data.Caption, data.MimeType ?? throw new global::System.ArgumentNullException());
             }
             else
             {
@@ -7371,7 +7758,38 @@ namespace MyMarketManager.GraphQL.Client.State
             IGetProductById_ProductById returnValue = default !;
             if (data?.__typename.Equals("Product", global::System.StringComparison.Ordinal) ?? false)
             {
-                returnValue = new GetProductById_ProductById_Product(data.Id ?? throw new global::System.ArgumentNullException(), data.Sku, data.Name ?? throw new global::System.ArgumentNullException(), data.Description, data.Quality ?? throw new global::System.ArgumentNullException(), data.Notes, data.StockOnHand ?? throw new global::System.ArgumentNullException());
+                returnValue = new GetProductById_ProductById_Product(data.Id ?? throw new global::System.ArgumentNullException(), data.Sku, data.Name ?? throw new global::System.ArgumentNullException(), data.Description, data.Quality ?? throw new global::System.ArgumentNullException(), data.Notes, data.StockOnHand ?? throw new global::System.ArgumentNullException(), MapNonNullableIGetProductById_ProductById_PhotosNonNullableArray(data.Photos ?? throw new global::System.ArgumentNullException(), snapshot));
+            }
+            else
+            {
+                throw new global::System.NotSupportedException();
+            }
+
+            return returnValue;
+        }
+
+        private global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.IGetProductById_ProductById_Photos> MapNonNullableIGetProductById_ProductById_PhotosNonNullableArray(global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.State.ProductPhotoData>? list, global::StrawberryShake.IEntityStoreSnapshot snapshot)
+        {
+            if (list is null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            var productPhotos = new global::System.Collections.Generic.List<global::MyMarketManager.GraphQL.Client.IGetProductById_ProductById_Photos>();
+            foreach (global::MyMarketManager.GraphQL.Client.State.ProductPhotoData child in list)
+            {
+                productPhotos.Add(MapNonNullableIGetProductById_ProductById_Photos(child, snapshot));
+            }
+
+            return productPhotos;
+        }
+
+        private global::MyMarketManager.GraphQL.Client.IGetProductById_ProductById_Photos MapNonNullableIGetProductById_ProductById_Photos(global::MyMarketManager.GraphQL.Client.State.ProductPhotoData data, global::StrawberryShake.IEntityStoreSnapshot snapshot)
+        {
+            IGetProductById_ProductById_Photos returnValue = default !;
+            if (data.__typename.Equals("ProductPhoto", global::System.StringComparison.Ordinal))
+            {
+                returnValue = new GetProductById_ProductById_Photos_ProductPhoto(data.Id ?? throw new global::System.ArgumentNullException(), data.Url ?? throw new global::System.ArgumentNullException(), data.Caption, data.MimeType ?? throw new global::System.ArgumentNullException());
             }
             else
             {
@@ -8167,7 +8585,7 @@ namespace MyMarketManager.GraphQL.Client.State
             var typename = obj.Value.GetProperty("__typename").GetString();
             if (typename?.Equals("Product", global::System.StringComparison.Ordinal) ?? false)
             {
-                return new global::MyMarketManager.GraphQL.Client.State.ProductData(typename, id: Deserialize_NonNullableGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), sku: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "sku")), name: Deserialize_NonNullableString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "name")), description: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "description")), quality: Deserialize_NonNullableProductQuality(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "quality")), notes: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "notes")), stockOnHand: Deserialize_NonNullableInt32(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "stockOnHand")));
+                return new global::MyMarketManager.GraphQL.Client.State.ProductData(typename, id: Deserialize_NonNullableGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), sku: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "sku")), name: Deserialize_NonNullableString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "name")), description: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "description")), quality: Deserialize_NonNullableProductQuality(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "quality")), notes: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "notes")), stockOnHand: Deserialize_NonNullableInt32(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "stockOnHand")), photos: Deserialize_NonNullableIGetProducts_Products_PhotosNonNullableArray(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "photos")));
             }
 
             throw new global::System.NotSupportedException();
@@ -8246,6 +8664,48 @@ namespace MyMarketManager.GraphQL.Client.State
             }
 
             return _intParser.Parse(obj.Value.GetInt32()!);
+        }
+
+        private global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.State.ProductPhotoData> Deserialize_NonNullableIGetProducts_Products_PhotosNonNullableArray(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            if (obj.Value.ValueKind == global::System.Text.Json.JsonValueKind.Null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            var productPhotos = new global::System.Collections.Generic.List<global::MyMarketManager.GraphQL.Client.State.ProductPhotoData>();
+            foreach (global::System.Text.Json.JsonElement child in obj.Value.EnumerateArray())
+            {
+                productPhotos.Add(Deserialize_NonNullableIGetProducts_Products_Photos(child));
+            }
+
+            return productPhotos;
+        }
+
+        private global::MyMarketManager.GraphQL.Client.State.ProductPhotoData Deserialize_NonNullableIGetProducts_Products_Photos(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            if (obj.Value.ValueKind == global::System.Text.Json.JsonValueKind.Null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            var typename = obj.Value.GetProperty("__typename").GetString();
+            if (typename?.Equals("ProductPhoto", global::System.StringComparison.Ordinal) ?? false)
+            {
+                return new global::MyMarketManager.GraphQL.Client.State.ProductPhotoData(typename, id: Deserialize_NonNullableGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), url: Deserialize_NonNullableString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "url")), caption: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "caption")), mimeType: Deserialize_NonNullableString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "mimeType")));
+            }
+
+            throw new global::System.NotSupportedException();
         }
     }
 
@@ -8472,7 +8932,7 @@ namespace MyMarketManager.GraphQL.Client.State
             var typename = obj.Value.GetProperty("__typename").GetString();
             if (typename?.Equals("Product", global::System.StringComparison.Ordinal) ?? false)
             {
-                return new global::MyMarketManager.GraphQL.Client.State.ProductData(typename, id: Deserialize_NonNullableGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), sku: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "sku")), name: Deserialize_NonNullableString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "name")), description: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "description")), quality: Deserialize_NonNullableProductQuality(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "quality")), notes: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "notes")), stockOnHand: Deserialize_NonNullableInt32(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "stockOnHand")));
+                return new global::MyMarketManager.GraphQL.Client.State.ProductData(typename, id: Deserialize_NonNullableGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), sku: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "sku")), name: Deserialize_NonNullableString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "name")), description: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "description")), quality: Deserialize_NonNullableProductQuality(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "quality")), notes: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "notes")), stockOnHand: Deserialize_NonNullableInt32(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "stockOnHand")), photos: Deserialize_NonNullableIGetProductById_ProductById_PhotosNonNullableArray(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "photos")));
             }
 
             throw new global::System.NotSupportedException();
@@ -8551,6 +9011,48 @@ namespace MyMarketManager.GraphQL.Client.State
             }
 
             return _intParser.Parse(obj.Value.GetInt32()!);
+        }
+
+        private global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.State.ProductPhotoData> Deserialize_NonNullableIGetProductById_ProductById_PhotosNonNullableArray(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            if (obj.Value.ValueKind == global::System.Text.Json.JsonValueKind.Null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            var productPhotos = new global::System.Collections.Generic.List<global::MyMarketManager.GraphQL.Client.State.ProductPhotoData>();
+            foreach (global::System.Text.Json.JsonElement child in obj.Value.EnumerateArray())
+            {
+                productPhotos.Add(Deserialize_NonNullableIGetProductById_ProductById_Photos(child));
+            }
+
+            return productPhotos;
+        }
+
+        private global::MyMarketManager.GraphQL.Client.State.ProductPhotoData Deserialize_NonNullableIGetProductById_ProductById_Photos(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            if (obj.Value.ValueKind == global::System.Text.Json.JsonValueKind.Null)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            var typename = obj.Value.GetProperty("__typename").GetString();
+            if (typename?.Equals("ProductPhoto", global::System.StringComparison.Ordinal) ?? false)
+            {
+                return new global::MyMarketManager.GraphQL.Client.State.ProductPhotoData(typename, id: Deserialize_NonNullableGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), url: Deserialize_NonNullableString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "url")), caption: Deserialize_String(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "caption")), mimeType: Deserialize_NonNullableString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "mimeType")));
+            }
+
+            throw new global::System.NotSupportedException();
         }
     }
 
@@ -9761,7 +10263,7 @@ namespace MyMarketManager.GraphQL.Client.State
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
     public partial record ProductData
     {
-        public ProductData(global::System.String __typename, global::System.Guid? id = default !, global::System.String? sku = default !, global::System.String? name = default !, global::System.String? description = default !, global::MyMarketManager.GraphQL.Client.ProductQuality? quality = default !, global::System.String? notes = default !, global::System.Int32? stockOnHand = default !)
+        public ProductData(global::System.String __typename, global::System.Guid? id = default !, global::System.String? sku = default !, global::System.String? name = default !, global::System.String? description = default !, global::MyMarketManager.GraphQL.Client.ProductQuality? quality = default !, global::System.String? notes = default !, global::System.Int32? stockOnHand = default !, global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.State.ProductPhotoData>? photos = default !)
         {
             this.__typename = __typename ?? throw new global::System.ArgumentNullException(nameof(__typename));
             Id = id;
@@ -9771,6 +10273,7 @@ namespace MyMarketManager.GraphQL.Client.State
             Quality = quality;
             Notes = notes;
             StockOnHand = stockOnHand;
+            Photos = photos;
         }
 
         public global::System.String __typename { get; init; }
@@ -9781,6 +10284,28 @@ namespace MyMarketManager.GraphQL.Client.State
         public global::MyMarketManager.GraphQL.Client.ProductQuality? Quality { get; init; }
         public global::System.String? Notes { get; init; }
         public global::System.Int32? StockOnHand { get; init; }
+        public global::System.Collections.Generic.IReadOnlyList<global::MyMarketManager.GraphQL.Client.State.ProductPhotoData>? Photos { get; init; }
+    }
+
+    ///<summary>Represents a product image stored for a product.</summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]
+    public partial record ProductPhotoData
+    {
+        public ProductPhotoData(global::System.String __typename, global::System.Guid? id = default !, global::System.String? url = default !, global::System.String? caption = default !, global::System.String? mimeType = default !)
+        {
+            this.__typename = __typename ?? throw new global::System.ArgumentNullException(nameof(__typename));
+            Id = id;
+            Url = url;
+            Caption = caption;
+            MimeType = mimeType;
+        }
+
+        public global::System.String __typename { get; init; }
+        public global::System.Guid? Id { get; init; }
+        public global::System.String? Url { get; init; }
+        public global::System.String? Caption { get; init; }
+        ///<summary>MIME type of the stored image, such as image/jpeg or image/png.</summary>
+        public global::System.String? MimeType { get; init; }
     }
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "15.1.10.0")]

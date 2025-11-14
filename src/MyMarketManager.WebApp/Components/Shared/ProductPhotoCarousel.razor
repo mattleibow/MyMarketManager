@@ -1,0 +1,152 @@
+@using Microsoft.AspNetCore.Components
+
+<div class="product-photo-carousel">
+    @if (HasPhotos)
+    {
+        <div class="d-flex flex-column gap-3">
+        <div id="@CarouselId" class="carousel slide" data-bs-ride="false">
+            @if (PhotoList.Count > 1)
+            {
+                <div class="carousel-indicators">
+                    @for (var index = 0; index < PhotoList.Count; index++)
+                    {
+                        var indicatorClass = index == 0 ? "active" : string.Empty;
+                        <button type="button"
+                                data-bs-target="@($"#{CarouselId}")"
+                                data-bs-slide-to="@index"
+                                class="@indicatorClass"
+                                aria-current="@(index == 0 ? "true" : null)"
+                                aria-label="Slide @(index + 1)">
+                        </button>
+                    }
+                </div>
+            }
+
+            <div class="carousel-inner">
+                @for (var index = 0; index < PhotoList.Count; index++)
+                {
+                    var photo = PhotoList[index];
+                    var cssClass = index == 0 ? "carousel-item active" : "carousel-item";
+                    <div class="@cssClass position-relative">
+                        <img src="@photo.Url" class="d-block w-100" alt="@GetPhotoAltText(photo, index)" />
+                        @if (!string.IsNullOrWhiteSpace(photo.Caption))
+                        {
+                            <div class="carousel-caption d-none d-md-block">
+                                <p>@photo.Caption</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            @if (PhotoList.Count > 1)
+            {
+                <button class="carousel-control-prev" type="button" data-bs-target="@($"#{CarouselId}")" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="@($"#{CarouselId}")" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            }
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button"
+                    class="btn btn-outline-danger"
+                    @onclick="HandleActivePhotoDelete"
+                    disabled="@(!HasPhotos)">
+                <i class="bi bi-trash me-2"></i>
+                Delete photo
+            </button>
+            <button type="button" class="btn btn-outline-primary" @onclick="HandleUploadClick">
+                <i class="bi bi-upload me-2"></i>
+                Upload new photo
+            </button>
+        </div>
+        </div>
+    }
+    else
+    {
+        <div class="border border-secondary border-2 rounded text-center py-5 px-3 placeholder-carousel" style="border-style: dashed;">
+            <div class="mb-3">
+                <i class="bi bi-images display-6 text-secondary"></i>
+            </div>
+            <p class="text-muted mb-3">Upload photos</p>
+            <button type="button" class="btn btn-outline-primary" @onclick="HandleUploadClick">
+                <i class="bi bi-upload me-2"></i>
+                Upload photos
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<ProductPhotoDisplayModel>? Photos { get; set; }
+
+    [Parameter]
+    public string? Id { get; set; }
+
+    [Parameter]
+    public EventCallback OnUploadRequested { get; set; }
+
+    [Parameter]
+    public EventCallback<System.Guid> OnDeleteRequested { get; set; }
+
+    private readonly string generatedCarouselId = $"product-photo-carousel-{Guid.NewGuid():N}";
+
+    private string CarouselId => Id ?? generatedCarouselId;
+
+    private IReadOnlyList<ProductPhotoDisplayModel> PhotoList => Photos ?? System.Array.Empty<ProductPhotoDisplayModel>();
+
+    private bool HasPhotos => PhotoList.Count > 0;
+
+    private Task HandleUploadClick()
+    {
+        if (OnUploadRequested.HasDelegate)
+        {
+            return OnUploadRequested.InvokeAsync();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task HandleDeleteClick(System.Guid photoId)
+    {
+        if (OnDeleteRequested.HasDelegate)
+        {
+            return OnDeleteRequested.InvokeAsync(photoId);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task HandleActivePhotoDelete()
+    {
+        if (!HasPhotos)
+        {
+            return Task.CompletedTask;
+        }
+
+        var activePhoto = PhotoList.FirstOrDefault();
+        if (activePhoto is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return HandleDeleteClick(activePhoto.Id);
+    }
+
+    private static string GetPhotoAltText(ProductPhotoDisplayModel photo, int index)
+    {
+        if (!string.IsNullOrWhiteSpace(photo.Caption))
+        {
+            return photo.Caption!;
+        }
+
+        return $"Product photo {index + 1}";
+    }
+
+    public sealed record ProductPhotoDisplayModel(System.Guid Id, string Url, string? Caption);
+}
