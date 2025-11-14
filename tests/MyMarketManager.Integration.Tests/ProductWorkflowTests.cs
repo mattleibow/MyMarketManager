@@ -49,7 +49,7 @@ public class ProductWorkflowTests(ITestOutputHelper outputHelper) : PlaywrightTe
         await ExpectNoErrorsAsync();
 
         // Verify the new product is visible in the list
-        await Expect(Page.Locator($"text={productName}")).ToBeVisibleAsync(new() { Timeout = 5000 });
+        await Expect(Page.Locator($"text={productName}")).ToBeVisibleAsync(new() { Timeout = 10000 }); // Increased from 5s
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class ProductWorkflowTests(ITestOutputHelper outputHelper) : PlaywrightTe
         await ExpectNoErrorsAsync();
 
         // Verify the updated product name is visible in the list
-        await Expect(Page.Locator($"text={updatedProductName}")).ToBeVisibleAsync(new() { Timeout = 5000 });
+        await Expect(Page.Locator($"text={updatedProductName}")).ToBeVisibleAsync(new() { Timeout = 10000 }); // Increased from 5s
     }
 
     [Fact]

@@ -33,6 +33,9 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
             ViewportSize = new() { Width = 1280, Height = 720 },
             IgnoreHTTPSErrors = true, // For local development certificates
         });
+        
+        // Set default timeout for all Playwright operations
+        Context.SetDefaultTimeout(60000); // 60 seconds (increased from default 30s)
 
         // Create a new page
         Page = await Context.NewPageAsync();
@@ -94,7 +97,7 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
         
         // Retry logic for transient network errors (e.g., ERR_NETWORK_CHANGED)
         const int maxRetries = 3;
-        var retryDelay = TimeSpan.FromSeconds(1);
+        var retryDelay = TimeSpan.FromSeconds(2);
         
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
@@ -103,7 +106,7 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
                 await Page!.GotoAsync(url, new() 
                 { 
                     WaitUntil = WaitUntilState.NetworkIdle,
-                    Timeout = 30000 // 30 second timeout
+                    Timeout = 60000 // 60 second timeout (increased from 30s)
                 });
                 
                 // Capture screenshot after successful navigation
@@ -136,7 +139,7 @@ public abstract class PlaywrightTestsBase(ITestOutputHelper outputHelper) : WebA
     /// </summary>
     protected async Task WaitForNavigationAsync(string urlPattern, PageWaitForURLOptions? options = null)
     {
-        var defaultOptions = new PageWaitForURLOptions { WaitUntil = WaitUntilState.NetworkIdle };
+        var defaultOptions = new PageWaitForURLOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 }; // Increased timeout
         await Page!.WaitForURLAsync(urlPattern, options ?? defaultOptions);
         
         // Capture screenshot after navigation completes

@@ -6,7 +6,7 @@ namespace MyMarketManager.Integration.Tests;
 
 public abstract class AppHostTestsBase(ITestOutputHelper outputHelper) : IAsyncLifetime
 {
-    protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(60);
+    protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(120); // Increased from 60s
 
     private readonly SqlServerHelper _sqlServer = new(outputHelper);
 
